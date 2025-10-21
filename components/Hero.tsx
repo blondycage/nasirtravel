@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 const heroSlides = [
@@ -137,20 +138,24 @@ export default function Hero() {
 
           {/* Buttons - Always Visible */}
           <div className="flex flex-wrap gap-3 sm:gap-4 pt-2 sm:pt-4 mt-4 sm:mt-6">
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 10px 40px rgba(249, 115, 22, 0.4)' }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-primary-orange hover:bg-orange-600 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-full text-base sm:text-lg font-bold transition-all duration-300 shadow-xl"
-            >
-              Explore Packages
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 10px 40px rgba(30, 64, 175, 0.3)' }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-primary-blue hover:bg-blue-800 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-full text-base sm:text-lg font-bold transition-all duration-300 shadow-xl"
-            >
-              Let&apos;s Plan
-            </motion.button>
+            <Link href="/packages">
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: '0 10px 40px rgba(249, 115, 22, 0.4)' }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-primary-orange hover:bg-orange-600 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-full text-base sm:text-lg font-bold transition-all duration-300 shadow-xl"
+              >
+                Explore Packages
+              </motion.button>
+            </Link>
+            <Link href="/contact">
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: '0 10px 40px rgba(30, 64, 175, 0.3)' }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-primary-blue hover:bg-blue-800 text-white px-6 py-3 sm:px-8 sm:py-4 rounded-full text-base sm:text-lg font-bold transition-all duration-300 shadow-xl"
+              >
+                Let&apos;s Plan
+              </motion.button>
+            </Link>
           </div>
 
           {/* Slide Indicators */}

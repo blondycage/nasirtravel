@@ -47,10 +47,9 @@ export default function Header() {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
             {[
-              { name: 'Home', href: '#home' },
-              { name: 'Packages', href: '#packages' },
-              { name: 'Testimonials', href: '#testimonials' },
-              { name: 'Contact', href: '#contact' },
+              { name: 'Home', href: '/' },
+              { name: 'Packages', href: '/packages' },
+              { name: 'Contact', href: '/contact' },
             ].map((item) => (
               <Link key={item.name} href={item.href}>
                 <motion.div
@@ -62,19 +61,21 @@ export default function Header() {
               </Link>
             ))}
 
-            <motion.button
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              className="ml-4 bg-gradient-to-r from-primary-orange to-orange-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden group"
-            >
-              <span className="relative z-10">Book Now</span>
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-orange-600 to-primary-orange"
-                initial={{ x: '100%' }}
-                whileHover={{ x: 0 }}
-                transition={{ duration: 0.3 }}
-              />
-            </motion.button>
+            <Link href="/contact">
+              <motion.button
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="ml-4 bg-gradient-to-r from-primary-orange to-orange-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden group"
+              >
+                <span className="relative z-10">Book Now</span>
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-orange-600 to-primary-orange"
+                  initial={{ x: '100%' }}
+                  whileHover={{ x: 0 }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -113,10 +114,9 @@ export default function Header() {
             >
               <div className="py-4 space-y-2 bg-white/95 backdrop-blur-md rounded-2xl mt-2 p-4 shadow-xl">
                 {[
-                  { name: 'Home', href: '#home' },
-                  { name: 'Packages', href: '#packages' },
-                  { name: 'Testimonials', href: '#testimonials' },
-                  { name: 'Contact', href: '#contact' },
+                  { name: 'Home', href: '/' },
+                  { name: 'Packages', href: '/packages' },
+                  { name: 'Contact', href: '/contact' },
                 ].map((item, index) => (
                   <motion.div
                     key={item.name}
@@ -133,14 +133,16 @@ export default function Header() {
                     </Link>
                   </motion.div>
                 ))}
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="w-full bg-gradient-to-r from-primary-orange to-orange-600 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 mt-2"
-                >
-                  Book Now
-                </motion.button>
+                <Link href="/contact">
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="w-full bg-gradient-to-r from-primary-orange to-orange-600 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 mt-2"
+                  >
+                    Book Now
+                  </motion.button>
+                </Link>
               </div>
             </motion.div>
           )}
