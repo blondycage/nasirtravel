@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -10,113 +10,49 @@ import Footer from '@/components/Footer';
 type PackageCategory = 'All' | 'Hajj / Umrah' | 'Asia' | 'Africa' | 'Europe';
 
 interface TourPackage {
-  id: number;
+  _id: string;
   title: string;
-  category: PackageCategory;
+  category: string;
   image: string;
   departure?: string;
   accommodation: string;
   dates: string;
   price: string;
-  isComing?: boolean;
+  status: 'draft' | 'published' | 'archived';
 }
-
-const availablePackages: TourPackage[] = [
-  {
-    id: 1,
-    title: 'Winter Break Istanbul & Umrah Package A',
-    category: 'Hajj / Umrah',
-    image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=800&q=80',
-    departure: 'Vancouver',
-    accommodation: '4 Star Accommodations',
-    dates: 'December 18 - January 1 (Tentative)',
-    price: '$4,585',
-  },
-  {
-    id: 2,
-    title: 'Winter Break Istanbul & Umrah Package B',
-    category: 'Hajj / Umrah',
-    image: 'https://images.unsplash.com/photo-1549180030-48bf079fb38a?w=800&q=80',
-    departure: 'Vancouver',
-    accommodation: '4 Star Accommodations',
-    dates: 'December 18 - January 1 (Tentative)',
-    price: '$4,275',
-  },
-  {
-    id: 3,
-    title: 'Winter Break Istanbul & Umrah Land Only Package',
-    category: 'Hajj / Umrah',
-    image: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=800&q=80',
-    accommodation: '4 Star Accommodations',
-    dates: 'December 18 - January 1 (Tentative)',
-    price: '$2,350',
-  },
-  {
-    id: 4,
-    title: 'Winter Break Umrah Land Only Package',
-    category: 'Hajj / Umrah',
-    image: '/kba.jpg',
-    accommodation: '4 Star Accommodations',
-    dates: 'December 22 - January 1 (Tentative)',
-    price: '$1,550',
-  },
-];
-
-const comingSoonPackages: TourPackage[] = [
-  {
-    id: 5,
-    title: 'Standard Ramadan Package',
-    category: 'Hajj / Umrah',
-    image: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=800&q=80',
-    accommodation: 'TBA',
-    dates: 'TBA',
-    price: 'TBA',
-    isComing: true,
-  },
-  {
-    id: 6,
-    title: 'VIP Ramadan Package',
-    category: 'Hajj / Umrah',
-    image: 'https://images.unsplash.com/photo-1512632578888-169bbbc64f33?w=800&q=80',
-    accommodation: 'TBA',
-    dates: 'TBA',
-    price: 'TBA',
-    isComing: true,
-  },
-  {
-    id: 7,
-    title: 'Spring Break Umrah Package',
-    category: 'Hajj / Umrah',
-    image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=800&q=80',
-    accommodation: 'TBA',
-    dates: 'TBA',
-    price: 'TBA',
-    isComing: true,
-  },
-  {
-    id: 8,
-    title: 'Explore Uzbekistan: The Land of Imam Bukhari',
-    category: 'Asia',
-    image: 'https://images.unsplash.com/photo-1599946347371-68eb71b16afc?w=800&q=80',
-    accommodation: 'TBA',
-    dates: 'TBA',
-    price: 'TBA',
-    isComing: true,
-  },
-];
 
 const categories: PackageCategory[] = ['All', 'Hajj / Umrah', 'Asia', 'Africa', 'Europe'];
 
 export default function PackagesPage() {
   const [selectedCategory, setSelectedCategory] = useState<PackageCategory>('All');
+  const [tours, setTours] = useState<TourPackage[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filter only applies to available packages
-  const filteredAvailablePackages = selectedCategory === 'All'
-    ? availablePackages
-    : availablePackages.filter(pkg => pkg.category === selectedCategory);
+  useEffect(() => {
+    fetchTours();
+  }, []);
 
-  // Coming Soon packages always show all, regardless of filter
-  const displayComingSoonPackages = comingSoonPackages;
+  const fetchTours = async () => {
+    try {
+      const response = await fetch('/api/tours');
+      const data = await response.json();
+      setTours(data.data || []);
+    } catch (error) {
+      console.error('Failed to fetch tours:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter packages by category and status
+  const filteredAvailablePackages = tours.filter(pkg => {
+    const matchesCategory = selectedCategory === 'All' || pkg.category === selectedCategory;
+    const isPublished = pkg.status === 'published';
+    return matchesCategory && isPublished;
+  });
+
+  // No coming soon packages - all from backend
+  const displayComingSoonPackages: TourPackage[] = [];
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -241,8 +177,15 @@ export default function PackagesPage() {
             ))}
           </motion.div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary-orange"></div>
+            </div>
+          )}
+
           {/* Available Packages */}
-          {filteredAvailablePackages.length > 0 && (
+          {!loading && filteredAvailablePackages.length > 0 && (
             <>
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -266,7 +209,7 @@ export default function PackagesPage() {
               >
                 {filteredAvailablePackages.map((pkg) => (
               <motion.div
-                key={pkg.id}
+                key={pkg._id}
                 variants={cardVariants}
                 whileHover={{ y: -10, transition: { duration: 0.3 } }}
                 className="group relative bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col h-full"
@@ -280,13 +223,6 @@ export default function PackagesPage() {
                     className="object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-
-                  {/* Coming Soon Badge */}
-                  {pkg.isComing && (
-                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-primary-orange text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-lg">
-                      Coming Soon
-                    </div>
-                  )}
                 </div>
 
                 {/* Content */}
@@ -316,32 +252,21 @@ export default function PackagesPage() {
                   <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
                     <p className="text-xs sm:text-sm text-gray-600 mb-1">Starting From</p>
                     <p className="text-xl sm:text-2xl font-extrabold text-primary-blue">
-                      {pkg.price}
-                      {!pkg.isComing && <span className="text-xs sm:text-sm font-normal text-gray-600"> Per Person</span>}
+                      ${pkg.price}
+                      <span className="text-xs sm:text-sm font-normal text-gray-600"> Per Person</span>
                     </p>
                   </div>
 
                   {/* Button */}
-                  {pkg.isComing ? (
+                  <Link href={`/packages/${pkg._id}`}>
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-bold transition-all duration-300 bg-gray-200 text-gray-500 cursor-not-allowed"
-                      disabled
+                      className="w-full py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-bold transition-all duration-300 bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-lg"
                     >
-                      Coming Soon
+                      View Details
                     </motion.button>
-                  ) : (
-                    <Link href={`/packages/${pkg.id}`}>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="w-full py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-bold transition-all duration-300 bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-lg"
-                      >
-                        View Details
-                      </motion.button>
-                    </Link>
-                  )}
+                  </Link>
                 </div>
 
                 {/* Hover Border Effect */}
@@ -452,14 +377,14 @@ export default function PackagesPage() {
           )}
 
           {/* No Results - Only shown when no available packages match filter */}
-          {filteredAvailablePackages.length === 0 && (
+          {!loading && filteredAvailablePackages.length === 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-center py-12 sm:py-16"
             >
               <p className="text-xl sm:text-2xl text-gray-600">No available packages found in this category.</p>
-              <p className="text-gray-500 mt-2 text-sm sm:text-base">Check out our coming soon packages below!</p>
+              <p className="text-gray-500 mt-2 text-sm sm:text-base">Please check back later for new tours!</p>
             </motion.div>
           )}
 

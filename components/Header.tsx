@@ -4,10 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<'user' | 'admin' | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,6 +20,35 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsLoggedIn(true);
+      // Decode token to get role (you can also fetch from API)
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUserRole(payload.role);
+      } catch (error) {
+        console.error('Failed to decode token:', error);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
+    setIsLoggedIn(false);
+    setUserRole(null);
+    router.push('/');
+  };
+
+  const getDashboardLink = () => {
+    if (userRole === 'admin') return '/admin';
+    return '/dashboard';
+  };
 
   return (
     <motion.header
@@ -61,21 +94,52 @@ export default function Header() {
               </Link>
             ))}
 
-            <Link href="/contact">
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="ml-4 bg-gradient-to-r from-primary-orange to-orange-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden group"
-              >
-                <span className="relative z-10">Book Now</span>
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-orange-600 to-primary-orange"
-                  initial={{ x: '100%' }}
-                  whileHover={{ x: 0 }}
-                  transition={{ duration: 0.3 }}
-                />
-              </motion.button>
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link href={getDashboardLink()}>
+                  <motion.div
+                    whileHover={{ y: -2 }}
+                    className="px-4 py-2 rounded-lg font-medium transition-all duration-300 text-gray-700 hover:text-primary-blue hover:bg-blue-50"
+                  >
+                    Dashboard
+                  </motion.div>
+                </Link>
+                <motion.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleLogout}
+                  className="ml-4 bg-gray-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-gray-700 transition-all duration-300"
+                >
+                  Logout
+                </motion.button>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <motion.div
+                    whileHover={{ y: -2 }}
+                    className="px-4 py-2 rounded-lg font-medium transition-all duration-300 text-gray-700 hover:text-primary-blue hover:bg-blue-50"
+                  >
+                    Login
+                  </motion.div>
+                </Link>
+                <Link href="/register">
+                  <motion.button
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="ml-4 bg-gradient-to-r from-primary-orange to-orange-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden group"
+                  >
+                    <span className="relative z-10">Sign Up</span>
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-orange-600 to-primary-orange"
+                      initial={{ x: '100%' }}
+                      whileHover={{ x: 0 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </motion.button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -133,16 +197,63 @@ export default function Header() {
                     </Link>
                   </motion.div>
                 ))}
-                <Link href="/contact">
-                  <motion.button
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="w-full bg-gradient-to-r from-primary-orange to-orange-600 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 mt-2"
-                  >
-                    Book Now
-                  </motion.button>
-                </Link>
+
+                {isLoggedIn ? (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <Link
+                        href={getDashboardLink()}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="block px-4 py-3 text-gray-700 hover:text-primary-blue hover:bg-blue-50 rounded-lg font-medium transition-all duration-300"
+                      >
+                        Dashboard
+                      </Link>
+                    </motion.div>
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full bg-gray-600 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 mt-2"
+                    >
+                      Logout
+                    </motion.button>
+                  </>
+                ) : (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <Link
+                        href="/login"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="block px-4 py-3 text-gray-700 hover:text-primary-blue hover:bg-blue-50 rounded-lg font-medium transition-all duration-300"
+                      >
+                        Login
+                      </Link>
+                    </motion.div>
+                    <Link href="/register">
+                      <motion.button
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="w-full bg-gradient-to-r from-primary-orange to-orange-600 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 mt-2"
+                      >
+                        Sign Up
+                      </motion.button>
+                    </Link>
+                  </>
+                )}
               </div>
             </motion.div>
           )}
