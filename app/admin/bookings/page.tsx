@@ -46,7 +46,7 @@ export default function AdminBookingsPage() {
       }
 
       const data = await response.json();
-      setBookings(data.bookings);
+      setBookings(data.bookings || data.data || []);
     } catch (err: any) {
       setError(err.message);
     } finally {

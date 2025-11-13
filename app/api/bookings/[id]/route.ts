@@ -46,7 +46,21 @@ export async function GET(
     // Check if user owns this booking or is admin
     // Allow access if: 1) user field matches, 2) customerEmail matches user's email, 3) is admin
     const isAdmin = decoded.role === 'admin';
-    const isOwnerByUserId = booking.user && booking.user._id.toString() === decoded.userId;
+    
+    // Handle both populated and unpopulated user field
+    let isOwnerByUserId = false;
+    if (booking.user) {
+      if (typeof booking.user === 'object' && booking.user._id) {
+        // Populated user object
+        isOwnerByUserId = booking.user._id.toString() === decoded.userId;
+      } else if (typeof booking.user === 'string') {
+        // Unpopulated ObjectId string
+        isOwnerByUserId = booking.user.toString() === decoded.userId;
+      } else if (booking.user.toString) {
+        // ObjectId object
+        isOwnerByUserId = booking.user.toString() === decoded.userId;
+      }
+    }
 
     // Get user's email from decoded token or fetch from DB
     let userEmail = decoded.email;
@@ -58,7 +72,7 @@ export async function GET(
 
     const isOwnerByEmail = booking.customerEmail === userEmail;
 
-    console.log('Access check - isOwnerByUserId:', isOwnerByUserId, 'isOwnerByEmail:', isOwnerByEmail, 'isAdmin:', isAdmin);
+    console.log('Access check - isOwnerByUserId:', isOwnerByUserId, 'isOwnerByEmail:', isOwnerByEmail, 'isAdmin:', isAdmin, 'userId:', decoded.userId, 'booking.user:', booking.user);
 
     if (!isOwnerByUserId && !isOwnerByEmail && !isAdmin) {
       return NextResponse.json(
@@ -128,6 +142,10 @@ export async function PATCH(
     if (paymentStatus) booking.paymentStatus = paymentStatus;
 
     await booking.save();
+
+    // Populate tour and user before returning
+    await booking.populate('tour');
+    await booking.populate('user');
 
     return NextResponse.json({ success: true, data: booking });
   } catch (error: any) {

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import Dependant from '@/lib/models/Dependant';
+import Booking from '@/lib/models/Booking';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 import { uploadToCloudinary, deleteFromCloudinary } from '@/lib/utils/cloudinary';
 
-// POST - Upload document for dependant
+// POST - Upload document for user (main applicant)
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -24,12 +24,25 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const dependant = await Dependant.findById(params.id);
-    if (!dependant) {
-      return NextResponse.json({ error: 'Dependant not found' }, { status: 404 });
+    const booking = await Booking.findById(params.id);
+    if (!booking) {
+      return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    if (decoded.role !== 'admin' && dependant.userId.toString() !== decoded.userId) {
+    // Check access
+    const isAdmin = decoded.role === 'admin';
+    const isOwnerByUserId = booking.user && booking.user.toString() === decoded.userId;
+    
+    let userEmail = decoded.email;
+    if (!userEmail && !isOwnerByUserId) {
+      const User = (await import('@/lib/models/User')).default;
+      const user = await User.findById(decoded.userId);
+      userEmail = user?.email;
+    }
+    
+    const isOwnerByEmail = booking.customerEmail === userEmail;
+
+    if (!isOwnerByUserId && !isOwnerByEmail && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -67,7 +80,7 @@ export async function POST(
     const base64 = `data:${file.type};base64,${buffer.toString('base64')}`;
 
     // Upload to Cloudinary with proper folder structure
-    const folder = `bookings/${dependant.bookingId}/dependants/${params.id}`;
+    const folder = `bookings/${params.id}/user`;
     const result = await uploadToCloudinary(base64, folder);
 
     const document = {
@@ -81,43 +94,43 @@ export async function POST(
     // Handle specific document types
     if (documentType === 'personal_passport_picture') {
       // Delete old personal passport picture if exists
-      if (dependant.personalPassportPicture?.publicId) {
+      if (booking.userPersonalPassportPicture?.publicId) {
         try {
-          await deleteFromCloudinary(dependant.personalPassportPicture.publicId);
+          await deleteFromCloudinary(booking.userPersonalPassportPicture.publicId);
         } catch (error) {
           console.error('Error deleting old personal passport picture:', error);
         }
       }
-      dependant.personalPassportPicture = document;
+      booking.userPersonalPassportPicture = document;
     } else if (documentType === 'international_passport') {
       // Delete old international passport if exists
-      if (dependant.internationalPassport?.publicId) {
+      if (booking.userInternationalPassport?.publicId) {
         try {
-          await deleteFromCloudinary(dependant.internationalPassport.publicId);
+          await deleteFromCloudinary(booking.userInternationalPassport.publicId);
         } catch (error) {
           console.error('Error deleting old international passport:', error);
         }
       }
-      dependant.internationalPassport = document;
+      booking.userInternationalPassport = document;
     } else if (documentType === 'supporting_document') {
       // Add to supporting documents array
-      if (!dependant.supportingDocuments) {
-        dependant.supportingDocuments = [];
+      if (!booking.userSupportingDocuments) {
+        booking.userSupportingDocuments = [];
       }
-      dependant.supportingDocuments.push(document);
+      booking.userSupportingDocuments.push(document);
     }
 
     // Also add to general documents array for backward compatibility
-    dependant.documents.push(document);
+    booking.documents.push(document);
 
-    await dependant.save();
+    await booking.save();
 
     return NextResponse.json({
       success: true,
       document: document,
     });
   } catch (error: any) {
-    console.error('Upload document error:', error);
+    console.error('Upload user document error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to upload document' },
       { status: 500 }

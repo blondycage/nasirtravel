@@ -20,11 +20,11 @@ export async function GET(request: NextRequest) {
     }
 
     const bookings = await Booking.find()
-      .populate('tourId')
-      .populate('userId')
+      .populate('tour')
+      .populate('user')
       .sort({ createdAt: -1 });
 
-    return NextResponse.json({ success: true, data: bookings, bookings });
+    return NextResponse.json({ success: true, bookings, data: bookings });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

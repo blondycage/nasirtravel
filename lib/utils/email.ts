@@ -1,12 +1,24 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD,
-  },
-});
+// Check if email is configured
+const isEmailConfigured = () => {
+  return !!(process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD);
+};
+
+// Create transporter only if email is configured
+const getTransporter = () => {
+  if (!isEmailConfigured()) {
+    return null;
+  }
+
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_APP_PASSWORD,
+    },
+  });
+};
 
 export const sendBookingConfirmation = async (
   to: string,
@@ -19,6 +31,16 @@ export const sendBookingConfirmation = async (
     bookingId: string;
   }
 ) => {
+  if (!isEmailConfigured()) {
+    console.log('Email not configured, skipping booking confirmation email');
+    return { success: false, error: 'Email not configured' };
+  }
+
+  const transporter = getTransporter();
+  if (!transporter) {
+    return { success: false, error: 'Failed to create email transporter' };
+  }
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to,
@@ -35,7 +57,7 @@ export const sendBookingConfirmation = async (
           <p><strong>Tour:</strong> ${bookingDetails.tourTitle}</p>
           <p><strong>Date:</strong> ${bookingDetails.bookingDate}</p>
           <p><strong>Number of Travelers:</strong> ${bookingDetails.numberOfTravelers}</p>
-          <p><strong>Total Amount:</strong> $${bookingDetails.totalAmount}</p>
+          <p><strong>Total Amount:</strong> $${(bookingDetails.totalAmount / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
 
         <p>We will send you more details about your tour closer to the departure date.</p>
@@ -63,6 +85,16 @@ export const sendPaymentConfirmation = async (
     bookingId: string;
   }
 ) => {
+  if (!isEmailConfigured()) {
+    console.log('Email not configured, skipping payment confirmation email');
+    return { success: false, error: 'Email not configured' };
+  }
+
+  const transporter = getTransporter();
+  if (!transporter) {
+    return { success: false, error: 'Failed to create email transporter' };
+  }
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to,

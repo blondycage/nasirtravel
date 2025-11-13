@@ -31,16 +31,56 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const document = dependant.documents.id(params.docId);
-    if (!document) {
+    let documentFound = false;
+    let publicIdToDelete: string | null = null;
+
+    // Check personalPassportPicture
+    if (dependant.personalPassportPicture && 
+        (dependant.personalPassportPicture._id?.toString() === params.docId || 
+         dependant.personalPassportPicture.publicId === params.docId)) {
+      publicIdToDelete = dependant.personalPassportPicture.publicId;
+      dependant.personalPassportPicture = undefined;
+      documentFound = true;
+    }
+    // Check internationalPassport
+    else if (dependant.internationalPassport && 
+             (dependant.internationalPassport._id?.toString() === params.docId || 
+              dependant.internationalPassport.publicId === params.docId)) {
+      publicIdToDelete = dependant.internationalPassport.publicId;
+      dependant.internationalPassport = undefined;
+      documentFound = true;
+    }
+    // Check supportingDocuments array
+    else if (dependant.supportingDocuments && dependant.supportingDocuments.length > 0) {
+      const docIndex = dependant.supportingDocuments.findIndex(
+        (doc: any) => doc._id?.toString() === params.docId || doc.publicId === params.docId
+      );
+      
+      if (docIndex !== -1) {
+        publicIdToDelete = dependant.supportingDocuments[docIndex].publicId;
+        dependant.supportingDocuments.splice(docIndex, 1);
+        documentFound = true;
+      }
+    }
+    // Also check general documents array (for backward compatibility)
+    if (!documentFound && dependant.documents && dependant.documents.length > 0) {
+      const document = dependant.documents.id(params.docId);
+      if (document) {
+        publicIdToDelete = document.publicId;
+        dependant.documents.pull(params.docId);
+        documentFound = true;
+      }
+    }
+
+    if (!documentFound) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
 
     // Delete from Cloudinary
-    await deleteFromCloudinary(document.publicId);
+    if (publicIdToDelete) {
+      await deleteFromCloudinary(publicIdToDelete);
+    }
 
-    // Remove from array
-    dependant.documents.pull(params.docId);
     await dependant.save();
 
     return NextResponse.json({ success: true });

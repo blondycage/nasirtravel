@@ -3,13 +3,28 @@ import connectDB from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
 import Tour from '@/lib/models/Tour';
 import { sendBookingConfirmation } from '@/lib/utils/email';
+import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
     const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId');
+    let userId = searchParams.get('userId');
+
+    // If userId not in query, try to get from token
+    if (!userId) {
+      const authHeader = request.headers.get('authorization');
+      const token = getTokenFromHeader(authHeader);
+      if (token) {
+        const decoded = verifyToken(token) as any;
+        if (decoded && decoded.userId) {
+          userId = decoded.userId;
+        }
+      }
+    }
+
+    console.log('GET /api/bookings - userId:', userId);
 
     const filter: any = {};
     if (userId) {
@@ -21,8 +36,17 @@ export async function GET(request: NextRequest) {
       .populate('user')
       .sort({ createdAt: -1 });
 
+    console.log('Found bookings:', bookings.length);
+    console.log('First booking sample:', bookings[0] ? {
+      _id: bookings[0]._id,
+      tour: bookings[0].tour?._id || bookings[0].tour,
+      user: bookings[0].user?._id || bookings[0].user,
+      customerEmail: bookings[0].customerEmail
+    } : 'none');
+
     return NextResponse.json({ success: true, data: bookings });
   } catch (error: any) {
+    console.error('GET /api/bookings error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

@@ -23,12 +23,14 @@ interface Dependant {
 export default function AdminBookingDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const bookingId = params.id as string;
+  const bookingId = Array.isArray(params.id) ? params.id[0] : (params.id as string);
 
   const [booking, setBooking] = useState<any>(null);
   const [dependants, setDependants] = useState<Dependant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -46,9 +48,16 @@ export default function AdminBookingDetailPage() {
       const bookingRes = await fetch(`/api/bookings/${bookingId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!bookingRes.ok) throw new Error('Failed to fetch booking');
+      if (!bookingRes.ok) {
+        const errorData = await bookingRes.json();
+        throw new Error(errorData.error || 'Failed to fetch booking');
+      }
       const bookingData = await bookingRes.json();
-      setBooking(bookingData.booking);
+      if (bookingData.success) {
+        setBooking(bookingData.data);
+      } else {
+        throw new Error(bookingData.error || 'Booking not found');
+      }
 
       // Fetch dependants
       const dependantsRes = await fetch(`/api/bookings/${bookingId}/dependants`, {
@@ -63,6 +72,57 @@ export default function AdminBookingDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const updateBookingStatus = async (field: 'bookingStatus' | 'paymentStatus', value: string) => {
+    setUpdating(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ [field]: value }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update booking status');
+      }
+
+      if (data.success) {
+        setBooking(data.data);
+        setSuccessMessage(`${field === 'bookingStatus' ? 'Booking' : 'Payment'} status updated successfully!`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors: any = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      confirmed: 'bg-green-100 text-green-800',
+      cancelled: 'bg-red-100 text-red-800',
+      paid: 'bg-green-100 text-green-800',
+      failed: 'bg-red-100 text-red-800',
+      refunded: 'bg-gray-100 text-gray-800',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
   if (loading) {
@@ -106,6 +166,12 @@ export default function AdminBookingDetailPage() {
           </div>
         )}
 
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+            {successMessage}
+          </div>
+        )}
+
         {/* Booking Information */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Booking Information</h2>
@@ -135,12 +201,41 @@ export default function AdminBookingDetailPage() {
               <p className="font-medium">{new Date(booking.bookingDate).toLocaleDateString()}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Payment Status</p>
-              <p className="font-medium">{booking.paymentStatus}</p>
+              <p className="text-sm text-gray-600 mb-2">Payment Status</p>
+              <div className="flex items-center gap-3">
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(booking.paymentStatus)}`}>
+                  {booking.paymentStatus}
+                </span>
+                <select
+                  value={booking.paymentStatus}
+                  onChange={(e) => updateBookingStatus('paymentStatus', e.target.value)}
+                  disabled={updating}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                  <option value="failed">Failed</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+              </div>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Booking Status</p>
-              <p className="font-medium">{booking.bookingStatus}</p>
+              <p className="text-sm text-gray-600 mb-2">Booking Status</p>
+              <div className="flex items-center gap-3">
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(booking.bookingStatus)}`}>
+                  {booking.bookingStatus}
+                </span>
+                <select
+                  value={booking.bookingStatus}
+                  onChange={(e) => updateBookingStatus('bookingStatus', e.target.value)}
+                  disabled={updating}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
             </div>
           </div>
           {booking.specialRequests && (

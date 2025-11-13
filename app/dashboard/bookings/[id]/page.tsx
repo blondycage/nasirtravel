@@ -44,35 +44,61 @@ interface BookingDetails {
   specialRequests?: string;
   paymentIntentId?: string;
   documents: IDocument[];
+  applicationClosed?: boolean;
+  userApplicationFormSubmitted?: boolean;
+  userApplicationStatus?: 'pending' | 'submitted' | 'under_review' | 'accepted' | 'rejected';
   createdAt: string;
   updatedAt: string;
 }
 
 export default function BookingDetailsPage() {
   const params = useParams();
+  const bookingId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [booking, setBooking] = useState<BookingDetails | null>(null);
+  const [dependants, setDependants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
-    if (params.id) {
+    if (bookingId) {
       fetchBookingDetails();
+    } else {
+      setLoading(false);
     }
-  }, [params.id]);
+  }, [bookingId]);
 
   const fetchBookingDetails = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/bookings/${params.id}`, {
+      if (!token || !bookingId) {
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch(`/api/bookings/${bookingId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.data) {
         setBooking(data.data);
+      } else {
+        console.error('Failed to fetch booking:', data.error || 'Unknown error');
+      }
+
+      // Fetch dependants for this booking
+      const dependantsRes = await fetch(`/api/bookings/${bookingId}/dependants`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (dependantsRes.ok) {
+        const dependantsData = await dependantsRes.json();
+        setDependants(dependantsData.dependants || []);
       }
     } catch (error) {
       console.error('Failed to fetch booking details:', error);
@@ -95,7 +121,7 @@ export default function BookingDetailsPage() {
       });
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/bookings/${params.id}/documents`, {
+      const response = await fetch(`/api/bookings/${bookingId}/documents`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -124,7 +150,7 @@ export default function BookingDetailsPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/bookings/${params.id}/documents/${documentId}`, {
+      const response = await fetch(`/api/bookings/${bookingId}/documents/${documentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -256,6 +282,58 @@ export default function BookingDetailsPage() {
           </div>
         </motion.div>
 
+        {/* Application Status & Actions - Only show if payment is paid */}
+        {booking.paymentStatus === 'paid' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-xl shadow-md p-6 mb-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Application Process</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {booking.applicationClosed 
+                    ? 'Application process has been closed by admin'
+                    : 'Complete your visa application forms and upload required documents'}
+                </p>
+              </div>
+              {booking.userApplicationStatus && (
+                <span
+                  className={`px-4 py-2 rounded-full text-sm font-bold ${getStatusColor(
+                    booking.userApplicationStatus === 'accepted' ? 'confirmed' : 
+                    booking.userApplicationStatus === 'rejected' ? 'failed' : 
+                    booking.userApplicationStatus === 'under_review' ? 'pending' : 
+                    booking.userApplicationStatus
+                  )}`}
+                >
+                  {booking.userApplicationStatus.replace('_', ' ').toUpperCase()}
+                </span>
+              )}
+            </div>
+            
+            {!booking.applicationClosed && (
+              <div className="space-y-3">
+                <Link
+                  href={`/dashboard/bookings/${bookingId}/application`}
+                  className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition text-center font-semibold"
+                >
+                  {booking.userApplicationFormSubmitted 
+                    ? 'View/Edit Your Application Form' 
+                    : 'Fill Your Application Form'}
+                </Link>
+                <Link
+                  href={`/dashboard/bookings/${bookingId}/documents`}
+                  className="block w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition text-center font-semibold"
+                >
+                  Manage Documents & Dependants
+                </Link>
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {/* Tour Information */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -365,11 +443,65 @@ export default function BookingDetailsPage() {
           </div>
         </motion.div>
 
+        {/* Dependants Section - Show all dependants added to booking */}
+        {booking.paymentStatus === 'paid' && dependants.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-xl shadow-md p-6 mb-6 print:hidden"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Dependants</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {dependants.length} dependant{dependants.length !== 1 ? 's' : ''} added to this booking
+                </p>
+              </div>
+              <Link
+                href={`/dashboard/bookings/${bookingId}/documents`}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                Manage Dependants →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {dependants.map((dep: any) => (
+                <div key={dep._id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900">{dep.name}</h4>
+                      <p className="text-sm text-gray-600">{dep.relationship}</p>
+                      {dep.applicationStatus && (
+                        <span className={`inline-block mt-2 px-2 py-1 text-xs rounded ${
+                          dep.applicationStatus === 'accepted' ? 'bg-green-100 text-green-800' :
+                          dep.applicationStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                          dep.applicationStatus === 'under_review' ? 'bg-yellow-100 text-yellow-800' :
+                          dep.applicationStatus === 'submitted' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {dep.applicationStatus.replace('_', ' ').toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <Link
+                      href={`/dashboard/bookings/${bookingId}/dependants/${dep._id}/application`}
+                      className="text-blue-600 hover:text-blue-700 text-sm"
+                    >
+                      {dep.applicationFormSubmitted ? 'View' : 'Fill'} Form
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Documents Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5 }}
           className="bg-white rounded-xl shadow-md p-6 mb-6 print:hidden"
         >
           <div className="flex items-center justify-between mb-4">

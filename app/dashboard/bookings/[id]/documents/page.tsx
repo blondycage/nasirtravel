@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ToastContainer, { useToast } from '@/components/Toast';
 
 interface Document {
   _id: string;
@@ -22,14 +23,19 @@ export default function BookingDocumentsPage() {
   const params = useParams();
   const router = useRouter();
   const bookingId = params.id as string;
+  const { toasts, success, error: showError, removeToast } = useToast();
 
   const [booking, setBooking] = useState<any>(null);
   const [dependants, setDependants] = useState<Dependant[]>([]);
+  const [userDependantProfiles, setUserDependantProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null); // Track which document is uploading
   const [documentName, setDocumentName] = useState('');
   const [showAddDependant, setShowAddDependant] = useState(false);
+  const [addingDependant, setAddingDependant] = useState(false);
+  const [addMode, setAddMode] = useState<'select' | 'create'>('select'); // 'select' or 'create'
+  const [selectedProfileId, setSelectedProfileId] = useState('');
   const [newDependant, setNewDependant] = useState({
     name: '',
     relationship: '',
@@ -39,6 +45,7 @@ export default function BookingDocumentsPage() {
 
   useEffect(() => {
     fetchData();
+    fetchUserDependantProfiles();
   }, [bookingId]);
 
   const fetchData = async () => {
@@ -55,47 +62,67 @@ export default function BookingDocumentsPage() {
       });
       if (!bookingRes.ok) throw new Error('Failed to fetch booking');
       const bookingData = await bookingRes.json();
-      setBooking(bookingData.booking);
+      setBooking(bookingData.success ? bookingData.data : bookingData.booking || bookingData);
 
-      // Fetch dependants
+      // Fetch dependants for this booking
       const dependantsRes = await fetch(`/api/bookings/${bookingId}/dependants`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (dependantsRes.ok) {
         const dependantsData = await dependantsRes.json();
-        setDependants(dependantsData.dependants);
+        setDependants(dependantsData.dependants || dependantsData.data?.dependants || []);
       }
     } catch (err: any) {
-      setError(err.message);
+      showError(err.message || 'Failed to fetch data');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUploadUserDocument = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  const fetchUserDependantProfiles = async () => {
+    try {
+      setLoadingProfiles(true);
+      const token = localStorage.getItem('token');
+      if (!token) return;
 
-    setUploading(true);
-    setError('');
+      const response = await fetch('/api/user/dependants', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserDependantProfiles(data.dependants || []);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch user dependant profiles:', err);
+    } finally {
+      setLoadingProfiles(false);
+    }
+  };
+
+  const handleUploadUserDocument = async (formData: FormData, documentType: string) => {
+    const uploadId = `user_${documentType}`;
+    setUploading(uploadId);
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/bookings/${bookingId}/documents`, {
+      const response = await fetch(`/api/bookings/${bookingId}/user-documents`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
 
-      if (!response.ok) throw new Error('Upload failed');
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Upload failed');
+      }
 
+      success(`Document uploaded successfully`);
       await fetchData();
-      setDocumentName('');
-      e.currentTarget.reset();
     } catch (err: any) {
-      setError(err.message);
+      showError(err.message || 'Failed to upload document');
     } finally {
-      setUploading(false);
+      setUploading(null);
     }
   };
 
@@ -104,41 +131,140 @@ export default function BookingDocumentsPage() {
 
     try {
       const token = localStorage.getItem('token');
-      await fetch(`/api/bookings/${bookingId}/documents/${docId}`, {
+      const response = await fetch(`/api/bookings/${bookingId}/user-documents/${docId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete document');
+      }
+
+      success('Document deleted successfully');
       await fetchData();
     } catch (err: any) {
-      alert(err.message);
+      showError(err.message || 'Failed to delete document');
     }
   };
 
   const handleAddDependant = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAddingDependant(true);
 
     try {
       const token = localStorage.getItem('token');
+      
+      let requestBody: any = {};
+      
+      if (addMode === 'select' && selectedProfileId) {
+        // Add from existing profile
+        requestBody = { profileId: selectedProfileId };
+      } else {
+        // Create new dependant
+        if (!newDependant.name || !newDependant.relationship) {
+          throw new Error('Name and relationship are required');
+        }
+        requestBody = {
+          name: newDependant.name,
+          relationship: newDependant.relationship,
+          dateOfBirth: newDependant.dateOfBirth || undefined,
+          passportNumber: newDependant.passportNumber || undefined,
+        };
+      }
+
       const response = await fetch(`/api/bookings/${bookingId}/dependants`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(newDependant)
+        body: JSON.stringify(requestBody)
       });
 
-      if (!response.ok) throw new Error('Failed to add dependant');
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add dependant');
+      }
 
+      success('Dependant added successfully');
       setShowAddDependant(false);
+      setAddMode('select');
+      setSelectedProfileId('');
       setNewDependant({ name: '', relationship: '', dateOfBirth: '', passportNumber: '' });
       await fetchData();
     } catch (err: any) {
-      setError(err.message);
+      showError(err.message || 'Failed to add dependant');
+    } finally {
+      setAddingDependant(false);
     }
   };
 
-  const handleUploadDependantDocument = async (dependantId: string, formData: FormData) => {
+  const handleCreateAndSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newDependant.name || !newDependant.relationship) {
+      showError('Name and relationship are required');
+      return;
+    }
+
+    setAddingDependant(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      
+      // First create the profile
+      const profileResponse = await fetch('/api/user/dependants', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newDependant.name,
+          relationship: newDependant.relationship,
+          dateOfBirth: newDependant.dateOfBirth || undefined,
+          passportNumber: newDependant.passportNumber || undefined,
+        })
+      });
+
+      const profileData = await profileResponse.json();
+      if (!profileResponse.ok) {
+        throw new Error(profileData.error || 'Failed to create dependant profile');
+      }
+
+      // Then add to booking
+      const bookingResponse = await fetch(`/api/bookings/${bookingId}/dependants`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ profileId: profileData.dependant._id })
+      });
+
+      const bookingData = await bookingResponse.json();
+      if (!bookingResponse.ok) {
+        throw new Error(bookingData.error || 'Failed to add dependant to booking');
+      }
+
+      success('Dependant profile created and added to booking successfully');
+      setShowAddDependant(false);
+      setAddMode('select');
+      setNewDependant({ name: '', relationship: '', dateOfBirth: '', passportNumber: '' });
+      await fetchUserDependantProfiles();
+      await fetchData();
+    } catch (err: any) {
+      showError(err.message || 'Failed to create and add dependant');
+    } finally {
+      setAddingDependant(false);
+    }
+  };
+
+  const handleUploadDependantDocument = async (dependantId: string, formData: FormData, documentType: string) => {
+    const uploadId = `dependant_${dependantId}_${documentType}`;
+    setUploading(uploadId);
+
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`/api/dependants/${dependantId}/documents`, {
@@ -147,10 +273,17 @@ export default function BookingDocumentsPage() {
         body: formData
       });
 
-      if (!response.ok) throw new Error('Upload failed');
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      success('Document uploaded successfully');
       await fetchData();
     } catch (err: any) {
-      alert(err.message);
+      showError(err.message || 'Failed to upload document');
+    } finally {
+      setUploading(null);
     }
   };
 
@@ -159,13 +292,20 @@ export default function BookingDocumentsPage() {
 
     try {
       const token = localStorage.getItem('token');
-      await fetch(`/api/dependants/${dependantId}/documents/${docId}`, {
+      const response = await fetch(`/api/dependants/${dependantId}/documents/${docId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete document');
+      }
+
+      success('Document deleted successfully');
       await fetchData();
     } catch (err: any) {
-      alert(err.message);
+      showError(err.message || 'Failed to delete document');
     }
   };
 
@@ -174,13 +314,20 @@ export default function BookingDocumentsPage() {
 
     try {
       const token = localStorage.getItem('token');
-      await fetch(`/api/dependants/${dependantId}`, {
+      const response = await fetch(`/api/dependants/${dependantId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete dependant');
+      }
+
+      success('Dependant deleted successfully');
       await fetchData();
     } catch (err: any) {
-      alert(err.message);
+      showError(err.message || 'Failed to delete dependant');
     }
   };
 
@@ -192,12 +339,11 @@ export default function BookingDocumentsPage() {
     );
   }
 
-  if (!booking || booking.bookingStatus !== 'confirmed') {
+  if (!booking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-bold mb-4">Booking Not Confirmed</h2>
-          <p className="text-gray-600 mb-4">Documents can only be uploaded for confirmed bookings</p>
+          <h2 className="text-xl font-bold mb-4">Booking Not Found</h2>
           <Link href="/dashboard" className="text-blue-600 hover:underline">
             Back to Dashboard
           </Link>
@@ -206,8 +352,24 @@ export default function BookingDocumentsPage() {
     );
   }
 
+  if (booking.paymentStatus !== 'paid') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold mb-4">Payment Required</h2>
+          <p className="text-gray-600 mb-4">Payment must be completed before managing documents</p>
+          <Link href={`/dashboard/bookings/${bookingId}`} className="text-blue-600 hover:underline">
+            Back to Booking Details
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <Link href="/dashboard" className="text-blue-600 hover:underline">← Back to Dashboard</Link>
@@ -215,50 +377,174 @@ export default function BookingDocumentsPage() {
           <p className="text-gray-600">Booking ID: {bookingId}</p>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded">
-            {error}
-          </div>
-        )}
-
         {/* User Documents Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4">Your Documents</h2>
-
-          <form onSubmit={handleUploadUserDocument} className="mb-4">
-            <div className="space-y-3">
-              <input
-                type="text"
-                name="name"
-                value={documentName}
-                onChange={(e) => setDocumentName(e.target.value)}
-                placeholder="Document name (e.g., Passport, Visa)"
-                required
-                className="w-full px-4 py-2 border rounded"
-              />
-              <input
-                type="file"
-                name="file"
-                accept="image/*,.pdf"
-                required
-                className="w-full px-4 py-2 border rounded"
-              />
-              <button
-                type="submit"
-                disabled={uploading}
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-              >
-                {uploading ? 'Uploading...' : 'Upload Document'}
-              </button>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold">Your Documents</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Upload required documents: Personal Passport Picture, International Passport, and Supporting Documents
+              </p>
             </div>
-          </form>
+            <Link
+              href={`/dashboard/bookings/${bookingId}/application`}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+            >
+              {booking.userApplicationFormSubmitted ? 'View Application' : 'Fill Application Form'}
+            </Link>
+          </div>
+
+          {!booking.applicationClosed && (
+            <div className="mb-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Personal Passport Picture
+                  {uploading === 'user_personal_passport_picture' && (
+                    <span className="ml-2 text-blue-600 text-xs">⏳ Uploading...</span>
+                  )}
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploading === 'user_personal_passport_picture'}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      formData.append('documentType', 'personal_passport_picture');
+                      handleUploadUserDocument(formData, 'personal_passport_picture');
+                    }
+                  }}
+                  className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  International Passport
+                  {uploading === 'user_international_passport' && (
+                    <span className="ml-2 text-blue-600 text-xs">⏳ Uploading...</span>
+                  )}
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploading === 'user_international_passport'}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      formData.append('documentType', 'international_passport');
+                      handleUploadUserDocument(formData, 'international_passport');
+                    }
+                  }}
+                  className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Supporting Document
+                  {uploading === 'user_supporting_document' && (
+                    <span className="ml-2 text-blue-600 text-xs">⏳ Uploading...</span>
+                  )}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={documentName}
+                    onChange={(e) => setDocumentName(e.target.value)}
+                    placeholder="Document name (e.g., Visa, ID Card)"
+                    disabled={uploading === 'user_supporting_document'}
+                    className="flex-1 px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploading === 'user_supporting_document' || !documentName}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && documentName) {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('documentType', 'supporting_document');
+                        formData.append('name', documentName);
+                        handleUploadUserDocument(formData, 'supporting_document');
+                        setDocumentName('');
+                        e.target.value = '';
+                      } else if (!documentName) {
+                        showError('Please enter a document name first');
+                      }
+                    }}
+                    className="px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
-            {booking.documents && booking.documents.length > 0 ? (
-              booking.documents.map((doc: Document) => (
+            {booking.userPersonalPassportPicture && (
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div>
+                  <p className="font-medium">📷 Personal Passport Picture</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(booking.userPersonalPassportPicture.uploadedAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href={booking.userPersonalPassportPicture.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline text-sm"
+                  >
+                    View
+                  </a>
+                  {!booking.applicationClosed && (
+                    <button
+                      onClick={() => handleDeleteUserDocument(booking.userPersonalPassportPicture._id)}
+                      className="text-red-600 hover:underline text-sm"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            {booking.userInternationalPassport && (
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div>
+                  <p className="font-medium">🛂 International Passport</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(booking.userInternationalPassport.uploadedAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href={booking.userInternationalPassport.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline text-sm"
+                  >
+                    View
+                  </a>
+                  {!booking.applicationClosed && (
+                    <button
+                      onClick={() => handleDeleteUserDocument(booking.userInternationalPassport._id)}
+                      className="text-red-600 hover:underline text-sm"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            {booking.userSupportingDocuments && booking.userSupportingDocuments.length > 0 && (
+              booking.userSupportingDocuments.map((doc: any) => (
                 <div key={doc._id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                   <div>
-                    <p className="font-medium">{doc.name}</p>
+                    <p className="font-medium">📄 {doc.name}</p>
                     <p className="text-sm text-gray-500">
                       {new Date(doc.uploadedAt).toLocaleDateString()}
                     </p>
@@ -272,16 +558,19 @@ export default function BookingDocumentsPage() {
                     >
                       View
                     </a>
-                    <button
-                      onClick={() => handleDeleteUserDocument(doc._id)}
-                      className="text-red-600 hover:underline text-sm"
-                    >
-                      Delete
-                    </button>
+                    {!booking.applicationClosed && (
+                      <button
+                        onClick={() => handleDeleteUserDocument(doc._id)}
+                        className="text-red-600 hover:underline text-sm"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
-            ) : (
+            )}
+            {(!booking.userPersonalPassportPicture && !booking.userInternationalPassport && (!booking.userSupportingDocuments || booking.userSupportingDocuments.length === 0)) && (
               <p className="text-gray-500 text-center py-4">No documents uploaded yet</p>
             )}
           </div>
@@ -290,74 +579,197 @@ export default function BookingDocumentsPage() {
         {/* Dependants Section */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Dependants</h2>
-            <button
-              onClick={() => setShowAddDependant(true)}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-            >
-              + Add Dependant
-            </button>
+            <div>
+              <h2 className="text-xl font-bold">Dependants</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {dependants.length} dependant{dependants.length !== 1 ? 's' : ''} added to this booking
+              </p>
+              {booking.applicationClosed && (
+                <p className="text-sm text-red-600 mt-1">Application process is closed. Cannot add/remove dependants.</p>
+              )}
+            </div>
+            {!booking.applicationClosed && (
+              <button
+                onClick={() => {
+                  setShowAddDependant(true);
+                  setAddMode('select');
+                }}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                + Add Dependant
+              </button>
+            )}
           </div>
 
           {showAddDependant && (
-            <form onSubmit={handleAddDependant} className="mb-6 p-4 bg-gray-50 rounded">
-              <h3 className="font-bold mb-3">Add New Dependant</h3>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  required
-                  value={newDependant.name}
-                  onChange={(e) => setNewDependant({...newDependant, name: e.target.value})}
-                  className="w-full px-4 py-2 border rounded"
-                />
-                <input
-                  type="text"
-                  placeholder="Relationship (e.g., Spouse, Child)"
-                  required
-                  value={newDependant.relationship}
-                  onChange={(e) => setNewDependant({...newDependant, relationship: e.target.value})}
-                  className="w-full px-4 py-2 border rounded"
-                />
-                <input
-                  type="date"
-                  placeholder="Date of Birth"
-                  value={newDependant.dateOfBirth}
-                  onChange={(e) => setNewDependant({...newDependant, dateOfBirth: e.target.value})}
-                  className="w-full px-4 py-2 border rounded"
-                />
-                <input
-                  type="text"
-                  placeholder="Passport Number (Optional)"
-                  value={newDependant.passportNumber}
-                  onChange={(e) => setNewDependant({...newDependant, passportNumber: e.target.value})}
-                  className="w-full px-4 py-2 border rounded"
-                />
-                <div className="flex gap-2">
-                  <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    Add
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddDependant(false)}
-                    className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
-                </div>
+            <div className="mb-6 p-4 bg-gray-50 rounded">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold">Add Dependant to Booking</h3>
+                <button
+                  onClick={() => {
+                    setShowAddDependant(false);
+                    setAddMode('select');
+                    setSelectedProfileId('');
+                    setNewDependant({ name: '', relationship: '', dateOfBirth: '', passportNumber: '' });
+                  }}
+                  disabled={addingDependant}
+                  className="text-gray-600 hover:text-gray-800 disabled:opacity-50"
+                >
+                  ✕
+                </button>
               </div>
-            </form>
+
+              {/* Mode Toggle */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setAddMode('select')}
+                  disabled={addingDependant}
+                  className={`px-4 py-2 rounded text-sm font-medium ${
+                    addMode === 'select'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 border border-gray-300'
+                  } disabled:opacity-50`}
+                >
+                  Select Existing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddMode('create')}
+                  disabled={addingDependant}
+                  className={`px-4 py-2 rounded text-sm font-medium ${
+                    addMode === 'create'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 border border-gray-300'
+                  } disabled:opacity-50`}
+                >
+                  Create New
+                </button>
+              </div>
+
+              {addMode === 'select' ? (
+                <div className="space-y-3">
+                  {loadingProfiles ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent mx-auto"></div>
+                      <p className="text-sm text-gray-600 mt-2">Loading dependants...</p>
+                    </div>
+                  ) : userDependantProfiles.length > 0 ? (
+                    <>
+                      <label className="block text-sm font-medium mb-2">Select a Dependant</label>
+                      <select
+                        value={selectedProfileId}
+                        onChange={(e) => setSelectedProfileId(e.target.value)}
+                        disabled={addingDependant}
+                        className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">-- Select a dependant --</option>
+                        {userDependantProfiles.map((profile) => (
+                          <option key={profile._id} value={profile._id}>
+                            {profile.name} ({profile.relationship})
+                            {profile.dateOfBirth && ` - ${new Date(profile.dateOfBirth).toLocaleDateString()}`}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={handleAddDependant}
+                        disabled={addingDependant || !selectedProfileId}
+                        className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {addingDependant ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                            <span>Adding...</span>
+                          </>
+                        ) : (
+                          'Add Selected Dependant'
+                        )}
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-center py-4 text-gray-600">
+                      <p className="mb-2">No saved dependants found.</p>
+                      <p className="text-sm">Switch to "Create New" to add a dependant and save it for future use.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <form onSubmit={handleCreateAndSaveProfile} className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Full Name *"
+                    required
+                    disabled={addingDependant}
+                    value={newDependant.name}
+                    onChange={(e) => setNewDependant({...newDependant, name: e.target.value})}
+                    className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Relationship (e.g., Spouse, Child) *"
+                    required
+                    disabled={addingDependant}
+                    value={newDependant.relationship}
+                    onChange={(e) => setNewDependant({...newDependant, relationship: e.target.value})}
+                    className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                  <input
+                    type="date"
+                    placeholder="Date of Birth"
+                    disabled={addingDependant}
+                    value={newDependant.dateOfBirth}
+                    onChange={(e) => setNewDependant({...newDependant, dateOfBirth: e.target.value})}
+                    className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Passport Number (Optional)"
+                    disabled={addingDependant}
+                    value={newDependant.passportNumber}
+                    onChange={(e) => setNewDependant({...newDependant, passportNumber: e.target.value})}
+                    className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={addingDependant}
+                      className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {addingDependant ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          <span>Creating & Adding...</span>
+                        </>
+                      ) : (
+                        'Create & Add to Booking'
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddDependant}
+                      disabled={addingDependant || !newDependant.name || !newDependant.relationship}
+                      className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      Add Only (Don't Save)
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
 
           {dependants.length > 0 ? (
             <div className="space-y-4">
-              {dependants.map((dependant) => (
+              {dependants.map((dependant: any) => (
                 <DependantCard
                   key={dependant._id}
                   dependant={dependant}
+                  bookingId={bookingId}
+                  applicationClosed={booking.applicationClosed}
                   onUploadDocument={handleUploadDependantDocument}
                   onDeleteDocument={handleDeleteDependantDocument}
                   onDelete={handleDeleteDependant}
+                  uploading={uploading}
                 />
               ))}
             </div>
@@ -372,23 +784,34 @@ export default function BookingDocumentsPage() {
 
 function DependantCard({
   dependant,
+  bookingId,
+  applicationClosed,
   onUploadDocument,
   onDeleteDocument,
-  onDelete
+  onDelete,
+  uploading
 }: {
-  dependant: Dependant;
-  onUploadDocument: (id: string, formData: FormData) => void;
+  dependant: any;
+  bookingId: string;
+  applicationClosed?: boolean;
+  onUploadDocument: (id: string, formData: FormData, documentType: string) => void;
   onDeleteDocument: (depId: string, docId: string) => void;
   onDelete: (id: string) => void;
+  uploading: string | null;
 }) {
   const [docName, setDocName] = useState('');
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    onUploadDocument(dependant._id, formData);
-    setDocName('');
-    e.currentTarget.reset();
+  const handleUpload = (documentType: string, file?: File, name?: string) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('documentType', documentType);
+    if (name) formData.append('name', name);
+    onUploadDocument(dependant._id, formData, documentType);
+  };
+
+  const isUploading = (docType: string) => {
+    return uploading === `dependant_${dependant._id}_${docType}`;
   };
 
   return (
@@ -397,59 +820,161 @@ function DependantCard({
         <div>
           <h3 className="font-bold">{dependant.name}</h3>
           <p className="text-sm text-gray-600">{dependant.relationship}</p>
+          {dependant.applicationStatus && (
+            <span className={`inline-block mt-1 px-2 py-1 text-xs rounded ${
+              dependant.applicationStatus === 'accepted' ? 'bg-green-100 text-green-800' :
+              dependant.applicationStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+              dependant.applicationStatus === 'under_review' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {dependant.applicationStatus.replace('_', ' ').toUpperCase()}
+            </span>
+          )}
         </div>
-        <button
-          onClick={() => onDelete(dependant._id)}
-          className="text-red-600 hover:underline text-sm"
-        >
-          Delete
-        </button>
+        <div className="flex gap-2">
+          <Link
+            href={`/dashboard/bookings/${bookingId}/dependants/${dependant._id}/application`}
+            className="text-blue-600 hover:underline text-sm"
+          >
+            {dependant.applicationFormSubmitted ? 'View Application' : 'Fill Application'}
+          </Link>
+          {!applicationClosed && (
+            <button
+              onClick={() => onDelete(dependant._id)}
+              className="text-red-600 hover:underline text-sm"
+            >
+              Delete
+            </button>
+          )}
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mb-3">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            name="name"
-            value={docName}
-            onChange={(e) => setDocName(e.target.value)}
-            placeholder="Document name"
-            required
-            className="flex-1 px-3 py-1 border rounded text-sm"
-          />
-          <input
-            type="file"
-            name="file"
-            accept="image/*,.pdf"
-            required
-            className="flex-1 px-3 py-1 border rounded text-sm"
-          />
-          <button type="submit" className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
-            Upload
-          </button>
+      {!applicationClosed && (
+        <div className="mb-3 space-y-2">
+          <div>
+            <label className="block text-xs font-medium mb-1">
+              Personal Passport Picture
+              {isUploading('personal_passport_picture') && (
+                <span className="ml-1 text-blue-600 text-xs">⏳</span>
+              )}
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              disabled={isUploading('personal_passport_picture')}
+              onChange={(e) => handleUpload('personal_passport_picture', e.target.files?.[0])}
+              className="w-full px-2 py-1 border rounded text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1">
+              International Passport
+              {isUploading('international_passport') && (
+                <span className="ml-1 text-blue-600 text-xs">⏳</span>
+              )}
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              disabled={isUploading('international_passport')}
+              onChange={(e) => handleUpload('international_passport', e.target.files?.[0])}
+              className="w-full px-2 py-1 border rounded text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1">
+              Supporting Document
+              {isUploading('supporting_document') && (
+                <span className="ml-1 text-blue-600 text-xs">⏳</span>
+              )}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={docName}
+                onChange={(e) => setDocName(e.target.value)}
+                placeholder="Document name"
+                disabled={isUploading('supporting_document')}
+                className="flex-1 px-2 py-1 border rounded text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                disabled={isUploading('supporting_document') || !docName}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && docName) {
+                    handleUpload('supporting_document', file, docName);
+                    setDocName('');
+                    e.target.value = '';
+                  }
+                }}
+                className="px-2 py-1 border rounded text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
+          </div>
         </div>
-      </form>
+      )}
 
       <div className="space-y-1">
-        {dependant.documents && dependant.documents.length > 0 ? (
-          dependant.documents.map((doc) => (
-            <div key={doc._id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-              <span>{doc.name}</span>
-              <div className="flex gap-2">
-                <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  View
-                </a>
+        {dependant.personalPassportPicture && (
+          <div className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+            <span>📷 Personal Passport Picture</span>
+            <div className="flex gap-2">
+              <a href={dependant.personalPassportPicture.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                View
+              </a>
+              {!applicationClosed && (
                 <button
-                  onClick={() => onDeleteDocument(dependant._id, doc._id)}
+                  onClick={() => onDeleteDocument(dependant._id, dependant.personalPassportPicture._id)}
                   className="text-red-600 hover:underline"
                 >
                   Delete
                 </button>
+              )}
+            </div>
+          </div>
+        )}
+        {dependant.internationalPassport && (
+          <div className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+            <span>🛂 International Passport</span>
+            <div className="flex gap-2">
+              <a href={dependant.internationalPassport.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                View
+              </a>
+              {!applicationClosed && (
+                <button
+                  onClick={() => onDeleteDocument(dependant._id, dependant.internationalPassport._id)}
+                  className="text-red-600 hover:underline"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        {dependant.supportingDocuments && dependant.supportingDocuments.length > 0 && (
+          dependant.supportingDocuments.map((doc: any) => (
+            <div key={doc._id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+              <span>📄 {doc.name}</span>
+              <div className="flex gap-2">
+                <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  View
+                </a>
+                {!applicationClosed && (
+                  <button
+                    onClick={() => onDeleteDocument(dependant._id, doc._id)}
+                    className="text-red-600 hover:underline"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))
-        ) : (
-          <p className="text-gray-500 text-sm">No documents</p>
+        )}
+        {(!dependant.personalPassportPicture && !dependant.internationalPassport && (!dependant.supportingDocuments || dependant.supportingDocuments.length === 0)) && (
+          <p className="text-gray-500 text-sm">No documents uploaded</p>
         )}
       </div>
     </div>

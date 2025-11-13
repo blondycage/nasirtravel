@@ -34,12 +34,16 @@ export default function BookingsPage() {
   const fetchBookings = async () => {
     try {
       const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userId');
+      
       if (!token) {
         router.push('/login');
         return;
       }
 
-      const response = await fetch('/api/bookings', {
+      // Fetch bookings with userId parameter
+      const url = userId ? `/api/bookings?userId=${userId}` : '/api/bookings';
+      const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

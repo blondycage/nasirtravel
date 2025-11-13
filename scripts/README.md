@@ -1,83 +1,47 @@
-# Database Seed Script
+# Seed Scripts
 
-## Overview
-This script populates your MongoDB database with mock data for testing and development.
+## Main Seed Script
+`seed.ts` - Seeds tours, users, bookings, and reviews (full database seed)
 
-## What Gets Created
+## Application Test Seed Script
+`seed-application-test.ts` - Seeds comprehensive test data for application system testing
 
-### Users (5 total)
-- **1 Admin Account**
-  - Email: `admin@naasirtravel.com`
-  - Password: `password123`
-  - Role: admin
+### Usage
 
-- **4 User Accounts**
-  - `john@example.com` / password123
-  - `sarah@example.com` / password123
-  - `ahmed@example.com` / password123
-  - `fatima@example.com` / password123
-
-### Tours (8 packages)
-- 4 Hajj/Umrah packages
-- 1 Asia tour (Uzbekistan)
-- 1 Africa tour (Morocco)
-- 1 Europe tour (Turkey & Greece)
-- 1 Express Umrah package
-
-Each tour includes:
-- Complete details (title, category, image, dates, pricing)
-- Detailed itinerary
-- Inclusions/exclusions lists
-- Gallery images
-- Published status
-
-### Bookings (5 bookings)
-- Mix of confirmed and pending bookings
-- Different payment statuses (paid/pending)
-- Various tour packages
-- Different numbers of travelers
-- Some with special requests
-
-### Reviews (6 reviews)
-- All approved and visible
-- Ratings from 4-5 stars
-- Detailed comments
-- Distributed across different tours
-
-## How to Run
-
-1. Make sure you have MongoDB URI in `.env.local`:
 ```bash
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/naasirtravel
+# Run application test seed (clears bookings, users, dependants only - preserves tours)
+npm run seed:test
+
+# Or directly with tsx
+tsx scripts/seed-application-test.ts
 ```
 
-2. Run the seed script:
-```bash
-npm run seed
-```
+### What It Does
 
-## Warning
+1. **Preserves Tours**: Does NOT delete or modify any tours/packages
+2. **Clears**: Removes all bookings, users, and dependants
+3. **Creates**: Comprehensive test data covering 8 different scenarios:
+   - Payment pending bookings
+   - Paid bookings with various application states
+   - Bookings with dependants
+   - Application closed scenarios
+   - Rejected applications
+   - Multiple dependants
 
-⚠️ **This script will DELETE all existing data** in the following collections:
-- tours
-- users
-- bookings
-- reviews
+### Test Users Created
 
-Make sure you're running this on a development/testing database, NOT production!
+- **Admin**: admin@naasirtravel.com / password123
+- **User 1**: john@example.com / password123
+- **User 2**: sarah@example.com / password123
+- **User 3**: ahmed@example.com / password123
+- **User 4**: fatima@example.com / password123
+- **User 5**: michael@example.com / password123
+- **User 6**: aisha@example.com / password123
 
-## After Seeding
+### Test Scenarios
 
-You can login with any of the test accounts:
+See `TEST_PLAN.md` for detailed test scenarios and test cases.
 
-**Admin Dashboard Access:**
-- Email: admin@naasirtravel.com
-- Password: password123
+### Document Images
 
-**User Dashboard Access:**
-- Email: john@example.com (or any other user)
-- Password: password123
-
-## Customization
-
-To modify the seed data, edit `/scripts/seed.ts` and change the mock data in the insertMany() calls.
+All documents use public image URLs from Unsplash/placeholder services (no Cloudinary uploads needed for testing).
