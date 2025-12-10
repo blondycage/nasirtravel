@@ -27,6 +27,10 @@ export default function PackagesPage() {
   const [selectedCategory, setSelectedCategory] = useState<PackageCategory>('All');
   const [tours, setTours] = useState<TourPackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<TourPackage | null>(null);
 
   useEffect(() => {
     fetchTours();
@@ -42,6 +46,46 @@ export default function PackagesPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmitEnquiry = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      // Submit to FormSubmit.io
+      await fetch('https://formsubmit.co/info@naasirtravel.com', {
+        method: 'POST',
+        body: formData,
+      });
+
+      // Show success message
+      setShowSuccess(true);
+
+      // Reset form
+      form.reset();
+
+      // Close modal
+      setEnquiryModalOpen(false);
+
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 5000);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Failed to send enquiry. Please try again or contact us directly.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEnquiryModal = (pkg: TourPackage) => {
+    setSelectedPackage(pkg);
+    setEnquiryModalOpen(true);
   };
 
   // Filter packages by category and status
@@ -79,6 +123,32 @@ export default function PackagesPage() {
   return (
     <div className="min-h-screen">
       <Header />
+
+      {/* Success Toast Notification */}
+      {showSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -100 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -100 }}
+          className="fixed top-24 right-4 z-50 bg-green-500 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 max-w-md"
+        >
+          <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          <div>
+            <p className="font-bold">Enquiry Sent Successfully!</p>
+            <p className="text-sm">We&apos;ll get back to you within 24 hours.</p>
+          </div>
+          <button
+            onClick={() => setShowSuccess(false)}
+            className="ml-auto text-white hover:text-gray-200 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </motion.div>
+      )}
 
       {/* Hero Section */}
       <section className="relative h-[50vh] sm:h-[60vh] lg:h-[70vh] overflow-hidden pt-16 lg:pt-20">
@@ -249,24 +319,43 @@ export default function PackagesPage() {
                   </div>
 
                   {/* Price */}
-                  <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">Starting From</p>
-                    <p className="text-xl sm:text-2xl font-extrabold text-primary-blue">
-                      ${pkg.price}
-                      <span className="text-xs sm:text-sm font-normal text-gray-600"> Per Person</span>
-                    </p>
-                  </div>
+                  {pkg.price ? (
+                    <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1">Starting From</p>
+                      <p className="text-xl sm:text-2xl font-extrabold text-primary-blue">
+                        ${pkg.price}
+                        <span className="text-xs sm:text-sm font-normal text-gray-600"> Per Person</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
+                      <p className="text-sm sm:text-base text-gray-600 italic">
+                        Price available on enquiry
+                      </p>
+                    </div>
+                  )}
 
                   {/* Button */}
-                  <Link href={`/packages/${pkg._id}`}>
+                  {pkg.price ? (
+                    <Link href={`/packages/${pkg._id}`}>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-bold transition-all duration-300 bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-lg"
+                      >
+                        View Details
+                      </motion.button>
+                    </Link>
+                  ) : (
                     <motion.button
+                      onClick={() => openEnquiryModal(pkg)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className="w-full py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-bold transition-all duration-300 bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-lg"
                     >
-                      View Details
+                      Enquire Now
                     </motion.button>
-                  </Link>
+                  )}
                 </div>
 
                 {/* Hover Border Effect */}
@@ -412,6 +501,154 @@ export default function PackagesPage() {
         </div>
       </section>
 
+      {/* Enquiry Form Section */}
+      <section className="py-16 sm:py-20 lg:py-24 bg-gradient-to-br from-gray-50 to-white">
+        <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4">
+              <span className="text-gray-900">Have a </span>
+              <span className="text-primary-orange">Question?</span>
+            </h2>
+            <div className="w-24 h-1.5 bg-gradient-to-r from-primary-blue to-primary-orange mx-auto rounded-full mb-6" />
+            <p className="text-gray-600 text-lg sm:text-xl max-w-2xl mx-auto">
+              Send us your enquiry and we&apos;ll get back to you as soon as possible
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="bg-white rounded-3xl shadow-2xl p-8 sm:p-12"
+          >
+            <form
+              onSubmit={handleSubmitEnquiry}
+              className="space-y-6"
+            >
+              {/* Hidden fields for FormSubmit configuration */}
+              <input type="hidden" name="_subject" value="New Package Enquiry from Website" />
+              <input type="hidden" name="_captcha" value="false" />
+              <input type="hidden" name="_template" value="table" />
+              <input type="hidden" name="_next" value="https://naasirtravel.com/packages?success=true" />
+              <input type="text" name="_honey" style={{ display: 'none' }} />
+
+              {/* Name Field */}
+              <div>
+                <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Your Name *
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all outline-none"
+                  placeholder="Enter your full name"
+                />
+              </div>
+
+              {/* Email Field */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Your Email *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all outline-none"
+                  placeholder="your.email@example.com"
+                />
+              </div>
+
+              {/* Phone Field (Optional) */}
+              <div>
+                <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all outline-none"
+                  placeholder="+1 (123) 456-7890"
+                />
+              </div>
+
+              {/* Package Interest */}
+              <div>
+                <label htmlFor="package" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Package of Interest
+                </label>
+                <select
+                  id="package"
+                  name="package"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all outline-none"
+                >
+                  <option value="">Select a package type</option>
+                  <option value="Hajj / Umrah">Hajj / Umrah</option>
+                  <option value="Asia">Asia</option>
+                  <option value="Africa">Africa</option>
+                  <option value="Europe">Europe</option>
+                  <option value="Custom Package">Custom Package</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {/* Message Field */}
+              <div>
+                <label htmlFor="message" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Your Enquiry *
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  required
+                  rows={6}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all outline-none resize-none"
+                  placeholder="Tell us about your travel plans, dates, number of travelers, or any specific requirements..."
+                />
+              </div>
+
+              {/* Submit Button */}
+              <motion.button
+                type="submit"
+                disabled={isSubmitting}
+                whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                className={`w-full py-4 bg-gradient-to-r from-primary-blue to-primary-orange text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 ${
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Sending...
+                  </span>
+                ) : (
+                  'Send Enquiry'
+                )}
+              </motion.button>
+
+              <p className="text-xs text-gray-500 text-center mt-4">
+                By submitting this form, you agree to our privacy policy. We&apos;ll respond to your enquiry within 24 hours.
+              </p>
+            </form>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section className="py-16 sm:py-20 lg:py-24 bg-gradient-to-br from-blue-50 via-white to-orange-50">
         <div className="container mx-auto px-4 sm:px-6">
@@ -549,6 +786,157 @@ export default function PackagesPage() {
           </div>
         </div>
       </section>
+
+      {/* Enquiry Modal */}
+      {enquiryModalOpen && selectedPackage && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="p-6 sm:p-8">
+              {/* Header */}
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
+                    Enquire About Package
+                  </h3>
+                  <p className="text-gray-600">{selectedPackage.title}</p>
+                </div>
+                <button
+                  onClick={() => setEnquiryModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+
+              {/* Package Details */}
+              <div className="bg-gradient-to-r from-blue-50 to-orange-50 p-4 rounded-xl mb-6">
+                <div className="space-y-2 text-sm">
+                  {selectedPackage.departure && (
+                    <p className="flex items-center gap-2">
+                      <span className="font-semibold">Departure:</span> {selectedPackage.departure}
+                    </p>
+                  )}
+                  <p className="flex items-center gap-2">
+                    <span className="font-semibold">Accommodation:</span> {selectedPackage.accommodation}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span className="font-semibold">Dates:</span> {selectedPackage.dates}
+                  </p>
+                </div>
+              </div>
+
+              {/* Enquiry Form */}
+              <form onSubmit={handleSubmitEnquiry} className="space-y-4">
+                {/* Hidden fields for FormSubmit configuration */}
+                <input type="hidden" name="_subject" value={`Package Enquiry: ${selectedPackage.title}`} />
+                <input type="hidden" name="_captcha" value="false" />
+                <input type="hidden" name="_template" value="table" />
+                <input type="hidden" name="_next" value="https://naasirtravel.com/packages?success=true" />
+                <input type="text" name="_honey" style={{ display: 'none' }} />
+                <input type="hidden" name="package_title" value={selectedPackage.title} />
+                <input type="hidden" name="package_category" value={selectedPackage.category} />
+
+                {/* Name Field */}
+                <div>
+                  <label htmlFor="modal-name" className="block text-sm font-semibold text-gray-700 mb-2">
+                    Your Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="modal-name"
+                    name="name"
+                    required
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all outline-none"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+
+                {/* Email Field */}
+                <div>
+                  <label htmlFor="modal-email" className="block text-sm font-semibold text-gray-700 mb-2">
+                    Your Email *
+                  </label>
+                  <input
+                    type="email"
+                    id="modal-email"
+                    name="email"
+                    required
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all outline-none"
+                    placeholder="your.email@example.com"
+                  />
+                </div>
+
+                {/* Phone Field */}
+                <div>
+                  <label htmlFor="modal-phone" className="block text-sm font-semibold text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="modal-phone"
+                    name="phone"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all outline-none"
+                    placeholder="+1 (123) 456-7890"
+                  />
+                </div>
+
+                {/* Message Field */}
+                <div>
+                  <label htmlFor="modal-message" className="block text-sm font-semibold text-gray-700 mb-2">
+                    Your Enquiry *
+                  </label>
+                  <textarea
+                    id="modal-message"
+                    name="message"
+                    required
+                    rows={5}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all outline-none resize-none"
+                    placeholder="Tell us about your travel plans, number of travelers, dates, or any specific requirements..."
+                  />
+                </div>
+
+                {/* Submit Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <motion.button
+                    type="submit"
+                    disabled={isSubmitting}
+                    whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                    whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                    className={`flex-1 py-3 bg-gradient-to-r from-primary-blue to-primary-orange text-white rounded-xl font-bold text-base shadow-lg hover:shadow-xl transition-all duration-300 ${
+                      isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sending...
+                      </span>
+                    ) : (
+                      'Send Enquiry'
+                    )}
+                  </motion.button>
+                  <button
+                    type="button"
+                    onClick={() => setEnquiryModalOpen(false)}
+                    className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       <Footer />
     </div>

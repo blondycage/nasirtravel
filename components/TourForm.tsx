@@ -13,6 +13,7 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
   const [formData, setFormData] = useState({
     title: '',
     category: '',
+    packageType: 'standard' as 'umrah' | 'standard',
     image: '',
     departure: '',
     accommodation: '',
@@ -33,6 +34,7 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
       setFormData({
         title: initialData.title || '',
         category: initialData.category || '',
+        packageType: initialData.packageType || 'standard',
         image: initialData.image || '',
         departure: initialData.departure || '',
         accommodation: initialData.accommodation || '',
@@ -201,19 +203,41 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
         </div>
 
         <div>
+          <label htmlFor="packageType" className="block text-sm font-medium text-gray-700 mb-1">
+            Package Type *
+          </label>
+          <select
+            id="packageType"
+            name="packageType"
+            required
+            value={formData.packageType}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="standard">Standard Package</option>
+            <option value="umrah">Umrah Package</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500">
+            Determines which application form fields will be required for bookings
+          </p>
+        </div>
+
+        <div>
           <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-            Price *
+            Price
           </label>
           <input
             type="text"
             id="price"
             name="price"
-            required
             value={formData.price}
             onChange={handleChange}
-            placeholder="e.g., $4,585 - $5,135"
+            placeholder="e.g., $4,585 - $5,135 (Leave empty for enquiry-only packages)"
             className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
+          <p className="mt-1 text-xs text-gray-500">
+            If left empty, users will see an &quot;Enquire&quot; button instead of payment
+          </p>
         </div>
 
         <div>

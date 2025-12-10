@@ -134,37 +134,6 @@ export async function POST(
       }
     }
 
-    // Validate travel dates
-    if (body.expectedArrivalDate && body.expectedDepartureDate) {
-      const arrival = new Date(body.expectedArrivalDate);
-      const departure = new Date(body.expectedDepartureDate);
-      
-      if (departure <= arrival) {
-        return NextResponse.json(
-          { error: 'Expected departure date must be after arrival date' },
-          { status: 400 }
-        );
-      }
-
-      const daysDifference = Math.ceil((departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysDifference > 90) {
-        return NextResponse.json(
-          { error: 'The period of stay cannot exceed 90 days' },
-          { status: 400 }
-        );
-      }
-
-      // Arrival date should be within 1 year from now
-      const oneYearFromNow = new Date();
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-      if (arrival > oneYearFromNow) {
-        return NextResponse.json(
-          { error: 'Expected arrival date should be within 1 year from submission date' },
-          { status: 400 }
-        );
-      }
-    }
-
     // Generate application number if not exists
     if (!booking.userApplicationFormData?.applicationNumber) {
       const now = new Date();
@@ -193,8 +162,6 @@ export async function POST(
       passportIssuePlace: body.passportIssuePlace,
       passportIssueDate: body.passportIssueDate ? new Date(body.passportIssueDate) : undefined,
       passportExpiryDate: body.passportExpiryDate ? new Date(body.passportExpiryDate) : undefined,
-      expectedArrivalDate: body.expectedArrivalDate ? new Date(body.expectedArrivalDate) : undefined,
-      expectedDepartureDate: body.expectedDepartureDate ? new Date(body.expectedDepartureDate) : undefined,
       residenceCountry: body.residenceCountry,
       residenceCity: body.residenceCity,
       residenceZipCode: body.residenceZipCode,
@@ -296,8 +263,6 @@ export async function PATCH(
     if (body.passportIssuePlace !== undefined) booking.userApplicationFormData.passportIssuePlace = body.passportIssuePlace;
     if (body.passportIssueDate !== undefined) booking.userApplicationFormData.passportIssueDate = body.passportIssueDate ? new Date(body.passportIssueDate) : undefined;
     if (body.passportExpiryDate !== undefined) booking.userApplicationFormData.passportExpiryDate = body.passportExpiryDate ? new Date(body.passportExpiryDate) : undefined;
-    if (body.expectedArrivalDate !== undefined) booking.userApplicationFormData.expectedArrivalDate = body.expectedArrivalDate ? new Date(body.expectedArrivalDate) : undefined;
-    if (body.expectedDepartureDate !== undefined) booking.userApplicationFormData.expectedDepartureDate = body.expectedDepartureDate ? new Date(body.expectedDepartureDate) : undefined;
     if (body.residenceCountry !== undefined) booking.userApplicationFormData.residenceCountry = body.residenceCountry;
     if (body.residenceCity !== undefined) booking.userApplicationFormData.residenceCity = body.residenceCity;
     if (body.residenceZipCode !== undefined) booking.userApplicationFormData.residenceZipCode = body.residenceZipCode;

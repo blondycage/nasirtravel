@@ -442,6 +442,40 @@ export default function BookingDocumentsPage() {
                   className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
+              {booking?.packageType === 'umrah' && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Passport Style Photo (200x200px, 5-100kb)
+                    {uploading === 'user_passport_photo' && (
+                      <span className="ml-2 text-blue-600 text-xs">⏳ Uploading...</span>
+                    )}
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png"
+                    disabled={uploading === 'user_passport_photo'}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // Validate file size (5kb - 100kb)
+                        if (file.size < 5120 || file.size > 102400) {
+                          showError('File size must be between 5KB and 100KB');
+                          e.target.value = '';
+                          return;
+                        }
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('documentType', 'passport_photo');
+                        handleUploadUserDocument(formData, 'passport_photo');
+                      }
+                    }}
+                    className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Upload .jpg, .jpeg, or .png file (200x200px, 5-100KB)
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Supporting Document
@@ -532,6 +566,34 @@ export default function BookingDocumentsPage() {
                   {!booking.applicationClosed && (
                     <button
                       onClick={() => handleDeleteUserDocument(booking.userInternationalPassport._id)}
+                      className="text-red-600 hover:underline text-sm"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            {booking?.packageType === 'umrah' && booking?.userPassportPhoto && (
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div>
+                  <p className="font-medium">🖼️ Passport Style Photo</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(booking.userPassportPhoto.uploadedAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href={booking.userPassportPhoto.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline text-sm"
+                  >
+                    View
+                  </a>
+                  {!booking.applicationClosed && (
+                    <button
+                      onClick={() => handleDeleteUserDocument(booking.userPassportPhoto._id)}
                       className="text-red-600 hover:underline text-sm"
                     >
                       Delete
@@ -765,7 +827,8 @@ export default function BookingDocumentsPage() {
                   key={dependant._id}
                   dependant={dependant}
                   bookingId={bookingId}
-                  applicationClosed={booking.applicationClosed}
+                  booking={booking}
+                  applicationClosed={booking?.applicationClosed}
                   onUploadDocument={handleUploadDependantDocument}
                   onDeleteDocument={handleDeleteDependantDocument}
                   onDelete={handleDeleteDependant}
@@ -785,6 +848,7 @@ export default function BookingDocumentsPage() {
 function DependantCard({
   dependant,
   bookingId,
+  booking,
   applicationClosed,
   onUploadDocument,
   onDeleteDocument,
@@ -793,6 +857,7 @@ function DependantCard({
 }: {
   dependant: any;
   bookingId: string;
+  booking: any;
   applicationClosed?: boolean;
   onUploadDocument: (id: string, formData: FormData, documentType: string) => void;
   onDeleteDocument: (depId: string, docId: string) => void;
@@ -881,6 +946,35 @@ function DependantCard({
               className="w-full px-2 py-1 border rounded text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
+          {booking?.packageType === 'umrah' && (
+            <div>
+              <label className="block text-xs font-medium mb-1">
+                Passport Style Photo
+                {isUploading('passport_photo') && (
+                  <span className="ml-1 text-blue-600 text-xs">⏳</span>
+                )}
+              </label>
+              <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png"
+                disabled={isUploading('passport_photo')}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    // Validate file size (5kb - 100kb)
+                    if (file.size < 5120 || file.size > 102400) {
+                      showError('File size must be between 5KB and 100KB');
+                      e.target.value = '';
+                      return;
+                    }
+                    handleUpload('passport_photo', file);
+                  }
+                }}
+                className="w-full px-2 py-1 border rounded text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-400 mt-0.5">200x200px, 5-100KB</p>
+            </div>
+          )}
           <div>
             <label className="block text-xs font-medium mb-1">
               Supporting Document
@@ -945,6 +1039,24 @@ function DependantCard({
               {!applicationClosed && (
                 <button
                   onClick={() => onDeleteDocument(dependant._id, dependant.internationalPassport._id)}
+                  className="text-red-600 hover:underline"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        {booking?.packageType === 'umrah' && dependant?.passportPhoto && (
+          <div className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+            <span>🖼️ Passport Style Photo</span>
+            <div className="flex gap-2">
+              <a href={dependant.passportPhoto.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                View
+              </a>
+              {!applicationClosed && (
+                <button
+                  onClick={() => onDeleteDocument(dependant._id, dependant.passportPhoto._id)}
                   className="text-red-600 hover:underline"
                 >
                   Delete

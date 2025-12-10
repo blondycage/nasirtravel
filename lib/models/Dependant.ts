@@ -4,7 +4,7 @@ export interface IDocument {
   name: string;
   url: string;
   publicId: string;
-  documentType?: 'personal_passport_picture' | 'international_passport' | 'supporting_document';
+  documentType?: 'personal_passport_picture' | 'international_passport' | 'supporting_document' | 'passport_photo';
   uploadedAt: Date;
 }
 
@@ -35,11 +35,7 @@ export interface IDependant extends Document {
   passportIssuePlace?: string; // Country or City
   passportIssueDate?: Date;
   passportExpiryDate?: Date;
-  
-  // Travel Information
-  expectedArrivalDate?: Date;
-  expectedDepartureDate?: Date;
-  
+
   // Current Residence Address
   residenceCountry?: string;
   residenceCity?: string;
@@ -50,6 +46,7 @@ export interface IDependant extends Document {
   documents: IDocument[];
   personalPassportPicture?: IDocument;
   internationalPassport?: IDocument;
+  passportPhoto?: IDocument; // For Umrah packages (200x200px, 5-100kb)
   supportingDocuments?: IDocument[];
   
   // Application Status
@@ -69,7 +66,7 @@ const DocumentSchema = new Schema({
   publicId: { type: String, required: true },
   documentType: {
     type: String,
-    enum: ['personal_passport_picture', 'international_passport', 'supporting_document'],
+    enum: ['personal_passport_picture', 'international_passport', 'supporting_document', 'passport_photo'],
   },
   uploadedAt: { type: Date, default: Date.now },
 });
@@ -105,11 +102,7 @@ const DependantSchema = new Schema<IDependant>(
     passportIssuePlace: { type: String },
     passportIssueDate: { type: Date },
     passportExpiryDate: { type: Date },
-    
-    // Travel Information
-    expectedArrivalDate: { type: Date },
-    expectedDepartureDate: { type: Date },
-    
+
     // Current Residence Address
     residenceCountry: { type: String },
     residenceCity: { type: String },
@@ -120,6 +113,7 @@ const DependantSchema = new Schema<IDependant>(
     documents: [DocumentSchema],
     personalPassportPicture: DocumentSchema,
     internationalPassport: DocumentSchema,
+    passportPhoto: DocumentSchema,
     supportingDocuments: [DocumentSchema],
     
     // Application Status

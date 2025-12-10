@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ITour extends Document {
   title: string;
   category: string;
+  packageType: 'umrah' | 'standard';
   image: string;
   departure?: string;
   accommodation: string;
@@ -27,11 +28,12 @@ const TourSchema = new Schema<ITour>(
   {
     title: { type: String, required: true },
     category: { type: String, required: true },
+    packageType: { type: String, enum: ['umrah', 'standard'], required: true, default: 'standard' },
     image: { type: String, required: true },
     departure: { type: String },
     accommodation: { type: String, required: true },
     dates: { type: String, required: true },
-    price: { type: String, required: true },
+    price: { type: String },
     isComing: { type: Boolean, default: false },
     description: { type: String },
     itinerary: [

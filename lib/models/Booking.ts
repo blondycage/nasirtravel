@@ -4,13 +4,14 @@ export interface IDocument {
   name: string;
   url: string;
   publicId: string;
-  documentType?: 'personal_passport_picture' | 'international_passport' | 'supporting_document';
+  documentType?: 'personal_passport_picture' | 'international_passport' | 'supporting_document' | 'passport_photo';
   uploadedAt: Date;
 }
 
 export interface IBooking extends Document {
   tour: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;
+  packageType: 'umrah' | 'standard';
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -51,11 +52,7 @@ export interface IBooking extends Document {
     passportIssuePlace?: string;
     passportIssueDate?: Date;
     passportExpiryDate?: Date;
-    
-    // Travel Information
-    expectedArrivalDate?: Date;
-    expectedDepartureDate?: Date;
-    
+
     // Current Residence Address
     residenceCountry?: string;
     residenceCity?: string;
@@ -66,6 +63,7 @@ export interface IBooking extends Document {
   // User Documents (specific types)
   userPersonalPassportPicture?: IDocument;
   userInternationalPassport?: IDocument;
+  userPassportPhoto?: IDocument; // For Umrah packages (200x200px, 5-100kb)
   userSupportingDocuments?: IDocument[];
   
   // User Application Status
@@ -83,7 +81,7 @@ const DocumentSchema = new Schema({
   publicId: { type: String, required: true },
   documentType: {
     type: String,
-    enum: ['personal_passport_picture', 'international_passport', 'supporting_document'],
+    enum: ['personal_passport_picture', 'international_passport', 'supporting_document', 'passport_photo'],
   },
   uploadedAt: { type: Date, default: Date.now },
 });
@@ -92,6 +90,7 @@ const BookingSchema = new Schema<IBooking>(
   {
     tour: { type: Schema.Types.ObjectId, ref: 'Tour', required: true },
     user: { type: Schema.Types.ObjectId, ref: 'User' },
+    packageType: { type: String, enum: ['umrah', 'standard'], required: true },
     customerName: { type: String, required: true },
     customerEmail: { type: String, required: true },
     customerPhone: { type: String, required: true },
@@ -140,8 +139,6 @@ const BookingSchema = new Schema<IBooking>(
       passportIssuePlace: { type: String },
       passportIssueDate: { type: Date },
       passportExpiryDate: { type: Date },
-      expectedArrivalDate: { type: Date },
-      expectedDepartureDate: { type: Date },
       residenceCountry: { type: String },
       residenceCity: { type: String },
       residenceZipCode: { type: String },
@@ -151,6 +148,7 @@ const BookingSchema = new Schema<IBooking>(
     // User Documents
     userPersonalPassportPicture: DocumentSchema,
     userInternationalPassport: DocumentSchema,
+    userPassportPhoto: DocumentSchema,
     userSupportingDocuments: [DocumentSchema],
     
     // User Application Status

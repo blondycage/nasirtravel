@@ -94,8 +94,6 @@ export default function DependantApplicationPage() {
             dateOfBirth: appData.data.dateOfBirth ? new Date(appData.data.dateOfBirth).toISOString().split('T')[0] : undefined,
             passportIssueDate: appData.data.passportIssueDate ? new Date(appData.data.passportIssueDate).toISOString().split('T')[0] : undefined,
             passportExpiryDate: appData.data.passportExpiryDate ? new Date(appData.data.passportExpiryDate).toISOString().split('T')[0] : undefined,
-            expectedArrivalDate: appData.data.expectedArrivalDate ? new Date(appData.data.expectedArrivalDate).toISOString().split('T')[0] : undefined,
-            expectedDepartureDate: appData.data.expectedDepartureDate ? new Date(appData.data.expectedDepartureDate).toISOString().split('T')[0] : undefined,
           };
           setApplicationData(formData);
         }
@@ -193,6 +191,7 @@ export default function DependantApplicationPage() {
         <ApplicationForm
           applicantType="dependant"
           applicantId={dependantId}
+          packageType={booking?.packageType || 'standard'}
           initialData={applicationData || undefined}
           onSubmit={handleSubmit}
           readOnly={dependant?.applicationStatus === 'accepted' || dependant?.applicationStatus === 'rejected'}

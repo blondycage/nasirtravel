@@ -91,7 +91,7 @@ export default function UserDashboard() {
 
   const totalSpent = bookings
     .filter((b) => b.paymentStatus === 'paid')
-    .reduce((acc, b) => acc + (b.totalAmount / 100), 0);
+    .reduce((acc, b) => acc + b.totalAmount, 0);
 
   const upcomingBookings = bookings.filter(
     (b) => new Date(b.bookingDate) > new Date() && b.bookingStatus !== 'cancelled'
@@ -240,7 +240,7 @@ export default function UserDashboard() {
                               <span className="font-medium">Travelers:</span> {booking.numberOfTravelers}
                             </p>
                             <p>
-                              <span className="font-medium">Amount:</span> ${(booking.totalAmount / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              <span className="font-medium">Amount:</span> ${booking.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                             {booking.documents && booking.documents.length > 0 && (
                               <p className="flex items-center gap-1">

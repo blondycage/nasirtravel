@@ -56,16 +56,30 @@ export async function POST(request: NextRequest) {
     await connectDB();
     const body = await request.json();
 
+    // Get user from token
+    const authHeader = request.headers.get('authorization');
+    const token = getTokenFromHeader(authHeader);
+    if (!token) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token) as any;
+    if (!decoded || !decoded.userId) {
+      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
+    }
+
     const tourId = body.tour || body.tourId;
     const tour = await Tour.findById(tourId);
     if (!tour) {
       return NextResponse.json({ success: false, error: 'Tour not found' }, { status: 404 });
     }
 
-    // Ensure tour field is set correctly
+    // Ensure tour field is set correctly and copy packageType from tour
     const bookingData = {
       ...body,
       tour: tourId,
+      user: decoded.userId, // Associate booking with logged-in user
+      packageType: tour.packageType, // Copy package type from tour
     };
     delete bookingData.tourId; // Remove tourId if it exists
 

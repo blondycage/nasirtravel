@@ -21,7 +21,7 @@ const DocumentSchema = new mongoose.Schema({
   publicId: { type: String, required: true },
   documentType: {
     type: String,
-    enum: ['personal_passport_picture', 'international_passport', 'supporting_document'],
+    enum: ['personal_passport_picture', 'international_passport', 'supporting_document', 'passport_photo'],
   },
   uploadedAt: { type: Date, default: Date.now },
 }, { _id: true });
@@ -29,6 +29,7 @@ const DocumentSchema = new mongoose.Schema({
 const BookingSchema = new mongoose.Schema({
   tour: { type: mongoose.Schema.Types.ObjectId, ref: 'Tour' },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  packageType: { type: String, enum: ['umrah', 'standard'], required: true },
   customerName: String,
   customerEmail: String,
   customerPhone: String,
@@ -71,6 +72,7 @@ const BookingSchema = new mongoose.Schema({
   },
   userPersonalPassportPicture: DocumentSchema,
   userInternationalPassport: DocumentSchema,
+  userPassportPhoto: DocumentSchema,
   userSupportingDocuments: [DocumentSchema],
   userApplicationStatus: {
     type: String,
@@ -111,6 +113,7 @@ const DependantSchema = new mongoose.Schema({
   documents: [DocumentSchema],
   personalPassportPicture: DocumentSchema,
   internationalPassport: DocumentSchema,
+  passportPhoto: DocumentSchema,
   supportingDocuments: [DocumentSchema],
   applicationFormSubmitted: { type: Boolean, default: false },
   applicationFormSubmittedAt: Date,
@@ -151,6 +154,7 @@ const MONGODB_URI = process.env.MONGODB_URI || '';
 const DOCUMENT_IMAGES = {
   personalPassport: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop',
   internationalPassport: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=500&fit=crop',
+  passportPhoto: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop',
   visa: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400&h=500&fit=crop',
   idCard: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=500&fit=crop',
   birthCertificate: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400&h=500&fit=crop',
@@ -346,10 +350,11 @@ async function seed() {
     console.log(`✅ Created ${userProfiles.length} user dependant profiles`);
 
     // SCENARIO 1: Booking with payment pending - No application process yet
-    console.log('📋 Creating Scenario 1: Payment Pending Booking...');
+    console.log('📋 Creating Scenario 1: Payment Pending Booking (Umrah)...');
     const booking1 = await Booking.create({
       tour: tours[0]._id,
       user: users[0]._id,
+      packageType: tours[0].packageType || 'umrah',
       customerName: users[0].name,
       customerEmail: users[0].email,
       customerPhone: users[0].phone,
@@ -360,11 +365,12 @@ async function seed() {
       bookingDate: new Date('2025-01-15'),
     });
 
-    // SCENARIO 2: Paid booking - User application submitted, no dependants, documents uploaded
-    console.log('📋 Creating Scenario 2: Paid - User App Submitted, No Dependants...');
+    // SCENARIO 2: Paid booking - User application submitted, no dependants, documents uploaded (Umrah)
+    console.log('📋 Creating Scenario 2: Paid - User App Submitted, No Dependants (Umrah)...');
     const booking2 = await Booking.create({
       tour: tours[0]._id,
       user: users[1]._id,
+      packageType: tours[0].packageType || 'umrah',
       customerName: users[1].name,
       customerEmail: users[1].email,
       customerPhone: users[1].phone,
@@ -402,16 +408,18 @@ async function seed() {
       },
       userPersonalPassportPicture: createDocument('Personal Passport Picture', DOCUMENT_IMAGES.personalPassport, 'personal_passport_picture'),
       userInternationalPassport: createDocument('International Passport', DOCUMENT_IMAGES.internationalPassport, 'international_passport'),
+      userPassportPhoto: createDocument('Passport Style Photo', DOCUMENT_IMAGES.passportPhoto, 'passport_photo'),
       userSupportingDocuments: [
         createDocument('Visa Document', DOCUMENT_IMAGES.visa, 'supporting_document'),
       ],
     });
 
-    // SCENARIO 3: Paid booking - User application accepted, 2 dependants, all applications submitted and accepted
-    console.log('📋 Creating Scenario 3: Paid - User Accepted, 2 Dependants, All Accepted...');
+    // SCENARIO 3: Paid booking - User application accepted, 2 dependants, all applications submitted and accepted (Umrah)
+    console.log('📋 Creating Scenario 3: Paid - User Accepted, 2 Dependants, All Accepted (Umrah)...');
     const booking3 = await Booking.create({
       tour: tours[1]._id,
       user: users[2]._id,
+      packageType: tours[1]?.packageType || 'umrah',
       customerName: users[2].name,
       customerEmail: users[2].email,
       customerPhone: users[2].phone,
@@ -452,13 +460,14 @@ async function seed() {
       },
       userPersonalPassportPicture: createDocument('Personal Passport Picture', DOCUMENT_IMAGES.personalPassport, 'personal_passport_picture'),
       userInternationalPassport: createDocument('International Passport', DOCUMENT_IMAGES.internationalPassport, 'international_passport'),
+      userPassportPhoto: createDocument('Passport Style Photo', DOCUMENT_IMAGES.passportPhoto, 'passport_photo'),
       userSupportingDocuments: [
         createDocument('Visa Document', DOCUMENT_IMAGES.visa, 'supporting_document'),
         createDocument('ID Card', DOCUMENT_IMAGES.idCard, 'supporting_document'),
       ],
     });
 
-    // Create dependants for booking3
+    // Create dependants for booking3 (Umrah)
     const dependant3a = await Dependant.create({
       bookingId: booking3._id,
       userId: users[2]._id,
@@ -492,6 +501,7 @@ async function seed() {
       applicationReviewedBy: adminUser._id,
       personalPassportPicture: createDocument('Personal Passport Picture', DOCUMENT_IMAGES.personalPassport, 'personal_passport_picture'),
       internationalPassport: createDocument('International Passport', DOCUMENT_IMAGES.internationalPassport, 'international_passport'),
+      passportPhoto: createDocument('Passport Style Photo', DOCUMENT_IMAGES.passportPhoto, 'passport_photo'),
       supportingDocuments: [
         createDocument('Visa Document', DOCUMENT_IMAGES.visa, 'supporting_document'),
       ],
@@ -530,13 +540,15 @@ async function seed() {
       applicationReviewedBy: adminUser._id,
       personalPassportPicture: createDocument('Personal Passport Picture', DOCUMENT_IMAGES.personalPassport, 'personal_passport_picture'),
       internationalPassport: createDocument('International Passport', DOCUMENT_IMAGES.internationalPassport, 'international_passport'),
+      passportPhoto: createDocument('Passport Style Photo', DOCUMENT_IMAGES.passportPhoto, 'passport_photo'),
     });
 
-    // SCENARIO 4: Paid booking - User application under review, 1 dependant pending application
-    console.log('📋 Creating Scenario 4: Paid - User Under Review, 1 Dependant Pending...');
+    // SCENARIO 4: Paid booking - User application under review, 1 dependant pending application (Standard Package)
+    console.log('📋 Creating Scenario 4: Paid - User Under Review, 1 Dependant Pending (Standard)...');
     const booking4 = await Booking.create({
-      tour: tours[2]?._id || tours[0]._id,
+      tour: tours[4]?._id || tours[0]._id, // Use tour 4 (standard package)
       user: users[3]._id,
+      packageType: tours[4]?.packageType || 'standard',
       customerName: users[3].name,
       customerEmail: users[3].email,
       customerPhone: users[3].phone,
@@ -606,13 +618,15 @@ async function seed() {
       applicationFormSubmitted: false,
       applicationStatus: 'pending',
       personalPassportPicture: createDocument('Personal Passport Picture', DOCUMENT_IMAGES.personalPassport, 'personal_passport_picture'),
+      // No passport photo for standard package
     });
 
-    // SCENARIO 5: Paid booking - Application closed by admin, user and dependants accepted
-    console.log('📋 Creating Scenario 5: Paid - Application Closed, All Accepted...');
+    // SCENARIO 5: Paid booking - Application closed by admin, user and dependants accepted (Umrah)
+    console.log('📋 Creating Scenario 5: Paid - Application Closed, All Accepted (Umrah)...');
     const booking5 = await Booking.create({
       tour: tours[3]?._id || tours[0]._id,
       user: users[4]._id,
+      packageType: tours[3]?.packageType || 'umrah',
       customerName: users[4].name,
       customerEmail: users[4].email,
       customerPhone: users[4].phone,
@@ -655,6 +669,7 @@ async function seed() {
       },
       userPersonalPassportPicture: createDocument('Personal Passport Picture', DOCUMENT_IMAGES.personalPassport, 'personal_passport_picture'),
       userInternationalPassport: createDocument('International Passport', DOCUMENT_IMAGES.internationalPassport, 'international_passport'),
+      userPassportPhoto: createDocument('Passport Style Photo', DOCUMENT_IMAGES.passportPhoto, 'passport_photo'),
       userSupportingDocuments: [
         createDocument('Visa Document', DOCUMENT_IMAGES.visa, 'supporting_document'),
       ],
@@ -693,16 +708,18 @@ async function seed() {
       applicationReviewedBy: adminUser._id,
       personalPassportPicture: createDocument('Personal Passport Picture', DOCUMENT_IMAGES.personalPassport, 'personal_passport_picture'),
       internationalPassport: createDocument('International Passport', DOCUMENT_IMAGES.internationalPassport, 'international_passport'),
+      passportPhoto: createDocument('Passport Style Photo', DOCUMENT_IMAGES.passportPhoto, 'passport_photo'),
       supportingDocuments: [
         createDocument('Birth Certificate', DOCUMENT_IMAGES.birthCertificate, 'supporting_document'),
       ],
     });
 
-    // SCENARIO 6: Paid booking - User application rejected, 1 dependant submitted
-    console.log('📋 Creating Scenario 6: Paid - User Rejected, 1 Dependant Submitted...');
+    // SCENARIO 6: Paid booking - User application rejected, 1 dependant submitted (Standard Package)
+    console.log('📋 Creating Scenario 6: Paid - User Rejected, 1 Dependant Submitted (Standard)...');
     const booking6 = await Booking.create({
-      tour: tours[4]?._id || tours[0]._id,
+      tour: tours[5]?._id || tours[0]._id, // Use tour 5 (standard package)
       user: users[5]._id,
+      packageType: tours[5]?.packageType || 'standard',
       customerName: users[5].name,
       customerEmail: users[5].email,
       customerPhone: users[5].phone,
@@ -775,16 +792,18 @@ async function seed() {
       applicationStatus: 'submitted',
       personalPassportPicture: createDocument('Personal Passport Picture', DOCUMENT_IMAGES.personalPassport, 'personal_passport_picture'),
       internationalPassport: createDocument('International Passport', DOCUMENT_IMAGES.internationalPassport, 'international_passport'),
+      // No passport photo for standard package
       supportingDocuments: [
         createDocument('Marriage Certificate', DOCUMENT_IMAGES.birthCertificate, 'supporting_document'),
       ],
     });
 
-    // SCENARIO 7: Paid booking - No application submitted yet, 3 dependants added but no applications
-    console.log('📋 Creating Scenario 7: Paid - No Applications, 3 Dependants Added...');
+    // SCENARIO 7: Paid booking - No application submitted yet, 3 dependants added but no applications (Umrah)
+    console.log('📋 Creating Scenario 7: Paid - No Applications, 3 Dependants Added (Umrah)...');
     const booking7 = await Booking.create({
       tour: tours[0]._id,
       user: users[0]._id,
+      packageType: tours[0].packageType || 'umrah',
       customerName: users[0].name,
       customerEmail: users[0].email,
       customerPhone: users[0].phone,
@@ -829,10 +848,11 @@ async function seed() {
     });
 
     // SCENARIO 8: Failed payment booking
-    console.log('📋 Creating Scenario 8: Failed Payment Booking...');
+    console.log('📋 Creating Scenario 8: Failed Payment Booking (Standard)...');
     const booking8 = await Booking.create({
-      tour: tours[1]?._id || tours[0]._id,
+      tour: tours[6]?._id || tours[0]._id,
       user: users[1]._id,
+      packageType: tours[6]?.packageType || 'standard',
       customerName: users[1].name,
       customerEmail: users[1].email,
       customerPhone: users[1].phone,

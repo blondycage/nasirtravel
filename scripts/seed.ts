@@ -10,6 +10,7 @@ dotenv.config({ path: '.env' });
 const TourSchema = new mongoose.Schema({
   title: String,
   category: String,
+  packageType: { type: String, enum: ['umrah', 'standard'], default: 'standard' },
   image: String,
   departure: String,
   accommodation: String,
@@ -39,6 +40,7 @@ const UserSchema = new mongoose.Schema({
 const BookingSchema = new mongoose.Schema({
   tour: { type: mongoose.Schema.Types.ObjectId, ref: 'Tour' },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  packageType: { type: String, enum: ['umrah', 'standard'], required: true },
   customerName: String,
   customerEmail: String,
   customerPhone: String,
@@ -136,6 +138,7 @@ async function seed() {
       {
         title: 'Winter Break Istanbul & Umrah Package A',
         category: 'Hajj / Umrah',
+        packageType: 'umrah',
         image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=800&q=80',
         departure: 'Vancouver',
         accommodation: '4 Star Accommodations',
@@ -160,6 +163,7 @@ async function seed() {
       {
         title: 'Winter Break Istanbul & Umrah Package B',
         category: 'Hajj / Umrah',
+        packageType: 'umrah',
         image: 'https://images.unsplash.com/photo-1549180030-48bf079fb38a?w=800&q=80',
         departure: 'Vancouver',
         accommodation: '4 Star Accommodations',
@@ -178,6 +182,7 @@ async function seed() {
       {
         title: 'Winter Break Istanbul & Umrah Land Only Package',
         category: 'Hajj / Umrah',
+        packageType: 'umrah',
         image: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=800&q=80',
         accommodation: '4 Star Accommodations',
         dates: 'December 18 - January 1 (Tentative)',
@@ -190,6 +195,7 @@ async function seed() {
       {
         title: 'Winter Break Umrah Land Only Package',
         category: 'Hajj / Umrah',
+        packageType: 'umrah',
         image: '/kba.jpg',
         accommodation: '4 Star Accommodations',
         dates: 'December 22 - January 1 (Tentative)',
@@ -202,6 +208,7 @@ async function seed() {
       {
         title: 'Explore Uzbekistan: The Land of Imam Bukhari',
         category: 'Asia',
+        packageType: 'standard',
         image: 'https://images.unsplash.com/photo-1599946347371-68eb71b16afc?w=800&q=80',
         accommodation: '5 Star Hotels',
         dates: 'March 15 - March 25, 2025',
@@ -224,6 +231,7 @@ async function seed() {
       {
         title: 'Morocco Desert & Imperial Cities',
         category: 'Africa',
+        packageType: 'standard',
         image: 'https://images.unsplash.com/photo-1539768942893-daf53e448371?w=800&q=80',
         accommodation: '4 Star Riads',
         dates: 'April 10 - April 20, 2025',
@@ -242,6 +250,7 @@ async function seed() {
       {
         title: 'Turkey & Greece Classical Tour',
         category: 'Europe',
+        packageType: 'standard',
         image: 'https://images.unsplash.com/photo-1555993539-1732b0258235?w=800&q=80',
         accommodation: '4 Star Hotels',
         dates: 'May 5 - May 18, 2025',
@@ -260,6 +269,7 @@ async function seed() {
       {
         title: 'Summer Umrah Express',
         category: 'Hajj / Umrah',
+        packageType: 'umrah',
         image: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?w=800&q=80',
         accommodation: '3 Star Hotels',
         dates: 'June 15 - June 25, 2025',
@@ -279,6 +289,7 @@ async function seed() {
       {
         tour: tours[0]._id,
         user: users[0]._id,
+        packageType: 'umrah',
         customerName: users[0].name,
         customerEmail: users[0].email,
         customerPhone: users[0].phone,
@@ -292,6 +303,7 @@ async function seed() {
       {
         tour: tours[1]._id,
         user: users[1]._id,
+        packageType: 'umrah',
         customerName: users[1].name,
         customerEmail: users[1].email,
         customerPhone: users[1].phone,
@@ -306,6 +318,7 @@ async function seed() {
       {
         tour: tours[4]._id,
         user: users[2]._id,
+        packageType: 'standard',
         customerName: users[2].name,
         customerEmail: users[2].email,
         customerPhone: users[2].phone,
@@ -318,6 +331,7 @@ async function seed() {
       {
         tour: tours[5]._id,
         user: users[3]._id,
+        packageType: 'standard',
         customerName: users[3].name,
         customerEmail: users[3].email,
         customerPhone: users[3].phone,
@@ -331,6 +345,7 @@ async function seed() {
       {
         tour: tours[7]._id,
         user: users[0]._id,
+        packageType: 'umrah',
         customerName: users[0].name,
         customerEmail: users[0].email,
         customerPhone: users[0].phone,

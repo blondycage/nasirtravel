@@ -22,11 +22,7 @@ export interface ApplicationFormData {
   passportIssuePlace?: string;
   passportIssueDate?: string;
   passportExpiryDate?: string;
-  
-  // Travel Information
-  expectedArrivalDate?: string;
-  expectedDepartureDate?: string;
-  
+
   // Current Residence Address
   residenceCountry?: string;
   residenceCity?: string;
@@ -37,6 +33,7 @@ export interface ApplicationFormData {
 interface ApplicationFormProps {
   applicantType: 'user' | 'dependant';
   applicantId: string; // bookingId for user, dependantId for dependant
+  packageType: 'umrah' | 'standard';
   initialData?: ApplicationFormData;
   onSubmit: (data: ApplicationFormData) => Promise<void>;
   readOnly?: boolean;
@@ -60,6 +57,7 @@ const PASSPORT_TYPES = ['Regular Passport', 'Diplomatic Passport', 'Official Pas
 export default function ApplicationForm({
   applicantType,
   applicantId,
+  packageType,
   initialData,
   onSubmit,
   readOnly = false,
@@ -82,8 +80,6 @@ export default function ApplicationForm({
     passportIssuePlace: '',
     passportIssueDate: '',
     passportExpiryDate: '',
-    expectedArrivalDate: '',
-    expectedDepartureDate: '',
     residenceCountry: '',
     residenceCity: '',
     residenceZipCode: '',
@@ -104,8 +100,6 @@ export default function ApplicationForm({
         dateOfBirth: initialData.dateOfBirth ? new Date(initialData.dateOfBirth).toISOString().split('T')[0] : '',
         passportIssueDate: initialData.passportIssueDate ? new Date(initialData.passportIssueDate).toISOString().split('T')[0] : '',
         passportExpiryDate: initialData.passportExpiryDate ? new Date(initialData.passportExpiryDate).toISOString().split('T')[0] : '',
-        expectedArrivalDate: initialData.expectedArrivalDate ? new Date(initialData.expectedArrivalDate).toISOString().split('T')[0] : '',
-        expectedDepartureDate: initialData.expectedDepartureDate ? new Date(initialData.expectedDepartureDate).toISOString().split('T')[0] : '',
       }));
     }
   }, [initialData]);
@@ -119,28 +113,34 @@ export default function ApplicationForm({
   };
 
   const validateForm = (): string | null => {
-    // Required fields validation
-    const requiredFields = [
+    // Required fields validation based on package type
+    const commonRequiredFields = [
       { field: 'countryOfNationality', label: 'Country of Nationality' },
       { field: 'firstName', label: 'First Name' },
       { field: 'lastName', label: 'Last Name' },
       { field: 'gender', label: 'Gender' },
-      { field: 'maritalStatus', label: 'Marital Status' },
       { field: 'dateOfBirth', label: 'Date of Birth' },
-      { field: 'countryOfBirth', label: 'Country of Birth' },
-      { field: 'cityOfBirth', label: 'City of Birth' },
-      { field: 'profession', label: 'Profession' },
-      { field: 'passportType', label: 'Passport Type' },
       { field: 'passportNumber', label: 'Passport Number' },
       { field: 'passportIssuePlace', label: 'Passport Issue Place' },
       { field: 'passportIssueDate', label: 'Passport Issue Date' },
       { field: 'passportExpiryDate', label: 'Passport Expiry Date' },
-      { field: 'expectedArrivalDate', label: 'Expected Arrival Date' },
-      { field: 'expectedDepartureDate', label: 'Expected Departure Date' },
       { field: 'residenceCountry', label: 'Residence Country' },
       { field: 'residenceCity', label: 'Residence City' },
-      { field: 'residenceAddress', label: 'Residence Address' },
+      { field: 'residenceZipCode', label: 'Postal Code/Zip Code' },
+      { field: 'residenceAddress', label: 'Street Address' },
     ];
+
+    // Additional fields required only for Umrah packages
+    const umrahRequiredFields = [
+      { field: 'maritalStatus', label: 'Marital Status' },
+      { field: 'countryOfBirth', label: 'Country of Birth' },
+      { field: 'cityOfBirth', label: 'City of Birth' },
+      { field: 'profession', label: 'Profession' },
+    ];
+
+    const requiredFields = packageType === 'umrah'
+      ? [...commonRequiredFields, ...umrahRequiredFields]
+      : commonRequiredFields;
 
     for (const { field, label } of requiredFields) {
       if (!formData[field as keyof ApplicationFormData]) {
@@ -156,28 +156,6 @@ export default function ApplicationForm({
       
       if (expiryDate < sixMonthsFromNow) {
         return 'Passport must be valid at least 6 months from the visa application submission date';
-      }
-    }
-
-    // Travel dates validation
-    if (formData.expectedArrivalDate && formData.expectedDepartureDate) {
-      const arrival = new Date(formData.expectedArrivalDate);
-      const departure = new Date(formData.expectedDepartureDate);
-      
-      if (departure <= arrival) {
-        return 'Expected departure date must be after arrival date';
-      }
-
-      const daysDifference = Math.ceil((departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysDifference > 90) {
-        return 'The period of stay cannot exceed 90 days';
-      }
-
-      // Arrival date should be within 1 year from submission
-      const oneYearFromNow = new Date();
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-      if (arrival > oneYearFromNow) {
-        return 'Expected arrival date should be within 1 year from submission date';
       }
     }
 
@@ -238,26 +216,32 @@ export default function ApplicationForm({
                 <label className="block text-sm font-medium text-gray-700">Gender</label>
                 <p className="mt-1 text-gray-900">{formData.gender || 'N/A'}</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Marital Status</label>
-                <p className="mt-1 text-gray-900">{formData.maritalStatus || 'N/A'}</p>
-              </div>
+              {packageType === 'umrah' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Marital Status</label>
+                  <p className="mt-1 text-gray-900">{formData.maritalStatus || 'N/A'}</p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
                 <p className="mt-1 text-gray-900">{formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Country of Birth</label>
-                <p className="mt-1 text-gray-900">{formData.countryOfBirth || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">City of Birth</label>
-                <p className="mt-1 text-gray-900">{formData.cityOfBirth || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Profession</label>
-                <p className="mt-1 text-gray-900">{formData.profession || 'N/A'}</p>
-              </div>
+              {packageType === 'umrah' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Country of Birth</label>
+                    <p className="mt-1 text-gray-900">{formData.countryOfBirth || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">City of Birth</label>
+                    <p className="mt-1 text-gray-900">{formData.cityOfBirth || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Profession</label>
+                    <p className="mt-1 text-gray-900">{formData.profession || 'N/A'}</p>
+                  </div>
+                </>
+              )}
             </div>
           </section>
 
@@ -293,20 +277,6 @@ export default function ApplicationForm({
           </section>
 
           {/* Travel Information */}
-          <section>
-            <h3 className="text-xl font-semibold mb-4">Travel Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Expected Arrival Date</label>
-                <p className="mt-1 text-gray-900">{formData.expectedArrivalDate ? new Date(formData.expectedArrivalDate).toLocaleDateString() : 'N/A'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Expected Departure Date</label>
-                <p className="mt-1 text-gray-900">{formData.expectedDepartureDate ? new Date(formData.expectedDepartureDate).toLocaleDateString() : 'N/A'}</p>
-              </div>
-            </div>
-          </section>
-
           {/* Address */}
           <section>
             <h3 className="text-xl font-semibold mb-4">Current Residence Address</h3>
@@ -450,24 +420,26 @@ export default function ApplicationForm({
               </select>
             </div>
 
-            <div>
-              <label htmlFor="maritalStatus" className="block text-sm font-medium mb-1">
-                Marital Status *
-              </label>
-              <select
-                id="maritalStatus"
-                name="maritalStatus"
-                required
-                value={formData.maritalStatus}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select</option>
-                {MARITAL_STATUSES.map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
+            {packageType === 'umrah' && (
+              <div>
+                <label htmlFor="maritalStatus" className="block text-sm font-medium mb-1">
+                  Marital Status *
+                </label>
+                <select
+                  id="maritalStatus"
+                  name="maritalStatus"
+                  required
+                  value={formData.maritalStatus}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select</option>
+                  {MARITAL_STATUSES.map(status => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div>
               <label htmlFor="dateOfBirth" className="block text-sm font-medium mb-1">
@@ -487,59 +459,63 @@ export default function ApplicationForm({
               </p>
             </div>
 
-            <div>
-              <label htmlFor="countryOfBirth" className="block text-sm font-medium mb-1">
-                Country of Birth *
-              </label>
-              <select
-                id="countryOfBirth"
-                name="countryOfBirth"
-                required
-                value={formData.countryOfBirth}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select</option>
-                {COUNTRIES.map(country => (
-                  <option key={country} value={country}>{country}</option>
-                ))}
-              </select>
-            </div>
+            {packageType === 'umrah' && (
+              <>
+                <div>
+                  <label htmlFor="countryOfBirth" className="block text-sm font-medium mb-1">
+                    Country of Birth *
+                  </label>
+                  <select
+                    id="countryOfBirth"
+                    name="countryOfBirth"
+                    required
+                    value={formData.countryOfBirth}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select</option>
+                    {COUNTRIES.map(country => (
+                      <option key={country} value={country}>{country}</option>
+                    ))}
+                  </select>
+                </div>
 
-            <div>
-              <label htmlFor="cityOfBirth" className="block text-sm font-medium mb-1">
-                City of Birth *
-              </label>
-              <input
-                type="text"
-                id="cityOfBirth"
-                name="cityOfBirth"
-                required
-                value={formData.cityOfBirth}
-                onChange={handleChange}
-                placeholder="City of Birth"
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+                <div>
+                  <label htmlFor="cityOfBirth" className="block text-sm font-medium mb-1">
+                    City of Birth *
+                  </label>
+                  <input
+                    type="text"
+                    id="cityOfBirth"
+                    name="cityOfBirth"
+                    required
+                    value={formData.cityOfBirth}
+                    onChange={handleChange}
+                    placeholder="City of Birth"
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="profession" className="block text-sm font-medium mb-1">
-                Profession *
-              </label>
-              <input
-                type="text"
-                id="profession"
-                name="profession"
-                required
-                value={formData.profession}
-                onChange={handleChange}
-                placeholder="Profession"
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                In case of minor please write 'None'
-              </p>
-            </div>
+                <div>
+                  <label htmlFor="profession" className="block text-sm font-medium mb-1">
+                    Profession *
+                  </label>
+                  <input
+                    type="text"
+                    id="profession"
+                    name="profession"
+                    required
+                    value={formData.profession}
+                    onChange={handleChange}
+                    placeholder="Profession"
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    In case of minor please write 'None'
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </section>
 
@@ -646,49 +622,6 @@ export default function ApplicationForm({
               />
               <p className="mt-1 text-xs text-red-600">
                 Passport must be valid at least 6 months from the Visa application submission date
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Travel Information Section */}
-        <section className="border-b pb-6">
-          <h3 className="text-xl font-semibold mb-4">Travel Information</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="expectedArrivalDate" className="block text-sm font-medium mb-1">
-                Expected Date of Arrival *
-              </label>
-              <input
-                type="date"
-                id="expectedArrivalDate"
-                name="expectedArrivalDate"
-                required
-                value={formData.expectedArrivalDate}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Expected Date of Arrival should be chosen in the Visa validity (1 year), from the date of submission
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="expectedDepartureDate" className="block text-sm font-medium mb-1">
-                Expected Date of Departure *
-              </label>
-              <input
-                type="date"
-                id="expectedDepartureDate"
-                name="expectedDepartureDate"
-                required
-                value={formData.expectedDepartureDate}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                The tourist visa is valid for 1 year starting from the issuance date and the period of stay is 90 days.
               </p>
             </div>
           </div>

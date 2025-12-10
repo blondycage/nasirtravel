@@ -14,24 +14,17 @@ interface Tour {
   title: string;
   description: string;
   category: string;
-  images: string[];
-  price: number;
-  duration: string;
-  maxGroupSize: number;
-  startDates: string[];
-  featured: boolean;
-  status: 'draft' | 'published' | 'archived';
-  itinerary?: { day: string; description: string }[];
-  priceIncludes?: string[];
-  priceExcludes?: string[];
-  accommodations?: {
-    makkah?: string;
-    madinah?: string;
-    istanbul?: string;
-  };
+  image: string;
+  price: string;
+  dates: string;
+  accommodation: string;
   departure?: string;
-  airline?: string;
-  roomTypes?: { type: string; price: number }[];
+  packageType: 'umrah' | 'standard';
+  status: 'draft' | 'published' | 'archived';
+  itinerary?: { day: number; title: string; description: string }[];
+  inclusions?: string[];
+  exclusions?: string[];
+  gallery?: string[];
 }
 
 export default function PackageDetailPage() {
@@ -43,10 +36,6 @@ export default function PackageDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reviews, setReviews] = useState<any[]>([]);
-
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedRoomType, setSelectedRoomType] = useState('');
-  const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'info' | 'reviews'>('info');
 
   useEffect(() => {
@@ -113,22 +102,14 @@ export default function PackageDetailPage() {
     );
   }
 
-  // Calculate price range from room types or use base price
-  const priceRange = tour.roomTypes && tour.roomTypes.length > 0
-    ? {
-        min: Math.min(...tour.roomTypes.map(rt => rt.price)),
-        max: Math.max(...tour.roomTypes.map(rt => rt.price))
-      }
-    : { min: tour.price, max: tour.price };
+  // Parse price - could be string like "$4,585" or "4585"
+  const parsePrice = (priceStr: string): number => {
+    if (!priceStr) return 0;
+    const cleanPrice = priceStr.replace(/[$,]/g, '');
+    return parseFloat(cleanPrice) || 0;
+  };
 
-  const currentPrice = selectedRoomType && tour.roomTypes
-    ? tour.roomTypes.find(rt => rt.type === selectedRoomType)?.price || priceRange.min
-    : priceRange.min;
-
-  // Format start dates
-  const formattedDates = tour.startDates && tour.startDates.length > 0
-    ? new Date(tour.startDates[0]).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-    : 'Dates to be announced';
+  const pricePerPerson = parsePrice(tour.price);
 
   // Approved reviews only
   const approvedReviews = reviews.filter(r => r.status === 'approved');
@@ -157,43 +138,22 @@ export default function PackageDetailPage() {
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Left Column - Image Gallery */}
+            {/* Left Column - Package Image */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
             >
-              {/* Main Image */}
-              <div className="relative h-96 sm:h-[500px] rounded-3xl overflow-hidden shadow-2xl mb-4">
+              {/* Package Image */}
+              <div className="relative h-96 sm:h-[500px] rounded-3xl overflow-hidden shadow-2xl">
                 <Image
-                  src={tour.images && tour.images.length > 0 ? tour.images[selectedImage] : '/placeholder-tour.jpg'}
-                  alt={`${tour.title} - Image ${selectedImage + 1}`}
+                  src={tour.image || '/placeholder-tour.jpg'}
+                  alt={tour.title}
                   fill
                   className="object-cover"
                   priority
                 />
               </div>
-
-              {/* Thumbnail Gallery */}
-              {tour.images && tour.images.length > 1 && (
-                <div className="grid grid-cols-7 gap-2">
-                  {tour.images.map((image, index) => (
-                    <motion.button
-                      key={index}
-                      onClick={() => setSelectedImage(index)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`relative h-16 sm:h-20 rounded-xl overflow-hidden ${
-                        selectedImage === index
-                          ? 'ring-4 ring-primary-orange shadow-lg'
-                          : 'ring-2 ring-gray-200 opacity-70 hover:opacity-100'
-                      } transition-all duration-300`}
-                    >
-                      <Image src={image} alt={`Thumbnail ${index + 1}`} fill className="object-cover" />
-                    </motion.button>
-                  ))}
-                </div>
-              )}
             </motion.div>
 
             {/* Right Column - Booking Details */}
@@ -207,114 +167,67 @@ export default function PackageDetailPage() {
               </h1>
 
               {/* Price */}
-              <div className="mb-6">
-                <p className="text-3xl sm:text-4xl font-extrabold text-primary-blue mb-2">
-                  ${currentPrice.toLocaleString()}
-                </p>
-                {priceRange.min !== priceRange.max && (
-                  <p className="text-gray-600">
-                    Price range: ${priceRange.min.toLocaleString()} through $
-                    {priceRange.max.toLocaleString()}
+              {tour.price && (
+                <div className="mb-6">
+                  <p className="text-3xl sm:text-4xl font-extrabold text-primary-blue mb-2">
+                    {tour.price}
                   </p>
-                )}
-              </div>
-
-              {/* Dates */}
-              <div className="bg-blue-50 border-l-4 border-primary-blue p-4 rounded-lg mb-6">
-                <p className="text-lg font-bold text-gray-900">
-                  📅 Dates: <span className="text-primary-orange">{formattedDates}</span>
-                </p>
-              </div>
-
-              {/* Room Type Selection */}
-              {tour.roomTypes && tour.roomTypes.length > 0 && (
-                <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
-                  <label className="block text-lg font-bold text-gray-900 mb-3">Room Type</label>
-                  <select
-                    value={selectedRoomType}
-                    onChange={(e) => setSelectedRoomType(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-primary-blue focus:outline-none text-gray-900 font-medium"
-                  >
-                    <option value="">Choose an option</option>
-                    {tour.roomTypes.map((room) => (
-                      <option key={room.type} value={room.type}>
-                        {room.type} - ${room.price.toLocaleString()}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => setSelectedRoomType('')}
-                    className="text-primary-orange text-sm mt-2 hover:underline"
-                  >
-                    Clear
-                  </button>
+                  <p className="text-gray-600 text-sm">Per Person</p>
                 </div>
               )}
 
+              {/* Package Details */}
+              <div className="space-y-4 mb-6">
+                {/* Dates */}
+                <div className="bg-blue-50 border-l-4 border-primary-blue p-4 rounded-lg">
+                  <p className="text-base font-bold text-gray-900">
+                    📅 Dates: <span className="text-primary-orange">{tour.dates}</span>
+                  </p>
+                </div>
+
+                {/* Accommodation */}
+                <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded-lg">
+                  <p className="text-base font-bold text-gray-900">
+                    🏨 Accommodation: <span className="text-gray-700">{tour.accommodation}</span>
+                  </p>
+                </div>
+
+                {/* Departure */}
+                {tour.departure && (
+                  <div className="bg-orange-50 border-l-4 border-primary-orange p-4 rounded-lg">
+                    <p className="text-base font-bold text-gray-900">
+                      ✈️ Departure: <span className="text-primary-orange">{tour.departure}</span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Category */}
+                <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+                  <p className="text-base font-bold text-gray-900">
+                    🏷️ Category: <span className="text-green-700">{tour.category}</span>
+                  </p>
+                </div>
+              </div>
+
               {/* Cash Discount Notice */}
-              <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl mb-6">
+              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6">
                 <p className="text-sm text-gray-700">
                   💰 <span className="font-bold">Contact us to inquire about our cash discount!</span>
                 </p>
               </div>
 
-              {/* Quantity Selector */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg mb-6">
-                <label className="block text-lg font-bold text-gray-900 mb-3">Quantity</label>
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-12 h-12 bg-gray-200 hover:bg-gray-300 rounded-full font-bold text-xl transition-colors"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-20 text-center border-2 border-gray-300 rounded-xl py-2 font-bold text-lg"
-                  />
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-12 h-12 bg-gray-200 hover:bg-gray-300 rounded-full font-bold text-xl transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Add to Cart Button */}
-              {!tour.roomTypes || tour.roomTypes.length === 0 || selectedRoomType ? (
-                <Link href="/contact">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full py-4 rounded-full text-lg font-bold transition-all duration-300 shadow-xl bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-2xl"
-                  >
-                    Book Now
-                  </motion.button>
-                </Link>
-              ) : (
-                <motion.button
-                  disabled
-                  className="w-full py-4 rounded-full text-lg font-bold transition-all duration-300 shadow-xl bg-gray-300 text-gray-500 cursor-not-allowed"
+              {/* Scroll to booking form */}
+              {tour.price && (
+                <button
+                  onClick={() => {
+                    const bookingSection = document.getElementById('booking-section');
+                    bookingSection?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="w-full py-4 rounded-full text-lg font-bold transition-all duration-300 shadow-xl bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-2xl hover:scale-105"
                 >
-                  Select Room Type
-                </motion.button>
+                  Book Now
+                </button>
               )}
-
-              {/* Meta Info */}
-              <div className="mt-6 pt-6 border-t border-gray-200 text-sm text-gray-600">
-                <p>
-                  <span className="font-semibold">Category:</span> {tour.category}
-                </p>
-                <p className="mt-2">
-                  <span className="font-semibold">Duration:</span> {tour.duration}
-                </p>
-                <p className="mt-2">
-                  <span className="font-semibold">Max Group Size:</span> {tour.maxGroupSize} people
-                </p>
-              </div>
             </motion.div>
           </div>
 
@@ -366,67 +279,16 @@ export default function PackageDetailPage() {
                   </p>
                 </div>
 
-                {/* Flight Details */}
-                {(tour.departure || tour.airline) && (
-                  <div className="mb-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      ✈️ Flight Details
-                    </h3>
-                    <div className="bg-gradient-to-r from-blue-50 to-orange-50 p-6 rounded-2xl">
-                      {tour.departure && (
-                        <p className="text-gray-700 mb-2">
-                          <span className="font-bold">Departure From:</span> {tour.departure}
-                        </p>
-                      )}
-                      {tour.airline && (
-                        <p className="text-gray-700">
-                          <span className="font-bold">Airlines:</span> {tour.airline}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Accommodations */}
-                {tour.accommodations && (tour.accommodations.makkah || tour.accommodations.madinah || tour.accommodations.istanbul) && (
-                  <div className="mb-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      🏨 Accommodations
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {tour.accommodations.makkah && (
-                        <div className="bg-blue-50 p-4 rounded-xl">
-                          <p className="font-bold text-primary-blue mb-1">Makkah:</p>
-                          <p className="text-gray-700">{tour.accommodations.makkah}</p>
-                        </div>
-                      )}
-                      {tour.accommodations.madinah && (
-                        <div className="bg-orange-50 p-4 rounded-xl">
-                          <p className="font-bold text-primary-orange mb-1">Madinah:</p>
-                          <p className="text-gray-700">{tour.accommodations.madinah}</p>
-                        </div>
-                      )}
-                      {tour.accommodations.istanbul && (
-                        <div className="bg-gray-50 p-4 rounded-xl">
-                          <p className="font-bold text-gray-900 mb-1">Istanbul:</p>
-                          <p className="text-gray-700">{tour.accommodations.istanbul}</p>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 italic mt-3">Or similar accommodations.</p>
-                  </div>
-                )}
-
                 {/* Price Includes/Excludes */}
-                {(tour.priceIncludes || tour.priceExcludes) && (
+                {(tour.inclusions || tour.exclusions) && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                    {tour.priceIncludes && tour.priceIncludes.length > 0 && (
+                    {tour.inclusions && tour.inclusions.length > 0 && (
                       <div>
                         <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                          💼 Price Includes
+                          ✓ Inclusions
                         </h3>
                         <ul className="space-y-2">
-                          {tour.priceIncludes.map((item, index) => (
+                          {tour.inclusions.map((item, index) => (
                             <li key={index} className="flex items-start gap-2 text-gray-700">
                               <span className="text-green-500 font-bold mt-1">✓</span>
                               <span>{item}</span>
@@ -435,13 +297,13 @@ export default function PackageDetailPage() {
                         </ul>
                       </div>
                     )}
-                    {tour.priceExcludes && tour.priceExcludes.length > 0 && (
+                    {tour.exclusions && tour.exclusions.length > 0 && (
                       <div>
                         <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                          🚫 Price Does Not Include
+                          ✗ Exclusions
                         </h3>
                         <ul className="space-y-2">
-                          {tour.priceExcludes.map((item, index) => (
+                          {tour.exclusions.map((item, index) => (
                             <li key={index} className="flex items-start gap-2 text-gray-700">
                               <span className="text-red-500 font-bold mt-1">✗</span>
                               <span>{item}</span>
@@ -469,7 +331,7 @@ export default function PackageDetailPage() {
                           transition={{ delay: index * 0.05 }}
                           className="bg-gradient-to-r from-gray-50 to-blue-50 p-5 rounded-xl border-l-4 border-primary-blue hover:shadow-md transition-shadow"
                         >
-                          <p className="font-bold text-gray-900 mb-1">{day.day}</p>
+                          <p className="font-bold text-gray-900 mb-1">Day {day.day}: {day.title}</p>
                           <p className="text-gray-700">{day.description}</p>
                         </motion.div>
                       ))}
@@ -523,11 +385,13 @@ export default function PackageDetailPage() {
                 )}
               </motion.div>
             )}
+
           </motion.div>
 
           {/* Booking Form Section */}
-          {(!tour.roomTypes || tour.roomTypes.length === 0 || selectedRoomType) && (
+          {tour.price && pricePerPerson > 0 && (
             <motion.div
+              id="booking-section"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
@@ -537,7 +401,7 @@ export default function PackageDetailPage() {
               <BookingForm
                 tourId={packageId}
                 tourTitle={tour.title}
-                pricePerPerson={currentPrice}
+                pricePerPerson={pricePerPerson}
               />
             </motion.div>
           )}

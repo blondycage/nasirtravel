@@ -55,8 +55,6 @@ export async function GET(
       passportIssuePlace: dependant.passportIssuePlace,
       passportIssueDate: dependant.passportIssueDate,
       passportExpiryDate: dependant.passportExpiryDate,
-      expectedArrivalDate: dependant.expectedArrivalDate,
-      expectedDepartureDate: dependant.expectedDepartureDate,
       residenceCountry: dependant.residenceCountry,
       residenceCity: dependant.residenceCity,
       residenceZipCode: dependant.residenceZipCode,
@@ -145,37 +143,6 @@ export async function POST(
       }
     }
 
-    // Validate travel dates
-    if (body.expectedArrivalDate && body.expectedDepartureDate) {
-      const arrival = new Date(body.expectedArrivalDate);
-      const departure = new Date(body.expectedDepartureDate);
-      
-      if (departure <= arrival) {
-        return NextResponse.json(
-          { error: 'Expected departure date must be after arrival date' },
-          { status: 400 }
-        );
-      }
-
-      const daysDifference = Math.ceil((departure.getTime() - arrival.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysDifference > 90) {
-        return NextResponse.json(
-          { error: 'The period of stay cannot exceed 90 days' },
-          { status: 400 }
-        );
-      }
-
-      // Arrival date should be within 1 year from now
-      const oneYearFromNow = new Date();
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-      if (arrival > oneYearFromNow) {
-        return NextResponse.json(
-          { error: 'Expected arrival date should be within 1 year from submission date' },
-          { status: 400 }
-        );
-      }
-    }
-
     // Update dependant with application form data
     dependant.countryOfNationality = body.countryOfNationality;
     dependant.firstName = body.firstName;
@@ -192,8 +159,6 @@ export async function POST(
     dependant.passportIssuePlace = body.passportIssuePlace;
     dependant.passportIssueDate = body.passportIssueDate ? new Date(body.passportIssueDate) : undefined;
     dependant.passportExpiryDate = body.passportExpiryDate ? new Date(body.passportExpiryDate) : undefined;
-    dependant.expectedArrivalDate = body.expectedArrivalDate ? new Date(body.expectedArrivalDate) : undefined;
-    dependant.expectedDepartureDate = body.expectedDepartureDate ? new Date(body.expectedDepartureDate) : undefined;
     dependant.residenceCountry = body.residenceCountry;
     dependant.residenceCity = body.residenceCity;
     dependant.residenceZipCode = body.residenceZipCode;
@@ -281,8 +246,6 @@ export async function PATCH(
     if (body.passportIssuePlace !== undefined) dependant.passportIssuePlace = body.passportIssuePlace;
     if (body.passportIssueDate !== undefined) dependant.passportIssueDate = body.passportIssueDate ? new Date(body.passportIssueDate) : undefined;
     if (body.passportExpiryDate !== undefined) dependant.passportExpiryDate = body.passportExpiryDate ? new Date(body.passportExpiryDate) : undefined;
-    if (body.expectedArrivalDate !== undefined) dependant.expectedArrivalDate = body.expectedArrivalDate ? new Date(body.expectedArrivalDate) : undefined;
-    if (body.expectedDepartureDate !== undefined) dependant.expectedDepartureDate = body.expectedDepartureDate ? new Date(body.expectedDepartureDate) : undefined;
     if (body.residenceCountry !== undefined) dependant.residenceCountry = body.residenceCountry;
     if (body.residenceCity !== undefined) dependant.residenceCity = body.residenceCity;
     if (body.residenceZipCode !== undefined) dependant.residenceZipCode = body.residenceZipCode;
