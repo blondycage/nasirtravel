@@ -57,7 +57,7 @@ export const sendBookingConfirmation = async (
           <p><strong>Tour:</strong> ${bookingDetails.tourTitle}</p>
           <p><strong>Date:</strong> ${bookingDetails.bookingDate}</p>
           <p><strong>Number of Travelers:</strong> ${bookingDetails.numberOfTravelers}</p>
-          <p><strong>Total Amount:</strong> $${(bookingDetails.totalAmount / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p><strong>Total Amount:</strong> $${bookingDetails.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
 
         <p>We will send you more details about your tour closer to the departure date.</p>

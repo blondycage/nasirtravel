@@ -194,7 +194,7 @@ export default function AdminBookingDetailPage() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Amount</p>
-              <p className="font-medium text-green-600">${(booking.totalAmount / 100).toLocaleString()}</p>
+              <p className="font-medium text-green-600">${booking.totalAmount.toLocaleString()}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Booking Date</p>

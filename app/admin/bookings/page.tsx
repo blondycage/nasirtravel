@@ -141,7 +141,7 @@ export default function AdminBookingsPage() {
                       {new Date(booking.bookingDate).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">${(booking.totalAmount / 100).toLocaleString()}</div>
+                      <div className="text-sm text-gray-900">${booking.totalAmount.toLocaleString()}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(booking.paymentStatus)}`}>
