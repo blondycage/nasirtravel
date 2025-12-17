@@ -187,6 +187,21 @@ export async function POST(
       );
     }
 
+    // Validate that adding this dependant won't exceed numberOfTravelers
+    // Count: 1 (main user) + existing dependants + 1 (new dependant) <= numberOfTravelers
+    const existingDependants = await Dependant.countDocuments({ bookingId: params.id });
+    const totalTravelers = 1 + existingDependants + 1; // 1 main user + existing dependants + new dependant
+    
+    if (totalTravelers > booking.numberOfTravelers) {
+      const remainingSlots = booking.numberOfTravelers - (1 + existingDependants);
+      return NextResponse.json(
+        { 
+          error: `Cannot add more dependants. The booking is for ${booking.numberOfTravelers} traveler(s) (including the main user). You have ${remainingSlots} slot(s) remaining.` 
+        },
+        { status: 400 }
+      );
+    }
+
     const dependant = new Dependant(dependantData);
     await dependant.save();
 

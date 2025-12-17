@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
+import Tour from '@/lib/models/Tour';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
+import { sendAdminApplicationNotification } from '@/lib/utils/email';
 
 // GET - Get user application form data
 export async function GET(
@@ -169,13 +171,32 @@ export async function POST(
     };
 
     // Mark as submitted if not already
-    if (!booking.userApplicationFormSubmitted) {
+    const isNewSubmission = !booking.userApplicationFormSubmitted;
+    if (isNewSubmission) {
       booking.userApplicationFormSubmitted = true;
       booking.userApplicationFormSubmittedAt = new Date();
       booking.userApplicationStatus = 'submitted';
     }
 
     await booking.save();
+
+    // Send admin notification email if this is a new submission
+    if (isNewSubmission) {
+      try {
+        const tour = await Tour.findById(booking.tour);
+        await sendAdminApplicationNotification(
+          'user',
+          booking._id.toString(),
+          booking._id.toString(),
+          booking.customerName,
+          booking.customerEmail,
+          tour?.title || 'Unknown Tour'
+        );
+      } catch (emailError) {
+        console.error('Failed to send admin notification email:', emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

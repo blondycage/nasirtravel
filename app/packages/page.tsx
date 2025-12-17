@@ -55,26 +55,45 @@ export default function PackagesPage() {
     const form = e.currentTarget;
     const formData = new FormData(form);
 
+    // Extract form data
+    const enquiryData = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      phone: formData.get('phone') as string || undefined,
+      subject: formData.get('_subject') as string || `Package Enquiry: ${selectedPackage?.title || 'General'}`,
+      message: formData.get('message') as string,
+      packageInterest: selectedPackage?.title || undefined,
+    };
+
     try {
-      // Submit to FormSubmit.io
-      await fetch('https://formsubmit.co/info@naasirtravel.com', {
+      // Submit to our API
+      const response = await fetch('/api/contact', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(enquiryData),
       });
 
-      // Show success message
-      setShowSuccess(true);
+      const data = await response.json();
 
-      // Reset form
-      form.reset();
+      if (data.success) {
+        // Show success message
+        setShowSuccess(true);
 
-      // Close modal
-      setEnquiryModalOpen(false);
+        // Reset form
+        form.reset();
 
-      // Hide success message after 5 seconds
-      setTimeout(() => {
-        setShowSuccess(false);
-      }, 5000);
+        // Close modal
+        setEnquiryModalOpen(false);
+
+        // Hide success message after 5 seconds
+        setTimeout(() => {
+          setShowSuccess(false);
+        }, 5000);
+      } else {
+        alert(data.error || 'Failed to send enquiry. Please try again or contact us directly.');
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
       alert('Failed to send enquiry. Please try again or contact us directly.');

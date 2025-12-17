@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import { hashPassword, generateToken } from '@/lib/utils/auth';
+import { sendSignupConfirmation } from '@/lib/utils/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,14 @@ export async function POST(request: NextRequest) {
       email: user.email,
       role: user.role,
     });
+
+    // Send welcome email
+    try {
+      await sendSignupConfirmation(user.email, user.name);
+    } catch (emailError) {
+      console.error('Failed to send signup confirmation email:', emailError);
+      // Don't fail the registration if email fails
+    }
 
     return NextResponse.json(
       {

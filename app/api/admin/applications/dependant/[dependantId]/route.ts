@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Dependant from '@/lib/models/Dependant';
 import Booking from '@/lib/models/Booking';
+import Tour from '@/lib/models/Tour';
 import { verifyToken } from '@/lib/utils/auth';
+import { sendApplicationStatusUpdate } from '@/lib/utils/email';
 
 export async function GET(
   req: NextRequest,
@@ -75,11 +77,38 @@ export async function PATCH(
       return NextResponse.json({ error: 'Dependant not found' }, { status: 404 });
     }
 
+    const oldStatus = dependant.applicationStatus;
     dependant.applicationStatus = status;
     dependant.applicationReviewedAt = new Date();
     dependant.applicationReviewedBy = decoded.userId;
 
     await dependant.save();
+
+    // Send email notification to customer if status changed
+    if (oldStatus !== status) {
+      try {
+        const booking = await Booking.findById(dependant.bookingId);
+        if (booking) {
+          const tour = await Tour.findById(booking.tour);
+          const applicationName = dependant.firstName 
+            ? `${dependant.firstName} ${dependant.lastName || ''}`.trim()
+            : dependant.name;
+          
+          await sendApplicationStatusUpdate(
+            booking.customerEmail,
+            booking.customerName,
+            'dependant',
+            applicationName,
+            status,
+            tour?.title || 'Unknown Tour',
+            booking._id.toString()
+          );
+        }
+      } catch (emailError) {
+        console.error('Failed to send application status update email:', emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

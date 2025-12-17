@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Dependant from '@/lib/models/Dependant';
 import Booking from '@/lib/models/Booking';
+import Tour from '@/lib/models/Tour';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
+import { sendAdminApplicationNotification } from '@/lib/utils/email';
 
 // GET - Get application form data for a dependant
 export async function GET(
@@ -165,13 +167,36 @@ export async function POST(
     dependant.residenceAddress = body.residenceAddress;
 
     // Mark as submitted if not already
-    if (!dependant.applicationFormSubmitted) {
+    const isNewSubmission = !dependant.applicationFormSubmitted;
+    if (isNewSubmission) {
       dependant.applicationFormSubmitted = true;
       dependant.applicationFormSubmittedAt = new Date();
       dependant.applicationStatus = 'submitted';
     }
 
     await dependant.save();
+
+    // Send admin notification email if this is a new submission
+    if (isNewSubmission) {
+      try {
+        const booking = await Booking.findById(dependant.bookingId);
+        if (booking) {
+          const Tour = (await import('@/lib/models/Tour')).default;
+          const tour = await Tour.findById(booking.tour);
+          await sendAdminApplicationNotification(
+            'dependant',
+            booking._id.toString(),
+            dependant._id.toString(),
+            booking.customerName,
+            booking.customerEmail,
+            tour?.title || 'Unknown Tour'
+          );
+        }
+      } catch (emailError) {
+        console.error('Failed to send admin notification email:', emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -33,3 +33,18 @@ export const getTokenFromHeader = (authHeader: string | null): string | null => 
   }
   return authHeader.substring(7);
 };
+
+// Generate password reset token
+export const generateResetToken = (): string => {
+  return jwt.sign({ type: 'password-reset' }, JWT_SECRET, { expiresIn: '1h' });
+};
+
+// Verify password reset token
+export const verifyResetToken = (token: string): boolean => {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    return decoded.type === 'password-reset';
+  } catch (error) {
+    return false;
+  }
+};
