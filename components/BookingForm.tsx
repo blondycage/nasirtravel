@@ -20,7 +20,7 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
     customerEmail: '',
     customerPhone: '',
     numberOfTravelers: 1,
-    bookingDate: ''
+    bookingDate: new Date().toISOString().split('T')[0]
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -274,12 +274,13 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
 
         <div>
           <label htmlFor="bookingDate" className="block text-sm font-medium mb-1">
-            Preferred Travel Date *
+            Booking Date *
           </label>
           <input
             type="date"
             id="bookingDate"
             name="bookingDate"
+            disabled
             required
             value={formData.bookingDate}
             onChange={handleChange}

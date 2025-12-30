@@ -282,6 +282,62 @@ export default function BookingDetailsPage() {
           </div>
         </motion.div>
 
+        {/* Next Steps Banner - Only show if payment is paid and application not closed */}
+        {booking.paymentStatus === 'paid' && !booking.applicationClosed && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-600 rounded-lg p-6 mb-6 shadow-md"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="bg-blue-600 text-white rounded-full p-3">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  📋 Important Next Steps
+                </h3>
+                <p className="text-gray-700 mb-4 font-medium">
+                  Your payment has been received! To complete your booking, please complete the following:
+                </p>
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-start gap-3">
+                    <span className="flex-shrink-0 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</span>
+                    <div>
+                      <p className="font-semibold text-gray-900">Fill Application Forms</p>
+                      <p className="text-sm text-gray-600">Complete the visa application form for yourself and all travelers in your booking ({booking.numberOfTravelers} {booking.numberOfTravelers === 1 ? 'traveler' : 'travelers'})</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="flex-shrink-0 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</span>
+                    <div>
+                      <p className="font-semibold text-gray-900">Upload Required Documents</p>
+                      <p className="text-sm text-gray-600">Upload passport copies, photos, and other required documents for all travelers</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="flex-shrink-0 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</span>
+                    <div>
+                      <p className="font-semibold text-gray-900">Add Dependants (if applicable)</p>
+                      <p className="text-sm text-gray-600">Add and complete application forms for any additional travelers or family members</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-sm text-amber-800">
+                    <span className="font-bold">⚠️ Note:</span> Your visa application cannot be processed until all forms and documents are submitted for all travelers.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Application Status & Actions - Only show if payment is paid */}
         {booking.paymentStatus === 'paid' && (
           <motion.div

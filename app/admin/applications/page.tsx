@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth, authFetch } from '@/hooks/useAuth';
 
 interface Application {
   _id: string;
@@ -20,25 +21,20 @@ interface Application {
 
 export default function AdminApplicationsPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth({ requiredRole: 'admin' });
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'submitted' | 'under_review' | 'accepted' | 'rejected'>('all');
 
   useEffect(() => {
-    fetchApplications();
-  }, []);
+    if (isAuthenticated) {
+      fetchApplications();
+    }
+  }, [isAuthenticated]);
 
   const fetchApplications = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
-
-      const response = await fetch('/api/admin/applications', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authFetch('/api/admin/applications');
 
       if (!response.ok) throw new Error('Failed to fetch applications');
 
@@ -66,7 +62,7 @@ export default function AdminApplicationsPage() {
     filter === 'all' || app.status === filter
   );
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -74,11 +70,26 @@ export default function AdminApplicationsPage() {
     );
   }
 
+  if (!isAuthenticated) {
+    return null; // Will redirect automatically
+  }
+
   return (
-    <div>
+    <div className="p-4 sm:p-6 lg:p-8">
+      {/* Navigation Bar */}
+      <div className="bg-white shadow-sm rounded-lg mb-6 p-4">
+        <div className="flex items-center gap-3">
+          <Link href="/admin" className="text-blue-600 hover:text-blue-800 font-medium transition-colors">
+            ← Dashboard
+          </Link>
+          <span className="text-gray-300">|</span>
+          <span className="text-gray-700 font-semibold">Applications</span>
+        </div>
+      </div>
+
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Application Management</h1>
-        <p className="text-gray-600">Review and manage visa application submissions</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Application Management</h1>
+        <p className="text-sm sm:text-base text-gray-600">Review and manage visa application submissions</p>
       </div>
 
       {/* Filter Tabs */}

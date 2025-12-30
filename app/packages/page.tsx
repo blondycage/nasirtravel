@@ -109,7 +109,19 @@ export default function PackagesPage() {
 
   // Filter packages by category and status
   const filteredAvailablePackages = tours.filter(pkg => {
-    const matchesCategory = selectedCategory === 'All' || pkg.category === selectedCategory;
+    let matchesCategory = false;
+
+    if (selectedCategory === 'All') {
+      matchesCategory = true;
+    } else if (selectedCategory === 'Hajj / Umrah') {
+      // Match if category contains 'hajj' or 'umrah' (case-insensitive)
+      const pkgCategoryLower = pkg.category.toLowerCase();
+      matchesCategory = pkgCategoryLower.includes('hajj') || pkgCategoryLower.includes('umrah');
+    } else {
+      // Exact match for other categories (case-insensitive)
+      matchesCategory = pkg.category.toLowerCase() === selectedCategory.toLowerCase();
+    }
+
     const isPublished = pkg.status === 'published';
     return matchesCategory && isPublished;
   });
@@ -290,10 +302,10 @@ export default function PackagesPage() {
               </motion.div>
 
               <motion.div
+                key={selectedCategory}
                 variants={containerVariants}
                 initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
+                animate="visible"
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8 mb-16 sm:mb-20 lg:mb-24"
               >
                 {filteredAvailablePackages.map((pkg) => (

@@ -1,29 +1,128 @@
 import nodemailer from 'nodemailer';
 
-// Check if email is configured
-const isEmailConfigured = () => {
-  return !!(process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD);
+// Get the "from" email address (defaults to EMAIL_USER if not set)
+const getFromAddress = () => {
+  return  'noreply@naasirtravel.com';
 };
 
-// Create transporter only if email is configured (Zoho SMTP)
+// Enhanced logging utility
+const logEmailDebug = (type: string, data: any) => {
+  const timestamp = new Date().toISOString();
+  console.log('\n' + '='.repeat(80));
+  console.log(`[EMAIL DEBUG ${timestamp}] ${type}`);
+  console.log('='.repeat(80));
+  console.log(JSON.stringify(data, null, 2));
+  console.log('='.repeat(80) + '\n');
+};
+
+// Check if email is configured
+const isEmailConfigured = () => {
+  const configured = !!(process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD);
+
+  logEmailDebug('EMAIL CONFIGURATION CHECK', {
+    configured,
+    hasEmailUser: !!process.env.EMAIL_USER,
+    hasEmailPassword: !!process.env.EMAIL_APP_PASSWORD,
+    emailUserLength: process.env.EMAIL_USER?.length || 0,
+    emailPasswordLength: process.env.EMAIL_APP_PASSWORD?.length || 0,
+    emailUser: process.env.EMAIL_USER ? `${process.env.EMAIL_USER.substring(0, 3)}***` : 'NOT SET'
+  });
+
+  return configured;
+};
+
+// Create transporter only if email is configured (Gmail SMTP)
 const getTransporter = () => {
   if (!isEmailConfigured()) {
+    logEmailDebug('TRANSPORTER CREATION FAILED', {
+      reason: 'Email not configured',
+      emailUser: process.env.EMAIL_USER,
+      hasPassword: !!process.env.EMAIL_APP_PASSWORD
+    });
     return null;
   }
 
-  return nodemailer.createTransport({
-    host: 'smtp.zoho.com',
+  const transportConfig = {
+    service: 'gmail',
+    host: 'smtp.gmail.com',
     port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_APP_PASSWORD,
-    },tls: {
+      user: process.env.EMAIL_USER, // Your Gmail address
+      pass: process.env.EMAIL_APP_PASSWORD, // Your Gmail App Password (NOT regular password)
+    },
+    tls: {
       rejectUnauthorized: false
     },
     debug: true,
     logger: true
+  };
+
+  // Show first and last 3 characters of password for verification
+  const maskPassword = (pwd: string | undefined) => {
+    if (!pwd) return 'NOT SET';
+    if (pwd.length <= 6) return '***INVALID_LENGTH***';
+    const first3 = pwd.substring(0, 3);
+    const last3 = pwd.substring(pwd.length - 3);
+    const middle = '*'.repeat(Math.max(0, pwd.length - 6));
+    return `${first3}${middle}${last3}`;
+  };
+
+  logEmailDebug('TRANSPORTER CREATED', {
+    service: transportConfig.service,
+    host: transportConfig.host,
+    port: transportConfig.port,
+    secure: transportConfig.secure,
+    user: transportConfig.auth.user,
+    userMasked: transportConfig.auth.user ? `${transportConfig.auth.user.substring(0, 5)}***@${transportConfig.auth.user.split('@')[1] || ''}` : 'NOT SET',
+    hasPassword: !!transportConfig.auth.pass,
+    passwordLength: transportConfig.auth.pass?.length || 0,
+    passwordMasked: maskPassword(transportConfig.auth.pass),
+    passwordFirst3Chars: transportConfig.auth.pass?.substring(0, 3) || 'NOT SET',
+    passwordLast3Chars: transportConfig.auth.pass?.substring(transportConfig.auth.pass.length - 3) || 'NOT SET',
+    // Full credentials for debugging (REMOVE IN PRODUCTION!)
+    FULL_EMAIL_FOR_DEBUG: process.env.EMAIL_USER,
+    FULL_PASSWORD_FOR_DEBUG: process.env.EMAIL_APP_PASSWORD
   });
+
+  return nodemailer.createTransport(transportConfig);
+};
+
+// Helper function to send email with debugging
+const sendEmailWithDebug = async (
+  emailType: string,
+  transporter: any,
+  mailOptions: any
+) => {
+  logEmailDebug(`${emailType} - MAIL OPTIONS`, {
+    from: mailOptions.from,
+    to: mailOptions.to,
+    subject: mailOptions.subject,
+    htmlLength: mailOptions.html?.length || 0
+  });
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    logEmailDebug(`${emailType} - SUCCESS`, {
+      messageId: info.messageId,
+      response: info.response,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      envelope: info.envelope
+    });
+    return { success: true, info };
+  } catch (error: any) {
+    logEmailDebug(`${emailType} - ERROR`, {
+      errorMessage: error.message,
+      errorCode: error.code,
+      errorStack: error.stack,
+      errorCommand: error.command,
+      errorResponse: error.response,
+      errorResponseCode: error.responseCode,
+      fullError: JSON.stringify(error, null, 2)
+    });
+    return { success: false, error };
+  }
 };
 
 export const sendBookingConfirmation = async (
@@ -37,18 +136,26 @@ export const sendBookingConfirmation = async (
     bookingId: string;
   }
 ) => {
+  logEmailDebug('SEND BOOKING CONFIRMATION - START', {
+    to,
+    bookingDetails
+  });
+
   if (!isEmailConfigured()) {
-    console.log('Email not configured, skipping booking confirmation email');
-    return { success: false, error: 'Email not configured' };
+    const error = 'Email not configured';
+    logEmailDebug('SEND BOOKING CONFIRMATION - FAILED', { error });
+    return { success: false, error };
   }
 
   const transporter = getTransporter();
   if (!transporter) {
-    return { success: false, error: 'Failed to create email transporter' };
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND BOOKING CONFIRMATION - FAILED', { error });
+    return { success: false, error };
   }
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: getFromAddress(),
     to,
     subject: 'Booking Confirmation - Naasir Travel',
     html: `
@@ -74,29 +181,28 @@ export const sendBookingConfirmation = async (
     `,
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    return { success: true };
-  } catch (error) {
-    console.error('Email send error:', error);
-    return { success: false, error };
-  }
+  return sendEmailWithDebug('SEND BOOKING CONFIRMATION', transporter, mailOptions);
 };
 
 // Email template for user signup
 export const sendSignupConfirmation = async (to: string, userName: string) => {
+  logEmailDebug('SEND SIGNUP CONFIRMATION - START', { to, userName });
+
   if (!isEmailConfigured()) {
-    console.log('Email not configured, skipping signup confirmation email');
-    return { success: false, error: 'Email not configured' };
+    const error = 'Email not configured';
+    logEmailDebug('SEND SIGNUP CONFIRMATION - FAILED', { error });
+    return { success: false, error };
   }
 
   const transporter = getTransporter();
   if (!transporter) {
-    return { success: false, error: 'Failed to create email transporter' };
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND SIGNUP CONFIRMATION - FAILED', { error });
+    return { success: false, error };
   }
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: getFromAddress(),
     to,
     subject: 'Welcome to Naasir Travel!',
     html: `
@@ -143,32 +249,31 @@ export const sendSignupConfirmation = async (to: string, userName: string) => {
     `,
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    return { success: true };
-  } catch (error) {
-    console.error('Email send error:', error);
-    return { success: false, error };
-  }
+  return sendEmailWithDebug('SEND SIGNUP CONFIRMATION', transporter, mailOptions);
 };
 
 // Email template for password reset
 export const sendPasswordResetEmail = async (to: string, userName: string, resetToken: string) => {
+  logEmailDebug('SEND PASSWORD RESET - START', { to, userName, tokenLength: resetToken.length });
+
   if (!isEmailConfigured()) {
-    console.log('Email not configured, skipping password reset email');
-    return { success: false, error: 'Email not configured' };
+    const error = 'Email not configured';
+    logEmailDebug('SEND PASSWORD RESET - FAILED', { error });
+    return { success: false, error };
   }
 
   const transporter = getTransporter();
   if (!transporter) {
-    return { success: false, error: 'Failed to create email transporter' };
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND PASSWORD RESET - FAILED', { error });
+    return { success: false, error };
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const resetLink = `${appUrl}/reset-password?token=${resetToken}`;
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: getFromAddress(),
     to,
     subject: 'Password Reset Request - Naasir Travel',
     html: `
@@ -215,13 +320,7 @@ export const sendPasswordResetEmail = async (to: string, userName: string, reset
     `,
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    return { success: true };
-  } catch (error) {
-    console.error('Email send error:', error);
-    return { success: false, error };
-  }
+  return sendEmailWithDebug('SEND PASSWORD RESET', transporter, mailOptions);
 };
 
 // Email notification to admin when application is submitted
@@ -233,14 +332,21 @@ export const sendAdminApplicationNotification = async (
   customerEmail: string,
   tourTitle: string
 ) => {
+  logEmailDebug('SEND ADMIN APPLICATION NOTIFICATION - START', {
+    applicationType, bookingId, applicationId, customerName, customerEmail, tourTitle
+  });
+
   if (!isEmailConfigured()) {
-    console.log('Email not configured, skipping admin notification email');
-    return { success: false, error: 'Email not configured' };
+    const error = 'Email not configured';
+    logEmailDebug('SEND ADMIN APPLICATION NOTIFICATION - FAILED', { error });
+    return { success: false, error };
   }
 
   const transporter = getTransporter();
   if (!transporter) {
-    return { success: false, error: 'Failed to create email transporter' };
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND ADMIN APPLICATION NOTIFICATION - FAILED', { error });
+    return { success: false, error };
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -249,7 +355,7 @@ export const sendAdminApplicationNotification = async (
     : `${appUrl}/admin/applications/dependant/${applicationId}`;
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: getFromAddress(),
     to: 'info@naasirtravel.com',
     subject: `New ${applicationType === 'user' ? 'User' : 'Dependant'} Application Submitted - ${customerName}`,
     html: `
@@ -301,13 +407,7 @@ export const sendAdminApplicationNotification = async (
     `,
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    return { success: true };
-  } catch (error) {
-    console.error('Email send error:', error);
-    return { success: false, error };
-  }
+  return sendEmailWithDebug('SEND ADMIN APPLICATION NOTIFICATION', transporter, mailOptions);
 };
 
 // Email notification when application status is updated by admin
@@ -320,14 +420,21 @@ export const sendApplicationStatusUpdate = async (
   tourTitle: string,
   bookingId: string
 ) => {
+  logEmailDebug('SEND APPLICATION STATUS UPDATE - START', {
+    to, customerName, applicationType, applicationName, status, tourTitle, bookingId
+  });
+
   if (!isEmailConfigured()) {
-    console.log('Email not configured, skipping application status update email');
-    return { success: false, error: 'Email not configured' };
+    const error = 'Email not configured';
+    logEmailDebug('SEND APPLICATION STATUS UPDATE - FAILED', { error });
+    return { success: false, error };
   }
 
   const transporter = getTransporter();
   if (!transporter) {
-    return { success: false, error: 'Failed to create email transporter' };
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND APPLICATION STATUS UPDATE - FAILED', { error });
+    return { success: false, error };
   }
 
   const statusMessages: Record<string, { title: string; message: string; color: string }> = {
@@ -363,7 +470,7 @@ export const sendApplicationStatusUpdate = async (
   const bookingLink = `${appUrl}/dashboard/bookings/${bookingId}`;
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: getFromAddress(),
     to,
     subject: `${statusInfo.title} - Naasir Travel`,
     html: `
@@ -422,13 +529,7 @@ export const sendApplicationStatusUpdate = async (
     `,
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    return { success: true };
-  } catch (error) {
-    console.error('Email send error:', error);
-    return { success: false, error };
-  }
+  return sendEmailWithDebug('SEND APPLICATION STATUS UPDATE', transporter, mailOptions);
 };
 
 // Email notification when enquiry/contact form is submitted
@@ -442,19 +543,24 @@ export const sendEnquiryNotification = async (
     packageInterest?: string;
   }
 ) => {
+  logEmailDebug('SEND ENQUIRY NOTIFICATION - START', { enquiryData });
+
   if (!isEmailConfigured()) {
-    console.log('Email not configured, skipping enquiry notification email');
-    return { success: false, error: 'Email not configured' };
+    const error = 'Email not configured';
+    logEmailDebug('SEND ENQUIRY NOTIFICATION - FAILED', { error });
+    return { success: false, error };
   }
 
   const transporter = getTransporter();
   if (!transporter) {
-    return { success: false, error: 'Failed to create email transporter' };
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND ENQUIRY NOTIFICATION - FAILED', { error });
+    return { success: false, error };
   }
 
   // Send to admin
   const adminMailOptions = {
-    from: process.env.EMAIL_USER,
+    from: getFromAddress(),
     to: 'info@naasirtravel.com',
     subject: `New Enquiry: ${enquiryData.subject}`,
     html: `
@@ -495,7 +601,7 @@ ${enquiryData.message}
 
   // Send confirmation to customer
   const customerMailOptions = {
-    from: process.env.EMAIL_USER,
+    from: getFromAddress(),
     to: enquiryData.email,
     subject: 'Thank you for your enquiry - Naasir Travel',
     html: `
@@ -544,13 +650,31 @@ ${enquiryData.message}
   };
 
   try {
-    await Promise.all([
+    logEmailDebug('SEND ENQUIRY NOTIFICATION - SENDING BOTH EMAILS', {
+      adminTo: adminMailOptions.to,
+      customerTo: customerMailOptions.to
+    });
+
+    const [adminResult, customerResult] = await Promise.all([
       transporter.sendMail(adminMailOptions),
       transporter.sendMail(customerMailOptions),
     ]);
+
+    logEmailDebug('SEND ENQUIRY NOTIFICATION - SUCCESS', {
+      adminMessageId: adminResult.messageId,
+      customerMessageId: customerResult.messageId,
+      adminAccepted: adminResult.accepted,
+      customerAccepted: customerResult.accepted
+    });
+
     return { success: true };
-  } catch (error) {
-    console.error('Email send error:', error);
+  } catch (error: any) {
+    logEmailDebug('SEND ENQUIRY NOTIFICATION - ERROR', {
+      errorMessage: error.message,
+      errorCode: error.code,
+      errorStack: error.stack,
+      fullError: JSON.stringify(error, null, 2)
+    });
     return { success: false, error };
   }
 };
@@ -563,18 +687,23 @@ export const sendPaymentConfirmation = async (
     bookingId: string;
   }
 ) => {
+  logEmailDebug('SEND PAYMENT CONFIRMATION - START', { to, paymentDetails });
+
   if (!isEmailConfigured()) {
-    console.log('Email not configured, skipping payment confirmation email');
-    return { success: false, error: 'Email not configured' };
+    const error = 'Email not configured';
+    logEmailDebug('SEND PAYMENT CONFIRMATION - FAILED', { error });
+    return { success: false, error };
   }
 
   const transporter = getTransporter();
   if (!transporter) {
-    return { success: false, error: 'Failed to create email transporter' };
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND PAYMENT CONFIRMATION - FAILED', { error });
+    return { success: false, error };
   }
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: getFromAddress(),
     to,
     subject: 'Payment Confirmation - Naasir Travel',
     html: `
@@ -596,11 +725,5 @@ export const sendPaymentConfirmation = async (
     `,
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    return { success: true };
-  } catch (error) {
-    console.error('Email send error:', error);
-    return { success: false, error };
-  }
+  return sendEmailWithDebug('SEND PAYMENT CONFIRMATION', transporter, mailOptions);
 };

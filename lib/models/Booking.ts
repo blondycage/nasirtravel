@@ -107,7 +107,7 @@ const BookingSchema = new Schema<IBooking>(
       enum: ['pending', 'confirmed', 'cancelled'],
       default: 'pending',
     },
-    bookingDate: { type: Date, required: true },
+    bookingDate: { type: Date },
     specialRequests: { type: String },
     documents: [DocumentSchema],
     

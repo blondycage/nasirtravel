@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth, authFetch } from '@/hooks/useAuth';
 
 export default function AdminUserApplicationReviewPage() {
   const params = useParams();
   const router = useRouter();
   const bookingId = params.bookingId as string;
+  const { isAuthenticated, isLoading: authLoading } = useAuth({ requiredRole: 'admin' });
 
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -15,15 +17,14 @@ export default function AdminUserApplicationReviewPage() {
   const [newStatus, setNewStatus] = useState('');
 
   useEffect(() => {
-    fetchApplication();
-  }, [bookingId]);
+    if (isAuthenticated && bookingId) {
+      fetchApplication();
+    }
+  }, [bookingId, isAuthenticated]);
 
   const fetchApplication = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/bookings/${bookingId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authFetch(`/api/bookings/${bookingId}`);
 
       if (!response.ok) throw new Error('Failed to fetch application');
 
@@ -42,12 +43,10 @@ export default function AdminUserApplicationReviewPage() {
 
     setUpdating(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/admin/applications/user/${bookingId}`, {
+      const response = await authFetch(`/api/admin/applications/user/${bookingId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status: newStatus })
       });
@@ -63,12 +62,16 @@ export default function AdminUserApplicationReviewPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect automatically
   }
 
   if (!booking) {
@@ -86,16 +89,28 @@ export default function AdminUserApplicationReviewPage() {
   const packageType = booking.packageType || 'standard';
 
   return (
-    <div>
+    <div className="p-4 sm:p-6 lg:p-8">
+      {/* Navigation Bar */}
+      <div className="bg-white shadow-sm rounded-lg mb-6 p-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <Link href="/admin" className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm sm:text-base">
+            ← Dashboard
+          </Link>
+          <span className="text-gray-300">|</span>
+          <Link href="/admin/applications" className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm sm:text-base">
+            Applications
+          </Link>
+          <span className="text-gray-300">|</span>
+          <span className="text-gray-700 font-semibold text-sm sm:text-base">User Application</span>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="mb-6">
-        <Link href="/admin/applications" className="text-blue-600 hover:underline mb-2 inline-block">
-          ← Back to Applications
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
           User Application Review
         </h1>
-        <p className="text-gray-600">{booking.customerName} - {booking.tour?.title}</p>
+        <p className="text-sm sm:text-base text-gray-600">{booking.customerName} - {booking.tour?.title}</p>
       </div>
 
       {/* Status Update Section */}

@@ -39,10 +39,23 @@ export async function POST(request: NextRequest) {
     });
 
     // Send welcome email
+    console.log('📨 Attempting to send signup confirmation email...');
     try {
-      await sendSignupConfirmation(user.email, user.name);
-    } catch (emailError) {
-      console.error('Failed to send signup confirmation email:', emailError);
+      const emailResult = await sendSignupConfirmation(user.email, user.name);
+      console.log('📬 Signup email result:', emailResult);
+
+      if (emailResult.success) {
+        console.log('✅ Signup confirmation email sent successfully');
+      } else {
+        console.warn('⚠️ Signup email failed but continuing with registration');
+      }
+    } catch (emailError: any) {
+      console.error('❌ Failed to send signup confirmation email:');
+      console.error('Error details:', {
+        message: emailError.message,
+        stack: emailError.stack,
+        fullError: emailError
+      });
       // Don't fail the registration if email fails
     }
 
