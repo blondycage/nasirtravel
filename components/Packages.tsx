@@ -28,7 +28,7 @@ const packages: TourPackage[] = [
     departure: 'Vancouver',
     accommodation: '4 Star Accommodations',
     dates: 'December 18 - January 1 (Tentative)',
-    price: '$4,585',
+    price: 'CA$4,585',
   },
   {
     id: 2,
@@ -38,7 +38,7 @@ const packages: TourPackage[] = [
     departure: 'Vancouver',
     accommodation: '4 Star Accommodations',
     dates: 'December 18 - January 1 (Tentative)',
-    price: '$4,275',
+    price: 'CA$4,275',
   },
   {
     id: 3,
@@ -47,7 +47,7 @@ const packages: TourPackage[] = [
     image: 'https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=800&q=80',
     accommodation: '4 Star Accommodations',
     dates: 'December 18 - January 1 (Tentative)',
-    price: '$2,350',
+    price: 'CA$2,350',
   },
   {
     id: 4,
@@ -56,7 +56,7 @@ const packages: TourPackage[] = [
     image: '/kba.jpg',
     accommodation: '4 Star Accommodations',
     dates: 'December 22 - January 1 (Tentative)',
-    price: '$1,550',
+    price: 'CA$1,550',
   },
   {
     id: 5,

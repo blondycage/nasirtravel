@@ -194,7 +194,7 @@ export default function BookingsPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-blue-600 mb-2">
-                          ${booking.totalAmount.toLocaleString()}
+                          CA${booking.totalAmount.toLocaleString()}
                         </div>
                         <div className="flex gap-2">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.paymentStatus)}`}>

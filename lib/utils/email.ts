@@ -170,7 +170,7 @@ export const sendBookingConfirmation = async (
           <p><strong>Tour:</strong> ${bookingDetails.tourTitle}</p>
           <p><strong>Date:</strong> ${bookingDetails.bookingDate}</p>
           <p><strong>Number of Travelers:</strong> ${bookingDetails.numberOfTravelers}</p>
-          <p><strong>Total Amount:</strong> $${bookingDetails.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p><strong>Total Amount:</strong> CA$${bookingDetails.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
 
         <p>We will send you more details about your tour closer to the departure date.</p>
@@ -715,7 +715,7 @@ export const sendPaymentConfirmation = async (
         <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="margin-top: 0;">Payment Details</h3>
           <p><strong>Booking ID:</strong> ${paymentDetails.bookingId}</p>
-          <p><strong>Amount Paid:</strong> $${paymentDetails.amount}</p>
+          <p><strong>Amount Paid:</strong> CA$${paymentDetails.amount}</p>
         </div>
 
         <p>Thank you for your payment!</p>

@@ -105,10 +105,11 @@ export default function PackageDetailPage() {
     );
   }
 
-  // Parse price - could be string like "$4,585" or "4585"
+  // Parse price - could be string like "CA$4,585", "$4,585" or "4585"
   const parsePrice = (priceStr: string): number => {
     if (!priceStr) return 0;
-    const cleanPrice = priceStr.replace(/[$,]/g, '');
+    // Remove CA, $, commas and any spaces to get just the number
+    const cleanPrice = priceStr.replace(/CA|[$,\s]/g, '');
     return parseFloat(cleanPrice) || 0;
   };
 
@@ -457,7 +458,6 @@ export default function PackageDetailPage() {
                 tourId={packageId}
                 tourTitle={tour.title}
                 pricePerPerson={pricePerPerson}
-                departureDate={tour.dates.split(' - ')[0].toString()}
               />
             </motion.div>
           )}

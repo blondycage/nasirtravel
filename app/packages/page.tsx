@@ -354,7 +354,7 @@ export default function PackagesPage() {
                     <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
                       <p className="text-xs sm:text-sm text-gray-600 mb-1">Starting From</p>
                       <p className="text-xl sm:text-2xl font-extrabold text-primary-blue">
-                        ${pkg.price}
+                        {pkg.price}
                         <span className="text-xs sm:text-sm font-normal text-gray-600"> Per Person</span>
                       </p>
                     </div>

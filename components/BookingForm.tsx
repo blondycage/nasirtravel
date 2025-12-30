@@ -293,11 +293,11 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
           <div className="flex justify-between items-center mb-4">
             <span className="text-lg font-medium">Total Amount:</span>
             <span className="text-2xl font-bold text-blue-600">
-              ${totalAmount.toLocaleString()}
+              CA${totalAmount.toLocaleString()}
             </span>
           </div>
           <p className="text-sm text-gray-600 mb-4">
-            ${pricePerPerson.toLocaleString()} × {formData.numberOfTravelers} traveler(s)
+            CA${pricePerPerson.toLocaleString()} × {formData.numberOfTravelers} traveler(s)
           </p>
         </div>
 

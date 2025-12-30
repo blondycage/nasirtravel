@@ -483,12 +483,12 @@ export default function BookingDetailsPage() {
           <div className="space-y-3">
             <div className="flex justify-between text-gray-700">
               <span>Subtotal ({booking.numberOfTravelers} travelers)</span>
-              <span className="font-semibold">${booking.totalAmount.toFixed(2)}</span>
+              <span className="font-semibold">CA${booking.totalAmount.toFixed(2)}</span>
             </div>
             <div className="border-t pt-3">
               <div className="flex justify-between text-lg font-bold text-gray-900">
                 <span>Total Amount</span>
-                <span className="text-primary-blue">${booking.totalAmount.toFixed(2)}</span>
+                <span className="text-primary-blue">CA${booking.totalAmount.toFixed(2)}</span>
               </div>
             </div>
             {booking.paymentIntentId && (

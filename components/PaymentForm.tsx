@@ -60,7 +60,7 @@ function PaymentFormContent({ bookingId, amount, onSuccess }: PaymentFormContent
         <div className="flex justify-between items-center mb-2">
           <span className="text-gray-700">Booking Total:</span>
           <span className="text-2xl font-bold text-blue-600">
-            ${(amount / 100).toLocaleString()}
+            CA${(amount / 100).toLocaleString()}
           </span>
         </div>
       </div>
@@ -72,7 +72,7 @@ function PaymentFormContent({ bookingId, amount, onSuccess }: PaymentFormContent
         disabled={!stripe || loading}
         className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
       >
-        {loading ? 'Processing...' : `Pay $${(amount / 100).toLocaleString()}`}
+        {loading ? 'Processing...' : `Pay CA$${(amount / 100).toLocaleString()}`}
       </button>
 
       <div className="text-center text-sm text-gray-500">

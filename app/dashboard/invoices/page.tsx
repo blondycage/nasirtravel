@@ -107,7 +107,7 @@ export default function InvoicesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm mb-1">Total Paid</p>
-                <p className="text-3xl font-bold text-green-600">${totalPaid.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-green-600">CA${totalPaid.toLocaleString()}</p>
               </div>
               <div className="text-4xl">✅</div>
             </div>
@@ -122,7 +122,7 @@ export default function InvoicesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm mb-1">Pending</p>
-                <p className="text-3xl font-bold text-yellow-600">${totalPending.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-yellow-600">CA${totalPending.toLocaleString()}</p>
               </div>
               <div className="text-4xl">⏳</div>
             </div>

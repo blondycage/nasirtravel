@@ -137,7 +137,7 @@ function BookingConfirmationContent() {
                 <div className="flex justify-between text-lg">
                   <span className="text-gray-900 font-semibold">Total Amount:</span>
                   <span className="font-bold text-green-600">
-                    ${booking.totalAmount.toLocaleString()}
+                    CA${booking.totalAmount.toLocaleString()}
                   </span>
                 </div>
 
