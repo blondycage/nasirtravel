@@ -73,11 +73,19 @@ export default function AdminUsersPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/admin" className="text-blue-600 hover:text-blue-700">
-              ← Back to Dashboard
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link href="/admin" className="text-blue-600 hover:text-blue-700">
+                ← Back to Dashboard
+              </Link>
+              <h1 className="text-2xl font-bold text-gray-900">Manage Users</h1>
+            </div>
+            <Link
+              href="/admin/users/new"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            >
+              + Add New User
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Manage Users</h1>
           </div>
         </div>
       </header>
@@ -134,6 +142,9 @@ export default function AdminUsersPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Joined
                   </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -155,6 +166,20 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <Link
+                        href={`/admin/users/${user._id}`}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        View
+                      </Link>
+                      <Link
+                        href={`/admin/users/${user._id}/edit`}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        Edit
+                      </Link>
                     </td>
                   </tr>
                 ))}

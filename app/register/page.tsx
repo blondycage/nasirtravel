@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Captcha from '@/components/Captcha';
 
 function RegisterForm() {
   const router = useRouter();
@@ -19,6 +20,7 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
 
   useEffect(() => {
     const redirect = searchParams.get('redirect');
@@ -31,6 +33,12 @@ function RegisterForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (!captchaVerified) {
+      setError('Please complete the captcha verification');
+      setLoading(false);
+      return;
+    }
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
@@ -187,9 +195,11 @@ function RegisterForm() {
                 />
               </div>
 
+              <Captcha onVerify={setCaptchaVerified} />
+
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !captchaVerified}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {loading ? 'Creating Account...' : 'Create Account'}

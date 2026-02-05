@@ -182,8 +182,14 @@ export default function AdminToursPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <Link
+                        href={`/admin/tours/${tour._id}/dashboard`}
+                        className="text-purple-600 hover:text-purple-900 mr-3"
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
                         href={`/admin/tours/${tour._id}`}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
+                        className="text-blue-600 hover:text-blue-900 mr-3"
                       >
                         Edit
                       </Link>

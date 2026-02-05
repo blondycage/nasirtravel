@@ -67,10 +67,11 @@ export interface IBooking extends Document {
   userSupportingDocuments?: IDocument[];
   
   // User Application Status
-  userApplicationStatus?: 'pending' | 'submitted' | 'under_review' | 'accepted' | 'rejected';
+  userApplicationStatus?: 'pending' | 'submitted' | 'under_review' | 'accepted' | 'rejected' | 'needs_revision';
   userApplicationReviewedAt?: Date;
   userApplicationReviewedBy?: mongoose.Types.ObjectId;
-  
+  userApplicationRejectionReason?: string;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -154,11 +155,12 @@ const BookingSchema = new Schema<IBooking>(
     // User Application Status
     userApplicationStatus: {
       type: String,
-      enum: ['pending', 'submitted', 'under_review', 'accepted', 'rejected'],
+      enum: ['pending', 'submitted', 'under_review', 'accepted', 'rejected', 'needs_revision'],
       default: 'pending',
     },
     userApplicationReviewedAt: { type: Date },
     userApplicationReviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    userApplicationRejectionReason: { type: String },
   },
   { timestamps: true }
 );

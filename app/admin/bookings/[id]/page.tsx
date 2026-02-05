@@ -273,6 +273,104 @@ export default function AdminBookingDetailPage() {
           )}
         </div>
 
+        {/* Application Management Section */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Application Management</h2>
+            {booking.applicationClosed ? (
+              <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
+                Closed
+              </span>
+            ) : (
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                Open
+              </span>
+            )}
+          </div>
+
+          {/* User Application */}
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Primary Applicant</h3>
+            <div className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="font-semibold text-gray-900">{booking.customerName}</p>
+                  <p className="text-sm text-gray-600">Primary Customer</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    booking.userApplicationStatus === 'accepted' ? 'bg-green-100 text-green-800' :
+                    booking.userApplicationStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                    booking.userApplicationStatus === 'needs_revision' ? 'bg-purple-100 text-purple-800' :
+                    booking.userApplicationStatus === 'under_review' ? 'bg-orange-100 text-orange-800' :
+                    booking.userApplicationStatus === 'submitted' ? 'bg-blue-100 text-blue-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {booking.userApplicationStatus?.replace('_', ' ').toUpperCase() || 'PENDING'}
+                  </span>
+                </div>
+              </div>
+              {booking.userApplicationFormData?.applicationNumber && (
+                <p className="text-sm text-gray-600 mb-2">
+                  Application #: {booking.userApplicationFormData.applicationNumber}
+                </p>
+              )}
+              <div className="flex gap-2 mt-3">
+                <Link
+                  href={`/admin/applications/user/${booking._id}`}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                >
+                  {booking.userApplicationFormSubmitted ? 'Review Application' : 'View Details'}
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Dependant Applications */}
+          {dependants.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Dependants ({dependants.length})</h3>
+              <div className="space-y-3">
+                {dependants.map((dependant) => (
+                  <div key={dependant._id} className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-semibold text-gray-900">{dependant.name}</p>
+                        <p className="text-sm text-gray-600">{dependant.relationship}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          dependant.applicationStatus === 'accepted' ? 'bg-green-100 text-green-800' :
+                          dependant.applicationStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                          dependant.applicationStatus === 'needs_revision' ? 'bg-purple-100 text-purple-800' :
+                          dependant.applicationStatus === 'under_review' ? 'bg-orange-100 text-orange-800' :
+                          dependant.applicationStatus === 'submitted' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {dependant.applicationStatus?.replace('_', ' ').toUpperCase() || 'PENDING'}
+                        </span>
+                      </div>
+                    </div>
+                    {dependant.applicationNumber && (
+                      <p className="text-sm text-gray-600 mb-2">
+                        Application #: {dependant.applicationNumber}
+                      </p>
+                    )}
+                    <div className="flex gap-2 mt-3">
+                      <Link
+                        href={`/admin/applications/dependant/${dependant._id}`}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                      >
+                        {dependant.applicationFormSubmitted ? 'Review Application' : 'View Details'}
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Dependants and Their Documents */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-bold mb-4">Dependants & Documents</h2>

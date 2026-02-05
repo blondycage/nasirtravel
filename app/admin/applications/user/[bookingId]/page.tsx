@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth, authFetch } from '@/hooks/useAuth';
+import ApplicationReviewForm from '@/components/admin/ApplicationReviewForm';
 
 export default function AdminUserApplicationReviewPage() {
   const params = useParams();
@@ -13,8 +14,7 @@ export default function AdminUserApplicationReviewPage() {
 
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [newStatus, setNewStatus] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     if (isAuthenticated && bookingId) {
@@ -30,7 +30,6 @@ export default function AdminUserApplicationReviewPage() {
 
       const data = await response.json();
       setBooking(data.data || data.booking);
-      setNewStatus(data.data?.userApplicationStatus || data.booking?.userApplicationStatus || '');
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -38,28 +37,23 @@ export default function AdminUserApplicationReviewPage() {
     }
   };
 
-  const handleUpdateStatus = async () => {
-    if (!newStatus) return;
+  const handleUpdateStatus = async (status: string, reason?: string) => {
+    const response = await authFetch(`/api/admin/bookings/${bookingId}/user-application-status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status, reason })
+    });
 
-    setUpdating(true);
-    try {
-      const response = await authFetch(`/api/admin/applications/user/${bookingId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      if (!response.ok) throw new Error('Failed to update status');
-
-      alert('Application status updated successfully');
-      await fetchApplication();
-    } catch (error: any) {
-      alert(error.message);
-    } finally {
-      setUpdating(false);
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to update status');
     }
+
+    setSuccessMessage(`Application status updated to ${status.replace('_', ' ')}${reason ? ' and email sent to customer' : ''}`);
+    setTimeout(() => setSuccessMessage(''), 5000);
+    await fetchApplication();
   };
 
   if (authLoading || loading) {
@@ -113,33 +107,19 @@ export default function AdminUserApplicationReviewPage() {
         <p className="text-sm sm:text-base text-gray-600">{booking.customerName} - {booking.tour?.title}</p>
       </div>
 
-      {/* Status Update Section */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-xl font-bold mb-4">Application Status</h2>
-        <div className="flex items-center gap-4">
-          <select
-            value={newStatus}
-            onChange={(e) => setNewStatus(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="pending">Pending</option>
-            <option value="submitted">Submitted</option>
-            <option value="under_review">Under Review</option>
-            <option value="accepted">Accepted</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <button
-            onClick={handleUpdateStatus}
-            disabled={updating || newStatus === booking.userApplicationStatus}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {updating ? 'Updating...' : 'Update Status'}
-          </button>
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+          ✓ {successMessage}
         </div>
-        <p className="text-sm text-gray-500 mt-2">
-          Current Status: <span className="font-semibold">{booking.userApplicationStatus}</span>
-        </p>
-      </div>
+      )}
+
+      {/* Status Update Section */}
+      <ApplicationReviewForm
+        currentStatus={booking.userApplicationStatus || 'pending'}
+        currentReason={booking.userApplicationRejectionReason}
+        onSubmit={handleUpdateStatus}
+      />
 
       {/* Application Details */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">

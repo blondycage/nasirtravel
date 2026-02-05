@@ -52,10 +52,11 @@ export interface IDependant extends Document {
   // Application Status
   applicationFormSubmitted: boolean;
   applicationFormSubmittedAt?: Date;
-  applicationStatus: 'pending' | 'submitted' | 'under_review' | 'accepted' | 'rejected';
+  applicationStatus: 'pending' | 'submitted' | 'under_review' | 'accepted' | 'rejected' | 'needs_revision';
   applicationReviewedAt?: Date;
   applicationReviewedBy?: mongoose.Types.ObjectId;
-  
+  applicationRejectionReason?: string;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -121,11 +122,12 @@ const DependantSchema = new Schema<IDependant>(
     applicationFormSubmittedAt: { type: Date },
     applicationStatus: {
       type: String,
-      enum: ['pending', 'submitted', 'under_review', 'accepted', 'rejected'],
+      enum: ['pending', 'submitted', 'under_review', 'accepted', 'rejected', 'needs_revision'],
       default: 'pending',
     },
     applicationReviewedAt: { type: Date },
     applicationReviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    applicationRejectionReason: { type: String },
   },
   { timestamps: true }
 );

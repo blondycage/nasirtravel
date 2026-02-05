@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
+import Dependant from '@/lib/models/Dependant';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 
 export async function GET(
@@ -81,8 +82,39 @@ export async function GET(
       );
     }
 
-    console.log('Returning booking data');
-    return NextResponse.json({ success: true, data: booking });
+    // Get dependants for this booking
+    const dependants = await Dependant.find({ bookingId: booking._id });
+
+    // Build application summaries
+    const applicationSummaries = {
+      user: {
+        status: booking.userApplicationStatus || 'pending',
+        submitted: booking.userApplicationFormSubmitted,
+        submittedAt: booking.userApplicationFormSubmittedAt,
+        applicationNumber: booking.userApplicationFormData?.applicationNumber,
+        rejectionReason: booking.userApplicationRejectionReason,
+      },
+      dependants: dependants.map(d => ({
+        _id: d._id,
+        name: d.name,
+        relationship: d.relationship,
+        status: d.applicationStatus,
+        submitted: d.applicationFormSubmitted,
+        submittedAt: d.applicationFormSubmittedAt,
+        applicationNumber: d.applicationNumber,
+        rejectionReason: d.applicationRejectionReason,
+      })),
+    };
+
+    console.log('Returning booking data with application summaries');
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...booking.toObject(),
+        applicationSummaries,
+        dependants,
+      }
+    });
   } catch (error: any) {
     console.error('Get booking error:', error.message);
     console.error('Stack:', error.stack);

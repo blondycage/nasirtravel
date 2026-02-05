@@ -727,3 +727,200 @@ export const sendPaymentConfirmation = async (
 
   return sendEmailWithDebug('SEND PAYMENT CONFIRMATION', transporter, mailOptions);
 };
+
+// Email notification when application needs revision
+export const sendApplicationNeedsRevision = async (
+  to: string,
+  customerName: string,
+  applicationType: 'user' | 'dependant',
+  applicationName: string,
+  revisionNotes: string,
+  tourTitle: string,
+  bookingId: string
+) => {
+  logEmailDebug('SEND APPLICATION NEEDS REVISION - START', {
+    to, customerName, applicationType, applicationName, tourTitle, bookingId
+  });
+
+  if (!isEmailConfigured()) {
+    const error = 'Email not configured';
+    logEmailDebug('SEND APPLICATION NEEDS REVISION - FAILED', { error });
+    return { success: false, error };
+  }
+
+  const transporter = getTransporter();
+  if (!transporter) {
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND APPLICATION NEEDS REVISION - FAILED', { error });
+    return { success: false, error };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const applicationLink = applicationType === 'user'
+    ? `${appUrl}/dashboard/bookings/${bookingId}/application`
+    : `${appUrl}/dashboard/bookings/${bookingId}/dependants/${applicationName}/application`;
+
+  const mailOptions = {
+    from: getFromAddress(),
+    to,
+    subject: 'Application Revision Required - Naasir Travel',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #ea580c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Application Revision Required</h1>
+        </div>
+
+        <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">Dear ${customerName},</p>
+
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            Your ${applicationType === 'user' ? 'application' : `application for ${applicationName}`} requires some revisions before it can be approved.
+          </p>
+
+          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="color: #92400e; font-size: 14px; margin: 0 0 10px 0;">
+              <strong>Revision Notes:</strong>
+            </p>
+            <p style="color: #92400e; font-size: 14px; margin: 0; white-space: pre-wrap;">
+              ${revisionNotes}
+            </p>
+          </div>
+
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #1e40af;">Application Information</h3>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;">
+              <strong>Type:</strong> ${applicationType === 'user' ? 'Main User Application' : 'Dependant Application'}
+            </p>
+            ${applicationType === 'dependant' ? `<p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Name:</strong> ${applicationName}</p>` : ''}
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;">
+              <strong>Tour:</strong> ${tourTitle}
+            </p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;">
+              <strong>Booking ID:</strong> ${bookingId}
+            </p>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${applicationLink}"
+               style="display: inline-block; background: linear-gradient(135deg, #1e40af 0%, #ea580c 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+              Edit Application
+            </a>
+          </div>
+
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            Please review the notes above and make the necessary changes to your application. Once you've made the revisions, submit your application again for review.
+          </p>
+
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-top: 30px;">
+            If you have any questions, please contact us at
+            <a href="mailto:info@naasirtravel.com" style="color: #1e40af; text-decoration: none;">info@naasirtravel.com</a>
+            or call us at <a href="tel:+18886627467" style="color: #1e40af; text-decoration: none;">1 (888) 662-7467</a>.
+          </p>
+
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-top: 30px;">
+            Best regards,<br>
+            <strong style="color: #1e40af;">The Naasir Travel Team</strong>
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px;">
+          <p>© ${new Date().getFullYear()} Naasir Travel. All rights reserved.</p>
+        </div>
+      </div>
+    `,
+  };
+
+  return sendEmailWithDebug('SEND APPLICATION NEEDS REVISION', transporter, mailOptions);
+};
+
+// Email notification when application is rejected
+export const sendApplicationRejected = async (
+  to: string,
+  customerName: string,
+  applicationType: 'user' | 'dependant',
+  applicationName: string,
+  rejectionReason: string,
+  tourTitle: string,
+  bookingId: string
+) => {
+  logEmailDebug('SEND APPLICATION REJECTED - START', {
+    to, customerName, applicationType, applicationName, tourTitle, bookingId
+  });
+
+  if (!isEmailConfigured()) {
+    const error = 'Email not configured';
+    logEmailDebug('SEND APPLICATION REJECTED - FAILED', { error });
+    return { success: false, error };
+  }
+
+  const transporter = getTransporter();
+  if (!transporter) {
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND APPLICATION REJECTED - FAILED', { error });
+    return { success: false, error };
+  }
+
+  const mailOptions = {
+    from: getFromAddress(),
+    to,
+    subject: 'Application Status Update - Naasir Travel',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #ea580c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Application Status Update</h1>
+        </div>
+
+        <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">Dear ${customerName},</p>
+
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            We regret to inform you that your ${applicationType === 'user' ? 'application' : `application for ${applicationName}`} has been reviewed and unfortunately could not be approved at this time.
+          </p>
+
+          <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <p style="color: #991b1b; font-size: 14px; margin: 0 0 10px 0;">
+              <strong>Reason:</strong>
+            </p>
+            <p style="color: #991b1b; font-size: 14px; margin: 0; white-space: pre-wrap;">
+              ${rejectionReason}
+            </p>
+          </div>
+
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #1e40af;">Application Information</h3>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;">
+              <strong>Type:</strong> ${applicationType === 'user' ? 'Main User Application' : 'Dependant Application'}
+            </p>
+            ${applicationType === 'dependant' ? `<p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Name:</strong> ${applicationName}</p>` : ''}
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;">
+              <strong>Tour:</strong> ${tourTitle}
+            </p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;">
+              <strong>Booking ID:</strong> ${bookingId}
+            </p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;">
+              <strong>Status:</strong> <span style="color: #ef4444; font-weight: bold;">REJECTED</span>
+            </p>
+          </div>
+
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-top: 30px;">
+            If you have any questions or would like to discuss this decision, please don't hesitate to contact us at
+            <a href="mailto:info@naasirtravel.com" style="color: #1e40af; text-decoration: none;">info@naasirtravel.com</a>
+            or call us at <a href="tel:+18886627467" style="color: #1e40af; text-decoration: none;">1 (888) 662-7467</a>.
+          </p>
+
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-top: 30px;">
+            Best regards,<br>
+            <strong style="color: #1e40af;">The Naasir Travel Team</strong>
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px;">
+          <p>© ${new Date().getFullYear()} Naasir Travel. All rights reserved.</p>
+        </div>
+      </div>
+    `,
+  };
+
+  return sendEmailWithDebug('SEND APPLICATION REJECTED', transporter, mailOptions);
+};
