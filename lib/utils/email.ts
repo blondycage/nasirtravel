@@ -41,10 +41,10 @@ const getTransporter = () => {
     });
     return null;
   }
-
+ 
   const transportConfig = {
-    service: 'gmail',
-    host: 'smtp.gmail.com',
+    service: 'zeptomail',
+    host: 'smtp.zeptomail.ca',
     port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
