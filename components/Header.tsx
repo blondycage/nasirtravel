@@ -82,6 +82,7 @@ export default function Header() {
             {[
               { name: 'Home', href: '/' },
               { name: 'Packages', href: '/packages' },
+              { name: 'FAQ', href: '/#faq' },
               { name: 'Contact', href: '/contact' },
             ].map((item) => (
               <Link key={item.name} href={item.href}>
@@ -180,6 +181,7 @@ export default function Header() {
                 {[
                   { name: 'Home', href: '/' },
                   { name: 'Packages', href: '/packages' },
+                  { name: 'FAQ', href: '/#faq' },
                   { name: 'Contact', href: '/contact' },
                 ].map((item, index) => (
                   <motion.div
