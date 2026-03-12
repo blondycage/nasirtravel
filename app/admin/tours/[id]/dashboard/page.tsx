@@ -202,11 +202,14 @@ export default function PackageDashboardPage() {
                         <ApplicationCard
                           key={index}
                           type={app.type}
-                          name={app.name}
+                          applicantName={app.applicantName}
+                          applicationNumber={app.applicationNumber}
                           status={app.status}
+                          submittedAt={app.submittedAt}
                           rejectionReason={app.rejectionReason}
                           bookingId={app.bookingId}
                           dependantId={app.dependantId}
+                          relationship={app.relationship}
                         />
                       ))}
                     </div>

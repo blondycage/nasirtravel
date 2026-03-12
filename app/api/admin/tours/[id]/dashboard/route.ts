@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Tour from '@/lib/models/Tour';
 import Booking from '@/lib/models/Booking';
 import Dependant from '@/lib/models/Dependant';
+import User from '@/lib/models/User';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 
 export async function GET(
@@ -55,6 +56,7 @@ export async function GET(
         // Add user application
         applications.push({
           type: 'user',
+          bookingId: booking._id,
           applicantName: booking.customerName,
           applicationNumber: booking.userApplicationFormData?.applicationNumber || 'Not assigned',
           status: booking.userApplicationStatus || 'pending',
@@ -66,6 +68,7 @@ export async function GET(
         for (const dependant of bookingDependants) {
           applications.push({
             type: 'dependant',
+            bookingId: booking._id,
             dependantId: dependant._id,
             applicantName: dependant.name,
             relationship: dependant.relationship,
