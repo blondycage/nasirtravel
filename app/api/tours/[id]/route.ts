@@ -5,7 +5,17 @@ import Tour from '@/lib/models/Tour';
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     await connectDB();
-    const tour = await Tour.findById(params.id);
+
+    // Check if param is a valid MongoDB ObjectId (24 character hex string)
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(params.id);
+
+    // Try to find by ID if it looks like an ObjectId, otherwise find by slug
+    let tour;
+    if (isObjectId) {
+      tour = await Tour.findById(params.id);
+    } else {
+      tour = await Tour.findOne({ slug: params.id });
+    }
 
     if (!tour) {
       return NextResponse.json({ success: false, error: 'Tour not found' }, { status: 404 });

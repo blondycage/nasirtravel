@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getReferralCode, clearReferralCode } from '@/components/ReferralCapture';
 
 interface BookingFormProps {
   tourId: string;
@@ -81,6 +82,8 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
         throw new Error('Please log in to continue');
       }
 
+      const referralCode = getReferralCode();
+
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: {
@@ -90,7 +93,8 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
         body: JSON.stringify({
           tourId,
           ...formData,
-          totalAmount
+          totalAmount,
+          ...(referralCode ? { referralCode } : {}),
         })
       });
 
@@ -100,6 +104,8 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
         throw new Error(data.error || 'Failed to create booking');
       }
 
+      // Clear referral code after successful booking — don't double-credit
+      clearReferralCode();
       // Redirect to payment page
       router.push(`/payment/${data.booking._id || data.data?._id}`);
     } catch (err: any) {

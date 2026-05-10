@@ -75,21 +75,10 @@ export default function AdminApplicationsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      {/* Navigation Bar */}
-      <div className="bg-white shadow-sm rounded-lg mb-6 p-4">
-        <div className="flex items-center gap-3">
-          <Link href="/admin" className="text-blue-600 hover:text-blue-800 font-medium transition-colors">
-            ← Dashboard
-          </Link>
-          <span className="text-gray-300">|</span>
-          <span className="text-gray-700 font-semibold">Applications</span>
-        </div>
-      </div>
-
+    <div>
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Application Management</h1>
-        <p className="text-sm sm:text-base text-gray-600">Review and manage visa application submissions</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">Application Management</h1>
+        <p className="text-sm text-gray-600">Review and manage visa application submissions</p>
       </div>
 
       {/* Filter Tabs */}

@@ -37,15 +37,15 @@ export default function AdminUserProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1E40AF]" />
       </div>
     );
   }
 
   if (error || !userData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <h2 className="text-xl font-bold mb-4">User Not Found</h2>
           <Link href="/admin/users" className="text-blue-600 hover:underline">
@@ -59,27 +59,17 @@ export default function AdminUserProfilePage() {
   const { user, bookings, applications, stats } = userData;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/admin/users" className="text-blue-600 hover:text-blue-700">
-                ← Back to Users
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">User Profile</h1>
-            </div>
-            <Link
-              href={`/admin/users/${userId}/edit`}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Edit User
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">User Profile</h1>
+        <Link
+          href={`/admin/users/${userId}/edit`}
+          className="px-4 py-2 bg-[#1E40AF] text-white rounded-lg hover:bg-blue-800 transition text-sm font-medium"
+        >
+          Edit User
+        </Link>
+      </div>
+      <div>
         {/* User Info */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Basic Information</h2>
@@ -205,7 +195,7 @@ export default function AdminUserProfilePage() {
             <p className="text-gray-500">No applications yet</p>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

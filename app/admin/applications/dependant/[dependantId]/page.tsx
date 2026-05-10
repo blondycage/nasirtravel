@@ -85,28 +85,10 @@ export default function AdminDependantApplicationReviewPage() {
   const packageType = booking?.packageType || 'standard';
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      {/* Navigation Bar */}
-      <div className="bg-white shadow-sm rounded-lg mb-6 p-4">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <Link href="/admin" className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm sm:text-base">
-            ← Dashboard
-          </Link>
-          <span className="text-gray-300">|</span>
-          <Link href="/admin/applications" className="text-blue-600 hover:text-blue-800 font-medium transition-colors text-sm sm:text-base">
-            Applications
-          </Link>
-          <span className="text-gray-300">|</span>
-          <span className="text-gray-700 font-semibold text-sm sm:text-base">Dependant Application</span>
-        </div>
-      </div>
-
-      {/* Header */}
+    <div>
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-          Dependant Application Review
-        </h1>
-        <p className="text-sm sm:text-base text-gray-600">{dependant?.name} - {booking?.tour?.title}</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">Dependant Application Review</h1>
+        <p className="text-sm text-gray-600">{dependant?.name} - {booking?.tour?.title}</p>
       </div>
 
       {/* Success Message */}

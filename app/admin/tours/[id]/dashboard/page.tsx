@@ -93,18 +93,15 @@ export default function PackageDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading package dashboard...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1E40AF]" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <h2 className="text-xl font-bold mb-4">Failed to Load Dashboard</h2>
           <p className="text-red-600 mb-4">{error}</p>
@@ -119,22 +116,12 @@ export default function PackageDashboardPage() {
   const { tour, stats, bookings } = data;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/tours" className="text-blue-600 hover:text-blue-700">
-              ← Back to Tours
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{tour.title}</h1>
-              <p className="text-sm text-gray-600">Package Dashboard</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">{tour.title}</h1>
+        <p className="text-sm text-gray-600">Package Dashboard</p>
+      </div>
+      <div>
         {/* Tour Info */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-bold mb-2">Package Details</h2>
@@ -216,7 +203,7 @@ export default function PackageDashboardPage() {
             </div>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

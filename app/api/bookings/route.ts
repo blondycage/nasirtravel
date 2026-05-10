@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
 import Tour from '@/lib/models/Tour';
+import User from '@/lib/models/User';
 import { sendBookingConfirmation } from '@/lib/utils/email';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 
@@ -74,14 +75,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Tour not found' }, { status: 404 });
     }
 
+    // Validate referral code if provided — look up the referrer
+    // Silently ignore invalid codes so booking always succeeds
+    let validatedReferralCode: string | undefined;
+    const submittedCode = typeof body.referralCode === 'string' ? body.referralCode.trim().toUpperCase() : null;
+    if (submittedCode) {
+      const referrer = await User.findOne({ referralCode: submittedCode });
+      // Valid only if referrer exists and is NOT the booking user (no self-referral)
+      if (referrer && referrer._id.toString() !== decoded.userId) {
+        validatedReferralCode = submittedCode;
+      }
+    }
+
     // Ensure tour field is set correctly and copy packageType from tour
+    // Explicitly list allowed fields — never spread raw body into the model
     const bookingData = {
-      ...body,
       tour: tourId,
-      user: decoded.userId, // Associate booking with logged-in user
-      packageType: tour.packageType, // Copy package type from tour
+      user: decoded.userId,
+      packageType: tour.packageType,
+      customerName: body.customerName,
+      customerEmail: body.customerEmail,
+      customerPhone: body.customerPhone,
+      numberOfTravelers: body.numberOfTravelers,
+      totalAmount: body.totalAmount,
+      bookingDate: body.bookingDate,
+      specialRequests: body.specialRequests,
+      ...(validatedReferralCode ? { referralCode: validatedReferralCode } : {}),
     };
-    delete bookingData.tourId; // Remove tourId if it exists
 
     const booking = await Booking.create(bookingData);
 

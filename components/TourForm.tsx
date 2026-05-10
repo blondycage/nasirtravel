@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { slugify } from '@/lib/utils/slugify';
 
 interface TourFormProps {
   tourId?: string;
@@ -12,6 +13,7 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
     title: '',
+    slug: '',
     category: '',
     packageType: 'standard' as 'umrah' | 'standard',
     image: '',
@@ -23,16 +25,20 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
     status: 'draft',
     inclusions: [] as string[],
     exclusions: [] as string[],
-    itinerary: [] as Array<{ day: number; title: string; description: string }>
+    itinerary: [] as Array<{ day: number; title: string; description: string }>,
+    referralRewardType: 'none' as 'none' | 'fixed' | 'percentage',
+    referralRewardValue: 0,
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [slugEdited, setSlugEdited] = useState(false);
 
   useEffect(() => {
     if (initialData) {
       setFormData({
         title: initialData.title || '',
+        slug: initialData.slug || '',
         category: initialData.category || '',
         packageType: initialData.packageType || 'standard',
         image: initialData.image || '',
@@ -44,8 +50,13 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
         status: initialData.status || 'draft',
         inclusions: initialData.inclusions || [],
         exclusions: initialData.exclusions || [],
-        itinerary: initialData.itinerary || []
+        itinerary: initialData.itinerary || [],
+        referralRewardType: initialData.referralRewardType || 'none',
+        referralRewardValue: initialData.referralRewardValue ?? 0,
       });
+      if (initialData.slug) {
+        setSlugEdited(true);
+      }
     }
   }, [initialData]);
 
@@ -89,10 +100,26 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+
+    // Auto-generate slug from title if slug hasn't been manually edited
+    if (name === 'title' && !slugEdited) {
+      setFormData(prev => ({
+        ...prev,
+        title: value,
+        slug: slugify(value)
+      }));
+    } else if (name === 'slug') {
+      setSlugEdited(true);
+      setFormData(prev => ({
+        ...prev,
+        slug: slugify(value) // Ensure slug is always URL-friendly
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleArrayChange = (field: 'inclusions' | 'exclusions', value: string) => {
@@ -186,6 +213,26 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
           />
         </div>
 
+        <div>
+          <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
+            URL Slug (SEO-friendly URL)
+          </label>
+          <input
+            type="text"
+            id="slug"
+            name="slug"
+            value={formData.slug}
+            onChange={handleChange}
+            placeholder="auto-generated-from-title"
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Auto-generated from title. Edit to customize.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
             Category *
@@ -428,6 +475,46 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
               />
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Referral Reward */}
+      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Referral Reward (optional)</h3>
+        <p className="text-xs text-gray-500 mb-4">
+          Set the reward users earn when someone books this package using their referral link.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Reward Type</label>
+            <select
+              name="referralRewardType"
+              value={formData.referralRewardType}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="none">No referral reward</option>
+              <option value="fixed">Fixed amount (CA$)</option>
+              <option value="percentage">Percentage of booking (%)</option>
+            </select>
+          </div>
+          {formData.referralRewardType !== 'none' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {formData.referralRewardType === 'fixed' ? 'Amount (CA$)' : 'Percentage (%)'}
+              </label>
+              <input
+                type="number"
+                name="referralRewardValue"
+                min="0"
+                step={formData.referralRewardType === 'percentage' ? '0.1' : '1'}
+                value={formData.referralRewardValue}
+                onChange={handleChange}
+                placeholder={formData.referralRewardType === 'fixed' ? 'e.g. 50' : 'e.g. 5'}
+                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          )}
         </div>
       </div>
 

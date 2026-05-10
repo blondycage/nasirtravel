@@ -87,38 +87,23 @@ export default function AdminToursPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading tours...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1E40AF]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Link href="/admin" className="text-blue-600 hover:text-blue-700">
-                ← Back to Dashboard
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Manage Tours</h1>
-            </div>
-            <Link
-              href="/admin/tours/new"
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              + Create New Tour
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Manage Tours</h1>
+        <Link
+          href="/admin/tours/new"
+          className="bg-[#1E40AF] text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition text-sm font-medium"
+        >
+          + Create New Tour
+        </Link>
+      </div>
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
             {error}
@@ -137,6 +122,7 @@ export default function AdminToursPage() {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -204,9 +190,9 @@ export default function AdminToursPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
-      </main>
     </div>
   );
 }

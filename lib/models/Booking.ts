@@ -24,6 +24,10 @@ export interface IBooking extends Document {
   specialRequests?: string;
   documents: IDocument[];
   
+  // Referral tracking — both fields optional, absent on pre-feature bookings
+  referralCode?: string;           // human-readable code used at booking time
+  referral?: mongoose.Types.ObjectId; // direct pointer to the Referral document
+
   // Application Workflow
   applicationClosed: boolean;
   applicationClosedAt?: Date;
@@ -112,6 +116,9 @@ const BookingSchema = new Schema<IBooking>(
     specialRequests: { type: String },
     documents: [DocumentSchema],
     
+    referralCode: { type: String },
+    referral: { type: Schema.Types.ObjectId, ref: 'Referral' },
+
     // Application Workflow
     applicationClosed: { type: Boolean, default: false },
     applicationClosedAt: { type: Date },

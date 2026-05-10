@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import { hashPassword, generateToken } from '@/lib/utils/auth';
 import { sendSignupConfirmation } from '@/lib/utils/email';
+import { generateUniqueReferralCode } from '@/lib/utils/referral';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +23,8 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
+    const referralCode = await generateUniqueReferralCode(name);
+
     // Create user
     const user = await User.create({
       name,
@@ -29,6 +32,7 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       phone,
       role: 'user',
+      referralCode,
     });
 
     // Generate token

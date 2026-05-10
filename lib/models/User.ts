@@ -8,6 +8,9 @@ export interface IUser extends Document {
   role: 'user' | 'admin';
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  // Referral fields — optional, not present on existing users
+  referralCode?: string;
+  referralBalance: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,6 +24,10 @@ const UserSchema = new Schema<IUser>(
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    // sparse: true means the unique index only applies to non-null values
+    // so existing users without a referralCode won't cause duplicate key errors
+    referralCode: { type: String, unique: true, sparse: true },
+    referralBalance: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

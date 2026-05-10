@@ -10,6 +10,9 @@ interface Stats {
   totalTours: number;
   totalUsers: number;
   totalReviews: number;
+  pendingReferrals: number;
+  totalReferralsPaid: number;
+  referralRewardsOwed: number;
 }
 
 export default function AdminDashboard() {
@@ -53,45 +56,16 @@ export default function AdminDashboard() {
     fetchStats();
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/login');
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading dashboard...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1E40AF]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-blue-600 hover:text-blue-700">
-                View Site
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <div>
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
             {error}
@@ -149,6 +123,41 @@ export default function AdminDashboard() {
               <div className="text-4xl">⭐</div>
             </div>
           </div>
+
+          <div className="bg-white p-6 rounded-lg shadow border-l-4 border-orange-400">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm">Pending Referrals</p>
+                <p className="text-3xl font-bold text-orange-500">{stats?.pendingReferrals || 0}</p>
+                <p className="text-xs text-gray-400 mt-1">awaiting confirmation</p>
+              </div>
+              <div className="text-4xl">🎁</div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow border-l-4 border-red-400">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm">Rewards Owed</p>
+                <p className="text-3xl font-bold text-red-500">
+                  CA${(stats?.referralRewardsOwed || 0).toFixed(2)}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">pending + confirmed</p>
+              </div>
+              <div className="text-4xl">💰</div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow border-l-4 border-green-400">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm">Referrals Paid Out</p>
+                <p className="text-3xl font-bold text-green-600">{stats?.totalReferralsPaid || 0}</p>
+                <p className="text-xs text-gray-400 mt-1">completed rewards</p>
+              </div>
+              <div className="text-4xl">✅</div>
+            </div>
+          </div>
         </div>
 
         {/* Quick Actions */}
@@ -194,6 +203,19 @@ export default function AdminDashboard() {
               <div className="text-3xl mb-2">📄</div>
               <p className="font-medium">Review Applications</p>
             </Link>
+
+            <Link
+              href="/admin/referrals"
+              className="p-4 border-2 border-orange-200 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition text-center"
+            >
+              <div className="text-3xl mb-2">🎁</div>
+              <p className="font-medium">Manage Referrals</p>
+              {(stats?.pendingReferrals ?? 0) > 0 && (
+                <span className="inline-block mt-1 px-2 py-0.5 bg-orange-500 text-white text-xs rounded-full">
+                  {stats?.pendingReferrals} pending
+                </span>
+              )}
+            </Link>
           </div>
         </div>
 
@@ -202,7 +224,6 @@ export default function AdminDashboard() {
           <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
           <p className="text-gray-600">Recent bookings and updates will appear here.</p>
         </div>
-      </main>
     </div>
   );
 }

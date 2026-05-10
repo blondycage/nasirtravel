@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
 import Dependant from '@/lib/models/Dependant';
+import Referral from '@/lib/models/Referral';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 
 export async function GET(
@@ -174,6 +175,31 @@ export async function PATCH(
     if (paymentStatus) booking.paymentStatus = paymentStatus;
 
     await booking.save();
+
+    // Cascade cancellation to linked referral — isolated so it never blocks this response
+    try {
+      const isCancellation =
+        bookingStatus === 'cancelled' || paymentStatus === 'refunded';
+
+      if (isCancellation && booking.referral) {
+        const referral = await Referral.findById(booking.referral);
+        // Only cancel if not already paid — paid rewards need manual admin review
+        if (referral && ['pending', 'confirmed'].includes(referral.status)) {
+          const previousStatus = referral.status;
+          referral.statusHistory.push({
+            from: previousStatus,
+            to: 'cancelled',
+            changedBy: decoded.userId,
+            changedAt: new Date(),
+            note: `Auto-cancelled: booking ${bookingStatus === 'cancelled' ? 'cancelled' : 'refunded'}`,
+          });
+          referral.status = 'cancelled';
+          await referral.save();
+        }
+      }
+    } catch (cascadeError) {
+      console.error('Referral cascade cancel failed (non-blocking):', cascadeError);
+    }
 
     // Populate tour and user before returning
     await booking.populate('tour');

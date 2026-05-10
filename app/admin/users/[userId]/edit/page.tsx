@@ -56,15 +56,15 @@ export default function AdminEditUserPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1E40AF]" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <h2 className="text-xl font-bold mb-4">User Not Found</h2>
           <Link href="/admin/users" className="text-blue-600 hover:underline">
@@ -76,19 +76,9 @@ export default function AdminEditUserPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href={`/admin/users/${userId}`} className="text-blue-600 hover:text-blue-700">
-              ← Back to Profile
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Edit User</h1>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit User</h1>
+      <div className="max-w-2xl">
         <UserForm
           mode="edit"
           initialData={{
@@ -100,7 +90,7 @@ export default function AdminEditUserPage() {
           onSubmit={handleUpdateUser}
           onCancel={() => router.push(`/admin/users/${userId}`)}
         />
-      </main>
+      </div>
     </div>
   );
 }

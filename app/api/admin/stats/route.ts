@@ -4,6 +4,7 @@ import Tour from '@/lib/models/Tour';
 import Booking from '@/lib/models/Booking';
 import User from '@/lib/models/User';
 import Review from '@/lib/models/Review';
+import Referral from '@/lib/models/Referral';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 
 export async function GET(request: NextRequest) {
@@ -22,11 +23,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
-    const totalTours = await Tour.countDocuments();
-    const totalBookings = await Booking.countDocuments();
-    const pendingBookings = await Booking.countDocuments({ bookingStatus: 'pending' });
-    const totalUsers = await User.countDocuments();
-    const totalReviews = await Review.countDocuments();
+    const [
+      totalTours,
+      totalBookings,
+      pendingBookings,
+      totalUsers,
+      totalReviews,
+      pendingReferrals,
+      totalReferralsPaid,
+      referralRewardsOwed,
+    ] = await Promise.all([
+      Tour.countDocuments(),
+      Booking.countDocuments(),
+      Booking.countDocuments({ bookingStatus: 'pending' }),
+      User.countDocuments(),
+      Review.countDocuments(),
+      Referral.countDocuments({ status: 'pending' }),
+      Referral.countDocuments({ status: 'paid' }),
+      Referral.aggregate([
+        { $match: { status: { $in: ['pending', 'confirmed'] } } },
+        { $group: { _id: null, total: { $sum: '$rewardAmount' } } },
+      ]).then(r => r[0]?.total ?? 0),
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -36,6 +54,9 @@ export async function GET(request: NextRequest) {
         pendingBookings,
         totalUsers,
         totalReviews,
+        pendingReferrals,
+        totalReferralsPaid,
+        referralRewardsOwed,
       },
     });
   } catch (error: any) {

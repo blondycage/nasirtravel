@@ -52,18 +52,15 @@ export default function EditTourPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading tour...</p>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1E40AF]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <Link href="/admin/tours" className="text-blue-600 hover:text-blue-700">
@@ -75,24 +72,11 @@ export default function EditTourPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/tours" className="text-blue-600 hover:text-blue-700">
-              ← Back to Tours
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Edit Tour</h1>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        <div className="bg-white p-8 rounded-lg shadow">
-          <TourForm tourId={tourId} initialData={tourData} />
-        </div>
-      </main>
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Tour</h1>
+      <div className="bg-white p-8 rounded-lg shadow">
+        <TourForm tourId={tourId} initialData={tourData} />
+      </div>
     </div>
   );
 }

@@ -127,15 +127,15 @@ export default function AdminBookingDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1E40AF]" />
       </div>
     );
   }
 
   if (!booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <h2 className="text-xl font-bold mb-4">Booking Not Found</h2>
           <Link href="/admin/bookings" className="text-blue-600 hover:underline">
@@ -147,19 +147,9 @@ export default function AdminBookingDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/bookings" className="text-blue-600 hover:text-blue-700">
-              ← Back to Bookings
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Booking Details</h1>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Booking Details</h1>
+      <div>
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
             {error}
@@ -423,7 +413,7 @@ export default function AdminBookingDetailPage() {
             <p className="text-gray-500">No dependants added yet</p>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

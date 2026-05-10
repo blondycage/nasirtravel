@@ -30,7 +30,7 @@ interface Tour {
 export default function PackageDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const packageId = params.id as string;
+  const packageId = params.slug as string;
 
   const [tour, setTour] = useState<Tour | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export default function PackageDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const fetchTourDetails = async () => {
+    const fetchAll = async () => {
       try {
         const response = await fetch(`/api/tours/${packageId}`);
         const data = await response.json();
@@ -51,7 +51,15 @@ export default function PackageDetailPage() {
           throw new Error(data.error || 'Failed to fetch tour details');
         }
 
-        setTour(data.data);
+        const tourData = data.data;
+        setTour(tourData);
+
+        // Use the real ObjectId so the reviews query works correctly
+        const reviewsRes = await fetch(`/api/reviews?tourId=${tourData._id}`);
+        const reviewsData = await reviewsRes.json();
+        if (reviewsRes.ok && reviewsData.success) {
+          setReviews(reviewsData.data || []);
+        }
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -59,22 +67,8 @@ export default function PackageDetailPage() {
       }
     };
 
-    const fetchReviews = async () => {
-      try {
-        const response = await fetch(`/api/reviews?tourId=${packageId}`);
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-          setReviews(data.data || []);
-        }
-      } catch (err) {
-        console.error('Failed to fetch reviews:', err);
-      }
-    };
-
     if (packageId) {
-      fetchTourDetails();
-      fetchReviews();
+      fetchAll();
     }
   }, [packageId]);
 
@@ -455,7 +449,7 @@ export default function PackageDetailPage() {
             >
               <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Complete Your Booking</h2>
               <BookingForm
-                tourId={packageId}
+                tourId={tour._id}
                 tourTitle={tour.title}
                 pricePerPerson={pricePerPerson}
               />

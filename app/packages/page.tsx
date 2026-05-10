@@ -2,16 +2,18 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ReferralCapture from '@/components/ReferralCapture';
 
 type PackageCategory = 'All' | 'Hajj / Umrah' | 'Asia' | 'Africa' | 'Europe';
 
 interface TourPackage {
   _id: string;
   title: string;
+  slug?: string;
   category: string;
   image: string;
   departure?: string;
@@ -153,6 +155,9 @@ export default function PackagesPage() {
 
   return (
     <div className="min-h-screen">
+      <Suspense fallback={null}>
+        <ReferralCapture />
+      </Suspense>
       <Header />
 
       {/* Success Toast Notification */}
@@ -368,7 +373,7 @@ export default function PackagesPage() {
 
                   {/* Button */}
                   {pkg.price ? (
-                    <Link href={`/packages/${pkg._id}`}>
+                    <Link href={`/packages/${pkg.slug || pkg._id}`}>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
@@ -378,8 +383,14 @@ export default function PackagesPage() {
                       </motion.button>
                     </Link>
                   ) : (
+<<<<<<< Updated upstream
                     <motion.button
                       onClick={() => openEnquiryModal(pkg)}
+=======
+                    <Link href={`/packages/${pkg.slug || pkg._id}`}>
+                    <motion.button
+
+>>>>>>> Stashed changes
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className="w-full py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-bold transition-all duration-300 bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-lg"

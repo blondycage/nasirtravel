@@ -53,6 +53,7 @@ export default function DashboardLayout({
     { name: 'My Bookings', path: '/dashboard/bookings', icon: '📋' },
     { name: 'Invoices', path: '/dashboard/invoices', icon: '💳' },
     { name: 'My Reviews', path: '/dashboard/reviews', icon: '⭐' },
+    { name: 'Refer & Earn', path: '/dashboard/referral', icon: '🎁' },
     { name: 'Profile', path: '/dashboard/profile', icon: '👤' },
   ];
 

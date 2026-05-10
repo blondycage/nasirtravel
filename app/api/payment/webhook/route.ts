@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       } catch (emailError) {
         console.error('Failed to send payment confirmation email:', emailError);
       }
+
     }
   }
 
