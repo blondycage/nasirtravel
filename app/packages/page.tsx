@@ -12,6 +12,7 @@ type PackageCategory = 'All' | 'Hajj / Umrah' | 'Asia' | 'Africa' | 'Europe';
 
 interface TourPackage {
   _id: string;
+  id?: string;
   title: string;
   slug?: string;
   category: string;
@@ -20,6 +21,7 @@ interface TourPackage {
   accommodation: string;
   dates: string;
   price: string;
+  isComing?: boolean;
   status: 'draft' | 'published' | 'archived';
 }
 
@@ -383,14 +385,8 @@ export default function PackagesPage() {
                       </motion.button>
                     </Link>
                   ) : (
-<<<<<<< Updated upstream
                     <motion.button
                       onClick={() => openEnquiryModal(pkg)}
-=======
-                    <Link href={`/packages/${pkg.slug || pkg._id}`}>
-                    <motion.button
-
->>>>>>> Stashed changes
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className="w-full py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-bold transition-all duration-300 bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-lg"

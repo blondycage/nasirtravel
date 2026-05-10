@@ -18,6 +18,9 @@ interface Dependant {
   dateOfBirth?: string;
   passportNumber?: string;
   documents: Document[];
+  applicationStatus?: string;
+  applicationNumber?: string;
+  applicationFormSubmitted?: boolean;
 }
 
 export default function AdminBookingDetailPage() {

@@ -35,16 +35,16 @@ interface DashboardData {
   };
   stats: {
     totalBookings: number;
-    totalRevenue: number;
-    totalApplications: number;
-    applicationsByStatus: {
-      pending: number;
-      submitted: number;
-      under_review: number;
-      accepted: number;
-      rejected: number;
-      needs_revision: number;
-    };
+    paidBookings: number;
+    pendingPayments: number;
+    totalRevenue?: number;
+    total: number;
+    pending: number;
+    submitted: number;
+    under_review: number;
+    accepted: number;
+    rejected: number;
+    needs_revision: number;
   };
   bookings: Booking[];
 }
@@ -192,7 +192,7 @@ export default function PackageDashboardPage() {
                           name={app.name}
                           status={app.status}
                           rejectionReason={app.rejectionReason}
-                          bookingId={app.bookingId}
+                          bookingId={app.bookingId ?? ''}
                           dependantId={app.dependantId}
                         />
                       ))}
