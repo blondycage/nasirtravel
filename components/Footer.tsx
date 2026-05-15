@@ -67,9 +67,9 @@ export default function Footer() {
           >
             <h4 className="text-lg font-bold mb-4 text-primary-orange">Hours of Operation</h4>
             <div className="space-y-2 text-gray-400">
-              <p>Sunday to Thursday:<br />10:00 AM to 4:00 PM</p>
-              <p>Friday and Saturday:<br />Closed</p>
-              <p>Stat Holidays and Eid:<br />Closed</p>
+              <p>Monday to Friday:<br />10:00 AM to 4:00 PM</p>
+              <p>Saturday and Sunday:<br />Closed</p>
+              <p> Holidays and Eid:<br />Closed</p>
             </div>
           </motion.div>
 
