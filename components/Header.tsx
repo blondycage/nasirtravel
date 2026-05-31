@@ -55,7 +55,7 @@ export default function Header() {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6 }}
-      className="fixed top-0 left-0 right-0 z-50 bg-white/98 backdrop-blur-md shadow-lg border-b border-gray-100 transition-all duration-300"
+      className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg border-b border-gray-100 transition-all duration-300"
     >
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
@@ -67,7 +67,7 @@ export default function Header() {
               className="relative h-10 sm:h-12 lg:h-14 w-auto"
             >
               <Image
-                src="/image-removebg-preview.webp"
+                src="/logo.png"
                 alt="Naasir Travel Logo"
                 width={180}
                 height={56}

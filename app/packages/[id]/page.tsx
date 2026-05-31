@@ -330,9 +330,10 @@ export default function PackageDetailPage() {
                   <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
                     {tour.title}
                   </h2>
-                  <p className="text-gray-700 leading-relaxed text-lg">
-                    {tour.description}
-                  </p>
+                  <div
+                    className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 prose-a:text-blue-600"
+                    dangerouslySetInnerHTML={{ __html: tour.description || '' }}
+                  />
                 </div>
 
                 {/* Price Includes/Excludes */}

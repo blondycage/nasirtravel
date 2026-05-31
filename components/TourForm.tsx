@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import RichTextEditor from './RichTextEditor';
 
 interface TourFormProps {
   tourId?: string;
@@ -28,6 +29,8 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [inclusionInput, setInclusionInput] = useState('');
+  const [exclusionInput, setExclusionInput] = useState('');
 
   useEffect(() => {
     if (initialData) {
@@ -95,12 +98,14 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
     }));
   };
 
-  const handleArrayChange = (field: 'inclusions' | 'exclusions', value: string) => {
-    const items = value.split('\n').filter(item => item.trim());
-    setFormData(prev => ({
-      ...prev,
-      [field]: items
-    }));
+  const addItem = (field: 'inclusions' | 'exclusions', value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    setFormData(prev => ({ ...prev, [field]: [...prev[field], trimmed] }));
+  };
+
+  const removeItem = (field: 'inclusions' | 'exclusions', index: number) => {
+    setFormData(prev => ({ ...prev, [field]: prev[field].filter((_, i) => i !== index) }));
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -325,16 +330,12 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
         </div>
 
         <div className="md:col-span-2">
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Description
           </label>
-          <textarea
-            id="description"
-            name="description"
-            rows={4}
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          <RichTextEditor
+            initialContent={formData.description}
+            onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
           />
         </div>
 
@@ -359,32 +360,102 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
 
       {/* Inclusions */}
       <div>
-        <label htmlFor="inclusions" className="block text-sm font-medium text-gray-700 mb-1">
-          Inclusions (one per line)
-        </label>
-        <textarea
-          id="inclusions"
-          rows={5}
-          value={formData.inclusions.join('\n')}
-          onChange={(e) => handleArrayChange('inclusions', e.target.value)}
-          placeholder="Roundtrip Airfare&#10;Hotel Accommodations&#10;Ground Transportation"
-          className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+        <label className="block text-sm font-medium text-gray-700 mb-2">Inclusions</label>
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            value={inclusionInput}
+            onChange={(e) => setInclusionInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addItem('inclusions', inclusionInput);
+                setInclusionInput('');
+              }
+            }}
+            placeholder="e.g. Roundtrip Airfare"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <button
+            type="button"
+            onClick={() => { addItem('inclusions', inclusionInput); setInclusionInput(''); }}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium"
+          >
+            + Add
+          </button>
+        </div>
+        {formData.inclusions.length > 0 && (
+          <ul className="space-y-2">
+            {formData.inclusions.map((item, i) => (
+              <li key={i} className="flex items-center justify-between bg-green-50 border border-green-200 rounded px-3 py-2">
+                <span className="text-sm text-gray-800 flex items-center gap-2">
+                  <span className="text-green-600 font-bold">✓</span> {item}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeItem('inclusions', i)}
+                  className="text-red-400 hover:text-red-600 text-lg leading-none ml-3"
+                  title="Remove"
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {formData.inclusions.length === 0 && (
+          <p className="text-sm text-gray-400 italic">No inclusions added yet.</p>
+        )}
       </div>
 
       {/* Exclusions */}
       <div>
-        <label htmlFor="exclusions" className="block text-sm font-medium text-gray-700 mb-1">
-          Exclusions (one per line)
-        </label>
-        <textarea
-          id="exclusions"
-          rows={5}
-          value={formData.exclusions.join('\n')}
-          onChange={(e) => handleArrayChange('exclusions', e.target.value)}
-          placeholder="Lunch & Dinner&#10;Travel Insurance&#10;Personal Expenses"
-          className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+        <label className="block text-sm font-medium text-gray-700 mb-2">Exclusions</label>
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            value={exclusionInput}
+            onChange={(e) => setExclusionInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addItem('exclusions', exclusionInput);
+                setExclusionInput('');
+              }
+            }}
+            placeholder="e.g. Travel Insurance"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <button
+            type="button"
+            onClick={() => { addItem('exclusions', exclusionInput); setExclusionInput(''); }}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-medium"
+          >
+            + Add
+          </button>
+        </div>
+        {formData.exclusions.length > 0 && (
+          <ul className="space-y-2">
+            {formData.exclusions.map((item, i) => (
+              <li key={i} className="flex items-center justify-between bg-red-50 border border-red-200 rounded px-3 py-2">
+                <span className="text-sm text-gray-800 flex items-center gap-2">
+                  <span className="text-red-500 font-bold">✗</span> {item}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeItem('exclusions', i)}
+                  className="text-red-400 hover:text-red-600 text-lg leading-none ml-3"
+                  title="Remove"
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {formData.exclusions.length === 0 && (
+          <p className="text-sm text-gray-400 italic">No exclusions added yet.</p>
+        )}
       </div>
 
       {/* Itinerary */}

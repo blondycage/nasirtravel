@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Tour from '@/lib/models/Tour';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
+import sanitizeHtml from 'sanitize-html';
 
 // GET single tour
 export async function GET(
@@ -74,6 +75,12 @@ export async function PUT(
     }
 
     const body = await request.json();
+    if (body.description) {
+      body.description = sanitizeHtml(body.description, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2', 'h3', 'u', 'br']),
+        allowedAttributes: { '*': ['class'] },
+      });
+    }
 
     const tour = await Tour.findByIdAndUpdate(
       params.id,
