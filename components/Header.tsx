@@ -82,10 +82,12 @@ export default function Header() {
             {[
               { name: 'Home', href: '/' },
               { name: 'Packages', href: '/packages' },
+              { name: 'Hajj 2027', href: '/hajj-2027' },
               { name: 'FAQ', href: '/#faq' },
               { name: 'Contact', href: '/contact' },
+              { name: 'T&C', href: '/Terms_and_Conditions.pdf', target: '_blank' },
             ].map((item) => (
-              <Link key={item.name} href={item.href}>
+              <Link key={item.name} href={item.href} target={'target' in item ? (item as any).target : undefined}>
                 <motion.div
                   whileHover={{ y: -2 }}
                   className="px-4 py-2 rounded-lg font-medium transition-all duration-300 text-gray-700 hover:text-primary-blue hover:bg-blue-50"
@@ -181,8 +183,10 @@ export default function Header() {
                 {[
                   { name: 'Home', href: '/' },
                   { name: 'Packages', href: '/packages' },
+                  { name: 'Hajj 2027', href: '/hajj-2027' },
                   { name: 'FAQ', href: '/#faq' },
                   { name: 'Contact', href: '/contact' },
+                  { name: 'Terms & Conditions', href: '/Terms_and_Conditions.pdf', target: '_blank' },
                 ].map((item, index) => (
                   <motion.div
                     key={item.name}
@@ -192,6 +196,7 @@ export default function Header() {
                   >
                     <Link
                       href={item.href}
+                      target={'target' in item ? (item as any).target : undefined}
                       onClick={() => setIsMenuOpen(false)}
                       className="block px-4 py-3 text-gray-700 hover:text-primary-blue hover:bg-blue-50 rounded-lg font-medium transition-all duration-300"
                     >

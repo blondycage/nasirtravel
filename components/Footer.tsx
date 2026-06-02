@@ -102,6 +102,16 @@ export default function Footer() {
                   Contact Us
                 </Link>
               </li>
+              <li>
+                <Link href="/hajj-2027" className="text-gray-400 hover:text-primary-orange transition-colors">
+                  Hajj 2027
+                </Link>
+              </li>
+              <li>
+                <Link href="/Terms_and_Conditions.pdf" target="_blank" className="text-gray-400 hover:text-primary-orange transition-colors">
+                  Terms &amp; Conditions
+                </Link>
+              </li>
             </ul>
           </motion.div>
         </div>
