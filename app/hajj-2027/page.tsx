@@ -5,57 +5,89 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 
-const requirementGroups = [
+const expectations = [
   {
-    title: 'Travel Documents',
-    icon: '📄',
-    items: [
-      'Valid passport (minimum 6 months validity beyond travel date)',
-      'Hajj visa issued by the Saudi Arabian consulate',
-      'Original birth certificate or marriage certificate (for women travelling with mahram)',
-      'Recent passport-sized photographs (white background)',
-    ],
+    icon: '📋',
+    title: 'Full Nusuk Support',
+    desc: 'Clear, step-by-step guidance during every key Nusuk phase — registration, profile setup, package selection, purchase, and receiving your visa and tickets — while you remain in full control of your own account.',
   },
   {
-    title: 'Health & Vaccinations',
-    icon: '💉',
-    items: [
-      'Meningococcal meningitis (ACYW135) vaccine — mandatory',
-      'COVID-19 vaccination certificate',
-      'Polio vaccine (for travellers from certain countries)',
-      'General health screening and medical clearance letter',
-      'Sufficient personal medications with prescriptions',
-    ],
+    icon: '🔗',
+    title: 'Correct Package Linking',
+    desc: 'Help understanding Nusuk package options and selecting the specific service provider and package required to join our guided group. You still click and pay within your own Nusuk account.',
   },
   {
-    title: 'Financial Requirements',
-    icon: '💰',
-    items: [
-      'Full payment of Hajj package before registration deadline',
-      'Proof of financial capability (istita\'a) for independent applicants',
-      'Travel insurance covering medical emergencies',
-      'Sufficient spending money for personal expenses in Makkah & Madinah',
-    ],
+    icon: '🎓',
+    title: 'Pre-Hajj Workshop',
+    desc: 'One structured workshop after Ramadan covering Hajj rituals, health and safety, packing, and a realistic day-by-day schedule for Hajj 2027 based on the latest guidance from our partnered Saudi Hajj service provider.',
   },
   {
-    title: 'Clothing & Ihram',
+    icon: '💬',
+    title: 'Hajj 2027 WhatsApp Group',
+    desc: 'A dedicated group chat serving as the main channel for schedules, meeting points, updates, reminders, and Q&A before departure and throughout the days of Hajj.',
+  },
+  {
+    icon: '📡',
+    title: 'Direct Line to Service Provider',
+    desc: 'We maintain direct communication with our selected Saudi Hajj service provider so we can relay instructions, timing changes, and logistical updates to you quickly and clearly.',
+  },
+  {
     icon: '🕌',
-    items: [
-      'Men: two pieces of unstitched white Ihram cloth',
-      'Women: modest, loose-fitting clothing (no specific Ihram requirement)',
-      'Comfortable walking shoes for long distances',
-      'Light layers for varying temperatures (hot days, cool nights)',
-      'Unscented soap, shampoo, and toiletries for Ihram state',
-    ],
+    title: 'On-the-Ground Group Guidance',
+    desc: 'Coordination and reminders during the key days of Hajj. We receive transport timings from the Hajj service provider and relay real-time updates so you know exactly what to do and where to be.',
+  },
+  {
+    icon: '🤝',
+    title: 'Realistic Expectations',
+    desc: 'Honest, transparent communication about schedule changes, delays, or limitations outside our control — including traffic, crowd management, or decisions by Saudi authorities.',
+  },
+  {
+    icon: '📍',
+    title: 'Local Team Support',
+    desc: 'A team based in Richmond, BC, that understands travel logistics, documentation, and time zones — supporting pilgrims wherever they are travelling from (as long as Nusuk allows booking with our chosen provider).',
   },
 ];
 
-const timeline = [
-  { phase: 'Registration Opens', date: 'Early 2026', desc: 'Applications open — secure your spot early as quotas fill fast.' },
-  { phase: 'Document Submission', date: 'Mid 2026', desc: 'Submit all required documents for visa processing.' },
-  { phase: 'Vaccinations Deadline', date: 'Late 2026', desc: 'Ensure all mandatory vaccinations are up to date.' },
-  { phase: 'Final Payment', date: 'Early 2027', desc: 'Full package payment must be completed before this date.' },
-  { phase: 'Hajj 2027', date: 'Jan / Feb 2027', desc: 'Dhul Hijja 1448 AH — the sacred days of Hajj.' },
+const conduct = [
+  {
+    title: 'Be clear about your intention',
+    desc: 'Let us know whether you are just learning about Hajj or actively planning to go in the upcoming season, so we can support you appropriately.',
+  },
+  {
+    title: 'Join our group if you rely on us',
+    desc: 'If you are actively preparing and relying on our ongoing guidance over many weeks or months, we kindly expect you to join Naasir Travel\'s guided group and select the Nusuk service provider we are working with.',
+  },
+  {
+    title: 'Fair use of our guidance',
+    desc: 'Our detailed and ongoing support is designed for pilgrims who are part of our guided group. If you make extensive use of our help and then book with another provider, we may limit further one-to-one assistance.',
+  },
+  {
+    title: 'Respectful use of our time',
+    desc: 'We are not available 24/7. Please read all shared materials first — they answer most questions. Avoid expecting instant replies; we will respond during working hours and may refer you to prior answers rather than repeating them.',
+  },
+  {
+    title: 'Use channels wisely',
+    desc: 'Keep general questions for group sessions or the WhatsApp group. Reserve one-to-one questions for matters that genuinely need personal attention.',
+  },
+  {
+    title: 'Follow instructions during Hajj',
+    desc: 'Respect group timings, meeting points, and instructions during Hajj, recognising that movements are tightly controlled by Saudi authorities and fixed transport schedules.',
+  },
+  {
+    title: 'Take care of your health',
+    desc: 'Consult your doctor, manage your medications, and prepare physically for heat, extensive walking, and large crowds.',
+  },
+  {
+    title: 'Maintain patience, respect, and adab',
+    desc: 'Treat fellow pilgrims, Naasir Travel staff, and service-provider personnel with patience and respect — especially in stressful moments.',
+  },
+];
+
+const nusukSteps = [
+  'Create a Nusuk account and upload your documents.',
+  'Browse approved Hajj packages from licensed Saudi service providers.',
+  'Choose the specific provider and package we indicate to link your booking to our group.',
+  'Complete secure online payment inside your own Nusuk account.',
 ];
 
 export default function Hajj2027Page() {
@@ -63,9 +95,8 @@ export default function Hajj2027Page() {
     <main className="min-h-screen bg-white">
       <Header />
 
-      {/* Hero */}
+      {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900 pt-20">
-        {/* Decorative circles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-blue/20 rounded-full blur-3xl" />
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary-orange/20 rounded-full blur-3xl" />
@@ -79,7 +110,7 @@ export default function Hajj2027Page() {
             transition={{ duration: 0.7 }}
           >
             <span className="inline-block bg-primary-orange/20 text-primary-orange border border-primary-orange/40 px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide mb-6">
-              1448 AH · January / February 2027
+              Hajj 2027 · Guidance & Group Coordination
             </span>
           </motion.div>
 
@@ -93,6 +124,8 @@ export default function Hajj2027Page() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-orange to-yellow-400">
               2027
             </span>
+            <br />
+            <span className="text-3xl sm:text-4xl font-bold text-gray-300">with Naasir Travel</span>
           </motion.h1>
 
           <motion.p
@@ -101,57 +134,27 @@ export default function Hajj2027Page() {
             transition={{ duration: 0.7, delay: 0.3 }}
             className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            The most sacred journey of a lifetime. Naasir Travel is preparing exclusive Hajj 2027 packages
-            — join thousands of pilgrims from Canada on this transformative spiritual experience.
+            Register for Hajj 2027 guidance with a trusted guide. We walk you through every step of the
+            official Nusuk process — while you remain in full control of your booking and payment.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.45 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Link href="/contact">
+            <a href="#register">
               <motion.button
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-primary-orange to-orange-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-orange-500/30 transition-all duration-300"
+                className="bg-gradient-to-r from-primary-orange to-orange-600 text-white px-10 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-orange-500/30 transition-all duration-300"
               >
-                Register Your Interest
-              </motion.button>
-            </Link>
-            <a href="#requirements">
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="border-2 border-white/30 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white/10 transition-all duration-300"
-              >
-                View Requirements
+                Register for Hajj 2027 Guidance
               </motion.button>
             </a>
           </motion.div>
-
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.6 }}
-            className="grid grid-cols-3 gap-6 max-w-lg mx-auto mt-16"
-          >
-            {[
-              { value: '30+', label: 'Years Experience' },
-              { value: '5★', label: 'Hotel Ratings' },
-              { value: '24/7', label: 'On-Ground Support' },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl font-extrabold text-primary-orange">{stat.value}</p>
-                <p className="text-gray-400 text-sm mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </motion.div>
         </div>
 
-        {/* Scroll indicator */}
         <motion.div
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 1.8 }}
@@ -163,8 +166,52 @@ export default function Hajj2027Page() {
         </motion.div>
       </section>
 
-      {/* What is Hajj */}
+      {/* ── INTRO ────────────────────────────────────────────────────────────── */}
       <section className="py-20 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-6 text-center">
+              How We <span className="text-primary-blue">Help You</span>
+            </h2>
+            <p className="text-gray-600 text-lg leading-relaxed mb-6 text-center max-w-3xl mx-auto">
+              Naasir Travel does <strong>not</strong> sell Hajj packages or take any Hajj payments. Instead,
+              we <strong>guide you through every step of the Nusuk process</strong> — from registration to
+              purchasing your Hajj package and receiving your visa and tickets — while you always complete
+              the actual booking and payment inside your own Nusuk account.
+            </p>
+
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-8 mt-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">When you register with us, you will:</h3>
+              <ul className="space-y-3">
+                {[
+                  'Receive clear information on how to apply for Hajj through Nusuk from your country of residence.',
+                  'Know exactly which approved Saudi Hajj service provider and package to choose on Nusuk in order to be linked to our group.',
+                  'Stay informed through our Hajj 2027 WhatsApp group and by attending our pre-Hajj workshop before you travel.',
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3 text-gray-700">
+                    <span className="flex-shrink-0 w-6 h-6 bg-primary-blue text-white rounded-full flex items-center justify-center text-sm font-bold mt-0.5">{i + 1}</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <p className="mt-6 text-sm text-gray-500 text-center italic">
+              Registration with Naasir Travel is <strong>for guidance, information, and group coordination only</strong> — not
+              for purchasing a Hajj package or securing a visa spot. Those are handled entirely through Nusuk
+              and its authorised Saudi Hajj service providers.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── HOW NUSUK WORKS ──────────────────────────────────────────────────── */}
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -173,51 +220,51 @@ export default function Hajj2027Page() {
             transition={{ duration: 0.6 }}
             className="text-center mb-14"
           >
-            <h2 className="text-4xl font-extrabold text-gray-900 mb-4">What is <span className="text-primary-blue">Hajj?</span></h2>
-            <p className="text-gray-500 max-w-2xl mx-auto text-lg leading-relaxed">
-              The fifth pillar of Islam, Hajj is an annual pilgrimage to the holy city of Makkah, Saudi Arabia.
-              It is obligatory once in a lifetime for every Muslim who is physically and financially able — a deeply
-              spiritual journey of devotion, sacrifice, and unity.
+            <h2 className="text-4xl font-extrabold text-gray-900 mb-4">
+              How Hajj Booking Works{' '}
+              <span className="text-primary-orange">(Nusuk Only)</span>
+            </h2>
+            <p className="text-gray-500 max-w-2xl mx-auto text-lg">
+              All Hajj bookings under the Direct Hajj Program must be completed on the official Nusuk
+              Hajj platform — the only approved digital system overseen by the Ministry of Hajj and Umrah.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: '🕋',
-                title: 'Tawaf',
-                desc: 'Circumambulating the Kaaba seven times in a counter-clockwise direction at Masjid al-Haram.',
-              },
-              {
-                icon: '🏔️',
-                title: "Wuquf at Arafat",
-                desc: "Standing on the plains of Arafat from noon until sunset — the pinnacle and heart of Hajj.",
-              },
-              {
-                icon: '🌙',
-                title: 'Mina & Stoning',
-                desc: 'Spending nights in Mina and performing the symbolic stoning of the devil at Jamarat.',
-              },
-            ].map((item, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            {nusukSteps.map((step, i) => (
               <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 25 }}
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-2xl p-8 text-center shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-start gap-4"
               >
-                <div className="text-5xl mb-4">{item.icon}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-gray-500 leading-relaxed">{item.desc}</p>
+                <span className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-primary-blue to-blue-700 text-white rounded-full flex items-center justify-center font-extrabold text-lg shadow-md">
+                  {i + 1}
+                </span>
+                <p className="text-gray-700 leading-relaxed pt-1">{step}</p>
               </motion.div>
             ))}
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="bg-primary-orange/10 border border-primary-orange/30 rounded-2xl p-6 text-center"
+          >
+            <p className="text-gray-800 font-medium">
+              Naasir Travel will <strong>never</strong> take payment for Hajj packages. Your booking and
+              funds stay within Nusuk and with the authorised Saudi Hajj service provider you select.
+            </p>
+          </motion.div>
         </div>
       </section>
 
-      {/* Requirements */}
-      <section id="requirements" className="py-20 bg-gray-50">
+      {/* ── WHAT YOU CAN EXPECT ──────────────────────────────────────────────── */}
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -227,44 +274,59 @@ export default function Hajj2027Page() {
             className="text-center mb-14"
           >
             <h2 className="text-4xl font-extrabold text-gray-900 mb-4">
-              What You'll <span className="text-primary-orange">Need</span>
+              What You Can Expect{' '}
+              <span className="text-primary-blue">with Naasir Travel</span>
             </h2>
             <p className="text-gray-500 max-w-xl mx-auto text-lg">
-              Prepare early — Hajj requires careful planning across documents, health, and finances.
+              When you register for Hajj 2027 guidance, here is what we provide.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {requirementGroups.map((group, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            {expectations.map((item, i) => (
               <motion.div
-                key={group.title}
+                key={item.title}
                 initial={{ opacity: 0, y: 25 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow"
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                className="bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="flex items-center gap-3 mb-5">
-                  <span className="text-3xl">{group.icon}</span>
-                  <h3 className="text-xl font-bold text-gray-900">{group.title}</h3>
+                <div className="flex items-start gap-4">
+                  <span className="text-3xl flex-shrink-0">{item.icon}</span>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">{item.title}</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">{item.desc}</p>
+                  </div>
                 </div>
-                <ul className="space-y-3">
-                  {group.items.map((item) => (
-                    <li key={item} className="flex items-start gap-3 text-gray-600">
-                      <span className="mt-1 flex-shrink-0 w-5 h-5 bg-primary-blue/10 text-primary-blue rounded-full flex items-center justify-center text-xs font-bold">✓</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
               </motion.div>
             ))}
           </div>
+
+          {/* Important disclaimer */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6"
+          >
+            <p className="text-sm text-gray-700 leading-relaxed">
+              <strong>Important:</strong> Naasir Travel is <strong>not</strong> a Hajj service provider and
+              does <strong>not</strong> control or guarantee services delivered during Hajj (such as buses,
+              accommodation, meals, or on-site facilities). These are fully managed by your Saudi Hajj service
+              provider through your Nusuk booking and are subject to local regulations and conditions.
+              Naasir Travel serves only as a guide and group coordinator and does not receive your Hajj package
+              payments. Your Hajj package is paid only through Nusuk. Optional add-on services such as qurbani
+              may be arranged and paid through Naasir Travel separately.
+            </p>
+          </motion.div>
         </div>
       </section>
 
-      {/* Timeline */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+      {/* ── CODE OF CONDUCT ──────────────────────────────────────────────────── */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -273,53 +335,40 @@ export default function Hajj2027Page() {
             className="text-center mb-14"
           >
             <h2 className="text-4xl font-extrabold text-gray-900 mb-4">
-              Key <span className="text-primary-blue">Dates</span>
+              What We Kindly{' '}
+              <span className="text-primary-orange">Expect from You</span>
             </h2>
-            <p className="text-gray-500 max-w-lg mx-auto">
-              Plan ahead — Hajj preparation starts over a year in advance.
+            <p className="text-gray-500 max-w-xl mx-auto text-lg">
+              To keep the group organised, safe, and fairly served, we have a simple code of conduct for
+              our Hajj guidance.
             </p>
           </motion.div>
 
-          <div className="relative">
-            <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-blue via-primary-orange to-primary-blue md:-translate-x-0.5" />
-            <div className="space-y-10">
-              {timeline.map((item, i) => (
-                <motion.div
-                  key={item.phase}
-                  initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className={`relative flex items-start gap-6 md:gap-0 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}
-                >
-                  <div className={`hidden md:block md:w-1/2 ${i % 2 === 0 ? 'md:pr-12 text-right' : 'md:pl-12 text-left'}`}>
-                    <p className="text-sm font-semibold text-primary-orange uppercase tracking-wide">{item.date}</p>
-                    <h4 className="text-lg font-bold text-gray-900 mt-1">{item.phase}</h4>
-                    <p className="text-gray-500 mt-1 text-sm">{item.desc}</p>
-                  </div>
-
-                  {/* Dot */}
-                  <div className="flex-shrink-0 relative z-10 w-12 h-12 bg-gradient-to-br from-primary-blue to-blue-700 rounded-full flex items-center justify-center shadow-lg text-white font-bold md:absolute md:left-1/2 md:-translate-x-1/2">
-                    {i + 1}
-                  </div>
-
-                  {/* Mobile content */}
-                  <div className="md:hidden flex-1">
-                    <p className="text-sm font-semibold text-primary-orange uppercase tracking-wide">{item.date}</p>
-                    <h4 className="text-lg font-bold text-gray-900 mt-1">{item.phase}</h4>
-                    <p className="text-gray-500 mt-1 text-sm">{item.desc}</p>
-                  </div>
-
-                  <div className="hidden md:block md:w-1/2" />
-                </motion.div>
-              ))}
-            </div>
+          <div className="space-y-4">
+            {conduct.map((item, i) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.06 }}
+                className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow"
+              >
+                <span className="flex-shrink-0 w-8 h-8 bg-primary-blue/10 text-primary-blue rounded-full flex items-center justify-center font-bold text-sm mt-0.5">
+                  {i + 1}
+                </span>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1">{item.title}</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">{item.desc}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Coming Soon Notice */}
-      <section className="py-20 bg-gradient-to-br from-blue-950 to-gray-900">
+      {/* ── REGISTRATION CTA ─────────────────────────────────────────────────── */}
+      <section id="register" className="py-20 bg-gradient-to-br from-blue-950 to-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -328,29 +377,24 @@ export default function Hajj2027Page() {
             transition={{ duration: 0.6 }}
             className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-3xl p-10 sm:p-14 text-center"
           >
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-              className="text-6xl mb-6 inline-block"
-            >
-              🔔
-            </motion.div>
+            <div className="text-6xl mb-6">🕋</div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-              More Details <span className="text-primary-orange">Coming Soon</span>
+              Register for{' '}
+              <span className="text-primary-orange">Hajj 2027 Guidance</span>
             </h2>
             <p className="text-gray-300 text-lg leading-relaxed mb-8">
-              We are currently finalising our exclusive Hajj 2027 packages — including pricing, hotel options,
-              group departure dates, and guided itineraries. Register your interest now and be the first to know
-              when full details are released.
+              Join Naasir Travel's guided group and let us support you through every step of the Nusuk
+              process. Registration is for guidance and group coordination only — no package payments
+              are taken by us.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/contact">
                 <motion.button
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-gradient-to-r from-primary-orange to-orange-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-orange-500/30 transition-all duration-300"
+                  className="bg-gradient-to-r from-primary-orange to-orange-600 text-white px-10 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-orange-500/30 transition-all duration-300"
                 >
-                  Register Interest
+                  Register for Hajj 2027 Guidance
                 </motion.button>
               </Link>
               <a href="tel:+18886627467">
@@ -366,6 +410,15 @@ export default function Hajj2027Page() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── FOOTER DISCLAIMER ────────────────────────────────────────────────── */}
+      <div className="bg-gray-100 py-5 px-4 text-center">
+        <p className="text-xs text-gray-500 max-w-3xl mx-auto leading-relaxed">
+          All Hajj bookings, payments, visas, and on-the-ground services are provided solely through the
+          official Nusuk Hajj platform and its approved Saudi Hajj service providers. Naasir Travel offers
+          guidance and group coordination only and is not responsible for the delivery of package services.
+        </p>
+      </div>
 
       <Footer />
     </main>

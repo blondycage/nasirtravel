@@ -82,7 +82,7 @@ export default function Header() {
             {[
               { name: 'Home', href: '/' },
               { name: 'Packages', href: '/packages' },
-             
+              { name: 'Hajj 2027', href: '/hajj-2027' },
               { name: 'FAQ', href: '/#faq' },
               { name: 'Contact', href: '/contact' },
               { name: 'T&C', href: '/Terms_and_Conditions.pdf', target: '_blank' },
