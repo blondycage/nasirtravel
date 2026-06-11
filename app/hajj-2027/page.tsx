@@ -1,9 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Link from 'next/link';
+import HajjInterestForm from '@/components/HajjInterestForm';
 
 const expectations = [
   {
@@ -91,6 +92,8 @@ const nusukSteps = [
 ];
 
 export default function Hajj2027Page() {
+  const [showInterestForm, setShowInterestForm] = useState(false);
+
   return (
     <main className="min-h-screen bg-white">
       <Header />
@@ -143,15 +146,14 @@ export default function Hajj2027Page() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.45 }}
           >
-            <a href="#register">
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-primary-orange to-orange-600 text-white px-10 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-orange-500/30 transition-all duration-300"
-              >
-                Register for Hajj 2027 Guidance
-              </motion.button>
-            </a>
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowInterestForm(true)}
+              className="bg-gradient-to-r from-primary-orange to-orange-600 text-white px-10 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-orange-500/30 transition-all duration-300"
+            >
+              Register Interest
+            </motion.button>
           </motion.div>
         </div>
 
@@ -379,8 +381,8 @@ export default function Hajj2027Page() {
           >
             <div className="text-6xl mb-6">🕋</div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
-              Register for{' '}
-              <span className="text-primary-orange">Hajj 2027 Guidance</span>
+              Register Interest for{' '}
+              <span className="text-primary-orange">Hajj 2027</span>
             </h2>
             <p className="text-gray-300 text-lg leading-relaxed mb-8">
               Join Naasir Travel's guided group and let us support you through every step of the Nusuk
@@ -388,15 +390,14 @@ export default function Hajj2027Page() {
               are taken by us.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/contact">
-                <motion.button
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-gradient-to-r from-primary-orange to-orange-600 text-white px-10 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-orange-500/30 transition-all duration-300"
-                >
-                  Register for Hajj 2027 Guidance
-                </motion.button>
-              </Link>
+              <motion.button
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowInterestForm(true)}
+                className="bg-gradient-to-r from-primary-orange to-orange-600 text-white px-10 py-4 rounded-full font-bold text-lg shadow-xl hover:shadow-orange-500/30 transition-all duration-300"
+              >
+                Register Interest
+              </motion.button>
               <a href="tel:+18886627467">
                 <motion.button
                   whileHover={{ scale: 1.05, y: -2 }}
@@ -419,6 +420,8 @@ export default function Hajj2027Page() {
           guidance and group coordination only and is not responsible for the delivery of package services.
         </p>
       </div>
+
+      <HajjInterestForm open={showInterestForm} onClose={() => setShowInterestForm(false)} />
 
       <Footer />
     </main>

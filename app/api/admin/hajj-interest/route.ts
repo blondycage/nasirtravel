@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import Tour from '@/lib/models/Tour';
-import Booking from '@/lib/models/Booking';
-import User from '@/lib/models/User';
-import Review from '@/lib/models/Review';
 import HajjInterest from '@/lib/models/HajjInterest';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 
@@ -23,25 +19,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
-    const totalTours = await Tour.countDocuments();
-    const totalBookings = await Booking.countDocuments();
-    const pendingBookings = await Booking.countDocuments({ bookingStatus: 'pending' });
-    const totalUsers = await User.countDocuments();
-    const totalReviews = await Review.countDocuments();
-    const totalHajjInterests = await HajjInterest.countDocuments();
+    const interests = await HajjInterest.find().sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,
-      data: {
-        totalTours,
-        totalBookings,
-        pendingBookings,
-        totalUsers,
-        totalReviews,
-        totalHajjInterests,
-      },
+      interests,
+      data: interests,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('GET /api/admin/hajj-interest error:', error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to fetch interest forms' },
+      { status: 500 }
+    );
   }
 }

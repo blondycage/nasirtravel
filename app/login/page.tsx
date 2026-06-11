@@ -54,6 +54,16 @@ function LoginForm() {
       localStorage.setItem('token', data.data.token);
       localStorage.setItem('userId', data.data.user.id || data.data.user._id);
       localStorage.setItem('userRole', data.data.user.role);
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          id: data.data.user.id || data.data.user._id,
+          _id: data.data.user.id || data.data.user._id,
+          name: data.data.user.name,
+          email: data.data.user.email,
+          role: data.data.user.role,
+        })
+      );
 
       console.log('Login successful, userId:', data.data.user.id || data.data.user._id);
 

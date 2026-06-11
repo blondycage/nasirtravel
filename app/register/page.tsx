@@ -76,6 +76,16 @@ function RegisterForm() {
       localStorage.setItem('token', data.data.token);
       localStorage.setItem('userId', data.data.user._id || data.data.user.id);
       localStorage.setItem('userRole', data.data.user.role || 'user');
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          id: data.data.user._id || data.data.user.id,
+          _id: data.data.user._id || data.data.user.id,
+          name: data.data.user.name,
+          email: data.data.user.email,
+          role: data.data.user.role || 'user',
+        })
+      );
 
       // Redirect to stored URL or dashboard
       if (redirectUrl) {

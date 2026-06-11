@@ -10,6 +10,7 @@ interface Stats {
   totalTours: number;
   totalUsers: number;
   totalReviews: number;
+  totalHajjInterests: number;
 }
 
 export default function AdminDashboard() {
@@ -149,6 +150,16 @@ export default function AdminDashboard() {
               <div className="text-4xl">⭐</div>
             </div>
           </div>
+
+          <div className="bg-white p-6 rounded-lg shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm">Hajj Interest</p>
+                <p className="text-3xl font-bold text-emerald-600">{stats?.totalHajjInterests || 0}</p>
+              </div>
+              <div className="text-4xl">🕋</div>
+            </div>
+          </div>
         </div>
 
         {/* Quick Actions */}
@@ -193,6 +204,14 @@ export default function AdminDashboard() {
             >
               <div className="text-3xl mb-2">📄</div>
               <p className="font-medium">Review Applications</p>
+            </Link>
+
+            <Link
+              href="/admin/hajj-interest"
+              className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center"
+            >
+              <div className="text-3xl mb-2">🕋</div>
+              <p className="font-medium">Hajj Interest</p>
             </Link>
           </div>
         </div>

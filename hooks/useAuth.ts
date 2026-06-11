@@ -25,26 +25,42 @@ export const useAuth = (options: UseAuthOptions = {}) => {
       return;
     }
 
-    // Check role if required
-    if (requiredRole) {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
+    const verifyRole = async () => {
+      if (requiredRole) {
         try {
-          const user = JSON.parse(userStr);
-          if (user.role !== requiredRole) {
+          const response = await fetch('/api/users/me', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.status === 401) {
+            handleUnauthorizedResponse(401, redirectTo);
+            return;
+          }
+
+          if (!response.ok) {
+            router.push(redirectTo);
+            return;
+          }
+
+          const data = await response.json();
+          if (data?.user?.role !== requiredRole) {
             router.push('/unauthorized');
             return;
           }
         } catch (error) {
-          console.error('Failed to parse user data:', error);
+          console.error('Failed to verify role:', error);
           router.push(redirectTo);
           return;
         }
       }
-    }
 
-    setIsAuthenticated(true);
-    setIsLoading(false);
+      setIsAuthenticated(true);
+      setIsLoading(false);
+    };
+
+    verifyRole();
   }, [redirectTo, requiredRole, router]);
 
   return { isAuthenticated, isLoading };
