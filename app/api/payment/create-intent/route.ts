@@ -14,11 +14,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Booking not found' }, { status: 404 });
     }
 
-    // Use the booking's total amount
-    const amount = booking.totalAmount;
+    // Use the admin-issued quote amount. Legacy bookings may still only have totalAmount.
+    const amount = booking.quotedTotalAmount || booking.totalAmount;
 
     if (!amount || amount <= 0) {
-      return NextResponse.json({ success: false, error: 'Invalid booking amount' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'This booking has not been priced yet' }, { status: 400 });
+    }
+
+    const legacyPricedBooking = booking.totalAmount > 0 && !booking.quotedTotalAmount;
+    const paymentAllowedStatuses = ['quoted', 'accepted', 'payment_pending'];
+    if (!legacyPricedBooking && !paymentAllowedStatuses.includes(booking.pricingStatus)) {
+      return NextResponse.json(
+        { success: false, error: 'Payment is available only after a quote has been issued' },
+        { status: 400 }
+      );
     }
 
     const paymentIntent = await createPaymentIntent(amount, {
@@ -32,6 +41,8 @@ export async function POST(request: NextRequest) {
     // Update booking with payment intent ID using findByIdAndUpdate to avoid version conflicts
     await Booking.findByIdAndUpdate(bookingId, {
       paymentIntentId: paymentIntent.id,
+      stripePaymentIntentId: paymentIntent.id,
+      pricingStatus: booking.pricingStatus === 'quoted' ? 'payment_pending' : booking.pricingStatus,
     });
 
     return NextResponse.json({

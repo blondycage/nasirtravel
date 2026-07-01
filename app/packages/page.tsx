@@ -10,6 +10,7 @@ import Footer from '@/components/Footer';
 type PackageCategory = 'All' | 'Hajj / Umrah' | 'Asia' | 'Africa' | 'Europe';
 
 interface TourPackage {
+  id?: number;
   _id: string;
   title: string;
   category: string;
@@ -18,6 +19,10 @@ interface TourPackage {
   accommodation: string;
   dates: string;
   price: string;
+  priceLabel?: string;
+  startingPrice?: number;
+  pricingMode?: 'fixed' | 'quote_required';
+  isComing?: boolean;
   status: 'draft' | 'published' | 'archived';
 }
 
@@ -350,45 +355,28 @@ export default function PackagesPage() {
                   </div>
 
                   {/* Price */}
-                  {pkg.price ? (
-                    <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
-                      <p className="text-xs sm:text-sm text-gray-600 mb-1">Starting From</p>
-                      <p className="text-xl sm:text-2xl font-extrabold text-primary-blue">
-                        {pkg.price}
-                        <span className="text-xs sm:text-sm font-normal text-gray-600"> Per Person</span>
+                  <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1">Pricing</p>
+                    <p className="text-lg sm:text-xl font-extrabold text-primary-blue">
+                      {pkg.priceLabel || 'Confirmed after review'}
+                    </p>
+                    {pkg.startingPrice && (
+                      <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                        Guidance from CA${pkg.startingPrice.toLocaleString()}
                       </p>
-                    </div>
-                  ) : (
-                    <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
-                      <p className="text-sm sm:text-base text-gray-600 italic">
-                        Price available on enquiry
-                      </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* Button */}
-                  {pkg.price ? (
-                    <Link href={`/packages/${pkg._id}`}>
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="w-full py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-bold transition-all duration-300 bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-lg"
-                      >
-                        View Details
-                      </motion.button>
-                    </Link>
-                  ) : (
-                    <Link href={`/packages/${pkg._id}`}>
+                  <Link href={`/packages/${pkg._id}`}>
                     <motion.button
-                      
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className="w-full py-2.5 sm:py-3 rounded-full text-sm sm:text-base font-bold transition-all duration-300 bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-lg"
                     >
-                      More Information
+                      Request Booking
                     </motion.button>
-                    </Link>
-                  )}
+                  </Link>
                 </div>
 
                 {/* Hover Border Effect */}
@@ -425,7 +413,7 @@ export default function PackagesPage() {
               >
                 {displayComingSoonPackages.map((pkg) => (
               <motion.div
-                key={pkg.id}
+              key={pkg._id}
                 variants={cardVariants}
                 whileHover={{ y: -10, transition: { duration: 0.3 } }}
                 className="group relative bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 flex flex-col h-full"
@@ -473,9 +461,9 @@ export default function PackagesPage() {
 
                   {/* Price */}
                   <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">Starting From</p>
-                    <p className="text-xl sm:text-2xl font-extrabold text-primary-blue">
-                      {pkg.price}
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1">Pricing</p>
+                    <p className="text-lg sm:text-xl font-extrabold text-primary-blue">
+                      {pkg.priceLabel || 'Confirmed after review'}
                     </p>
                   </div>
 

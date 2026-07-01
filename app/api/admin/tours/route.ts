@@ -44,6 +44,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    if (body.startingPrice === '') {
+      delete body.startingPrice;
+    }
     if (body.description) {
       body.description = sanitizeHtml(body.description, {
         allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2', 'h3', 'u', 'br']),

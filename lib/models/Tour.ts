@@ -9,6 +9,9 @@ export interface ITour extends Document {
   accommodation: string;
   dates: string;
   price: string;
+  pricingMode?: 'fixed' | 'quote_required';
+  priceLabel?: string;
+  startingPrice?: number;
   isComing?: boolean;
   description?: string;
   itinerary?: Array<{
@@ -34,6 +37,13 @@ const TourSchema = new Schema<ITour>(
     accommodation: { type: String, required: true },
     dates: { type: String, required: true },
     price: { type: String },
+    pricingMode: {
+      type: String,
+      enum: ['fixed', 'quote_required'],
+      default: 'quote_required',
+    },
+    priceLabel: { type: String, default: 'Price confirmed after review' },
+    startingPrice: { type: Number },
     isComing: { type: Boolean, default: false },
     description: { type: String },
     itinerary: [

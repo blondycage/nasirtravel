@@ -15,6 +15,15 @@ const logEmailDebug = (type: string, data: any) => {
   console.log('='.repeat(80) + '\n');
 };
 
+const escapeHtml = (value: any) => {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
 // Check if email is configured
 const isEmailConfigured = () => {
   const configured = !!(process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD);
@@ -726,6 +735,145 @@ export const sendPaymentConfirmation = async (
   };
 
   return sendEmailWithDebug('SEND PAYMENT CONFIRMATION', transporter, mailOptions);
+};
+
+export const sendQuoteRequestReceived = async (
+  to: string,
+  quoteDetails: {
+    customerName: string;
+    tourTitle: string;
+    bookingId: string;
+    numberOfTravelers: number;
+  }
+) => {
+  logEmailDebug('SEND QUOTE REQUEST RECEIVED - START', { to, quoteDetails });
+
+  if (!isEmailConfigured()) {
+    const error = 'Email not configured';
+    logEmailDebug('SEND QUOTE REQUEST RECEIVED - FAILED', { error });
+    return { success: false, error };
+  }
+
+  const transporter = getTransporter();
+  if (!transporter) {
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND QUOTE REQUEST RECEIVED - FAILED', { error });
+    return { success: false, error };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const bookingLink = `${appUrl}/dashboard/bookings/${quoteDetails.bookingId}`;
+
+  const mailOptions = {
+    from: getFromAddress(),
+    to,
+    subject: 'Quote Request Received - Naasir Travel',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #ea580c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Quote Request Received</h1>
+        </div>
+        <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">Dear ${escapeHtml(quoteDetails.customerName)},</p>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            We received your confirmation request. Our team will review your traveler details and send final pricing before any payment is required.
+          </p>
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #1e40af;">Booking Details</h3>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Booking ID:</strong> ${escapeHtml(quoteDetails.bookingId)}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Package:</strong> ${escapeHtml(quoteDetails.tourTitle)}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Travelers:</strong> ${quoteDetails.numberOfTravelers}</p>
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${bookingLink}" style="display: inline-block; background: linear-gradient(135deg, #1e40af 0%, #ea580c 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+              View Booking
+            </a>
+          </div>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            Best regards,<br>
+            <strong style="color: #1e40af;">The Naasir Travel Team</strong>
+          </p>
+        </div>
+      </div>
+    `,
+  };
+
+  return sendEmailWithDebug('SEND QUOTE REQUEST RECEIVED', transporter, mailOptions);
+};
+
+export const sendBookingQuoteReady = async (
+  to: string,
+  quoteDetails: {
+    customerName: string;
+    tourTitle: string;
+    bookingId: string;
+    numberOfTravelers: number;
+    pricePerPerson: number;
+    totalAmount: number;
+    quoteNotes?: string;
+    quoteExpiresAt?: Date;
+  }
+) => {
+  logEmailDebug('SEND BOOKING QUOTE READY - START', { to, quoteDetails });
+
+  if (!isEmailConfigured()) {
+    const error = 'Email not configured';
+    logEmailDebug('SEND BOOKING QUOTE READY - FAILED', { error });
+    return { success: false, error };
+  }
+
+  const transporter = getTransporter();
+  if (!transporter) {
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND BOOKING QUOTE READY - FAILED', { error });
+    return { success: false, error };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const paymentLink = `${appUrl}/payment/${quoteDetails.bookingId}`;
+  const expiryText = quoteDetails.quoteExpiresAt
+    ? quoteDetails.quoteExpiresAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
+
+  const mailOptions = {
+    from: getFromAddress(),
+    to,
+    subject: 'Your Naasir Travel Quote Is Ready',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #ea580c 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Your Quote Is Ready</h1>
+        </div>
+        <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">Dear ${escapeHtml(quoteDetails.customerName)},</p>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            Your booking quote has been prepared. Please review the details below and continue to payment when you are ready.
+          </p>
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #1e40af;">Quote Details</h3>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Booking ID:</strong> ${escapeHtml(quoteDetails.bookingId)}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Package:</strong> ${escapeHtml(quoteDetails.tourTitle)}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Travelers:</strong> ${quoteDetails.numberOfTravelers}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Price Per Person:</strong> CA$${quoteDetails.pricePerPerson.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p style="color: #374151; font-size: 16px; margin: 10px 0 5px 0;"><strong>Total:</strong> CA$${quoteDetails.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            ${expiryText ? `<p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Quote Expires:</strong> ${escapeHtml(expiryText)}</p>` : ''}
+            ${quoteDetails.quoteNotes ? `<div style="background: white; padding: 15px; border-radius: 4px; border: 1px solid #d1d5db; color: #374151; font-size: 14px; line-height: 1.6; white-space: pre-wrap; margin-top: 12px;">${escapeHtml(quoteDetails.quoteNotes)}</div>` : ''}
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${paymentLink}" style="display: inline-block; background: linear-gradient(135deg, #1e40af 0%, #ea580c 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+              Review & Pay
+            </a>
+          </div>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            Best regards,<br>
+            <strong style="color: #1e40af;">The Naasir Travel Team</strong>
+          </p>
+        </div>
+      </div>
+    `,
+  };
+
+  return sendEmailWithDebug('SEND BOOKING QUOTE READY', transporter, mailOptions);
 };
 
 // Email notification when application needs revision

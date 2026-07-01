@@ -17,6 +17,9 @@ interface Tour {
   category: string;
   image: string;
   price: string;
+  pricingMode?: 'fixed' | 'quote_required';
+  priceLabel?: string;
+  startingPrice?: number;
   dates: string;
   accommodation: string;
   departure?: string;
@@ -119,16 +122,6 @@ export default function PackageDetailPage() {
     );
   }
 
-  // Parse price - could be string like "CA$4,585", "$4,585" or "4585"
-  const parsePrice = (priceStr: string): number => {
-    if (!priceStr) return 0;
-    // Remove CA, $, commas and any spaces to get just the number
-    const cleanPrice = priceStr.replace(/CA|[$,\s]/g, '');
-    return parseFloat(cleanPrice) || 0;
-  };
-
-  const pricePerPerson = parsePrice(tour.price);
-
   // Approved reviews only
   const approvedReviews = reviews.filter(r => r.status === 'approved');
 
@@ -230,14 +223,20 @@ export default function PackageDetailPage() {
               </h1>
 
               {/* Price */}
-              {tour.price && (
-                <div className="mb-6">
-                  <p className="text-3xl sm:text-4xl font-extrabold text-primary-blue mb-2">
-                    {tour.price}
+              <div className="mb-6">
+                <p className="text-3xl sm:text-4xl font-extrabold text-primary-blue mb-2">
+                  {tour.priceLabel || 'Price confirmed after review'}
+                </p>
+                {tour.startingPrice ? (
+                  <p className="text-gray-600 text-sm">
+                    Guidance from CA${tour.startingPrice.toLocaleString()} per person. Final price is confirmed by our team.
                   </p>
-                  <p className="text-gray-600 text-sm">Per Person</p>
-                </div>
-              )}
+                ) : (
+                  <p className="text-gray-600 text-sm">
+                    Add travelers first. Our team will send final pricing before payment.
+                  </p>
+                )}
+              </div>
 
               {/* Package Details */}
               <div className="space-y-4 mb-6">
@@ -272,32 +271,23 @@ export default function PackageDetailPage() {
                 </div>
               </div>
 
-              {/* Cash Discount Notice */}
+              {/* Quote Notice */}
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6">
                 <p className="text-sm text-gray-700">
-                  💰 <span className="font-bold">Contact us to inquire about our cash discount!</span>
+                  <span className="font-bold">No payment is due today.</span> Submit a booking request, add travelers, then receive a confirmed quote from our team.
                 </p>
               </div>
 
               {/* Action Button */}
-              {tour.price && pricePerPerson > 0 ? (
-                <button
-                  onClick={() => {
-                    const bookingSection = document.getElementById('booking-section');
-                    bookingSection?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="w-full py-4 rounded-full text-lg font-bold transition-all duration-300 shadow-xl bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-2xl hover:scale-105"
-                >
-                  Book Now
-                </button>
-              ) : (
-                <button
-                  onClick={() => setEnquiryModalOpen(true)}
-                  className="w-full py-4 rounded-full text-lg font-bold transition-all duration-300 shadow-xl bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-2xl hover:scale-105"
-                >
-                  Contact for Details
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  const bookingSection = document.getElementById('booking-section');
+                  bookingSection?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="w-full py-4 rounded-full text-lg font-bold transition-all duration-300 shadow-xl bg-gradient-to-r from-primary-blue to-primary-orange text-white hover:shadow-2xl hover:scale-105"
+              >
+                Request Booking
+              </button>
 
               {/* Download PDF */}
               <button
@@ -484,22 +474,19 @@ export default function PackageDetailPage() {
           </motion.div>
 
           {/* Booking Form Section */}
-          {tour.price && pricePerPerson > 0 && (
-            <motion.div
-              id="booking-section"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="mt-16"
-            >
-              <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Complete Your Booking</h2>
-              <BookingForm
-                tourId={packageId}
-                tourTitle={tour.title}
-                pricePerPerson={pricePerPerson}
-              />
-            </motion.div>
-          )}
+          <motion.div
+            id="booking-section"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mt-16"
+          >
+            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Start Your Booking Request</h2>
+            <BookingForm
+              tourId={packageId}
+              tourTitle={tour.title}
+            />
+          </motion.div>
         </div>
       </main>
 

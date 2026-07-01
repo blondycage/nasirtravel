@@ -38,6 +38,11 @@ interface BookingDetails {
   customerPhone: string;
   numberOfTravelers: number;
   totalAmount: number;
+  pricingStatus?: 'unpriced' | 'quote_requested' | 'quoted' | 'accepted' | 'payment_pending' | 'paid' | 'expired';
+  quotedTotalAmount?: number;
+  pricePerPerson?: number;
+  quoteNotes?: string;
+  quoteExpiresAt?: string;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   bookingStatus: 'pending' | 'confirmed' | 'cancelled';
   bookingDate: string;
@@ -215,7 +220,7 @@ export default function BookingDetailsPage() {
     );
   }
 
-  const tourData = booking.tour || booking.tourId;
+  const tourData: any = booking.tour || booking.tourId;
   const tourImage = tourData?.images?.[0] || tourData?.image || '/placeholder-tour.jpg';
   const tourTitle = tourData?.title || 'Tour Package';
   const tourCategory = tourData?.category || 'N/A';
@@ -281,6 +286,40 @@ export default function BookingDetailsPage() {
             </span>
           </div>
         </motion.div>
+
+        {booking.paymentStatus !== 'paid' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="bg-blue-50 border-l-4 border-blue-600 rounded-lg p-6 mb-6 shadow-md print:hidden"
+          >
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Booking Request Status</h3>
+            <p className="text-gray-700 mb-4">
+              {booking.pricingStatus === 'quoted' || booking.pricingStatus === 'payment_pending'
+                ? 'Your quote is ready. Review the amount and continue to payment when ready.'
+                : booking.pricingStatus === 'quote_requested'
+                  ? 'Confirmation has been requested. Our team will review your travelers and send final pricing.'
+                  : 'Add all travelers, then request confirmation so our team can send final pricing.'}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href={`/dashboard/bookings/${bookingId}/documents`}
+                className="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition text-center font-semibold"
+              >
+                Manage Travelers
+              </Link>
+              {['quoted', 'payment_pending', 'accepted'].includes(booking.pricingStatus || '') && (
+                <Link
+                  href={`/payment/${bookingId}`}
+                  className="bg-green-600 text-white px-5 py-3 rounded-lg hover:bg-green-700 transition text-center font-semibold"
+                >
+                  Continue to Payment
+                </Link>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* Next Steps Banner - Only show if payment is paid and application not closed */}
         {booking.paymentStatus === 'paid' && !booking.applicationClosed && (
@@ -483,14 +522,32 @@ export default function BookingDetailsPage() {
           <div className="space-y-3">
             <div className="flex justify-between text-gray-700">
               <span>Subtotal ({booking.numberOfTravelers} travelers)</span>
-              <span className="font-semibold">CA${booking.totalAmount.toFixed(2)}</span>
+              <span className="font-semibold">
+                {(booking.quotedTotalAmount || booking.totalAmount) > 0
+                  ? `CA${(booking.quotedTotalAmount || booking.totalAmount).toFixed(2)}`
+                  : 'Awaiting quote'}
+              </span>
             </div>
             <div className="border-t pt-3">
               <div className="flex justify-between text-lg font-bold text-gray-900">
                 <span>Total Amount</span>
-                <span className="text-primary-blue">CA${booking.totalAmount.toFixed(2)}</span>
+                <span className="text-primary-blue">
+                  {(booking.quotedTotalAmount || booking.totalAmount) > 0
+                    ? `CA${(booking.quotedTotalAmount || booking.totalAmount).toFixed(2)}`
+                    : 'Pending'}
+                </span>
               </div>
             </div>
+            {booking.pricePerPerson && (
+              <div className="text-sm text-gray-600">
+                Price per person: CA${booking.pricePerPerson.toFixed(2)}
+              </div>
+            )}
+            {booking.quoteNotes && (
+              <div className="text-sm text-gray-600">
+                Quote notes: {booking.quoteNotes}
+              </div>
+            )}
             {booking.paymentIntentId && (
               <div className="text-xs text-gray-500 pt-2">
                 Payment ID: {booking.paymentIntentId}

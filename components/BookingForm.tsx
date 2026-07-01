@@ -7,10 +7,9 @@ import Link from 'next/link';
 interface BookingFormProps {
   tourId: string;
   tourTitle: string;
-  pricePerPerson: number;
 }
 
-export default function BookingForm({ tourId, tourTitle, pricePerPerson }: BookingFormProps) {
+export default function BookingForm({ tourId, tourTitle }: BookingFormProps) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -20,12 +19,11 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
     customerEmail: '',
     customerPhone: '',
     numberOfTravelers: 1,
-    bookingDate: new Date().toISOString().split('T')[0]
+    bookingDate: new Date().toISOString().split('T')[0],
+    specialRequests: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const totalAmount = formData.numberOfTravelers * pricePerPerson;
 
   // Check authentication on mount
   useEffect(() => {
@@ -89,8 +87,7 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
         },
         body: JSON.stringify({
           tourId,
-          ...formData,
-          totalAmount
+          ...formData
         })
       });
 
@@ -100,8 +97,8 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
         throw new Error(data.error || 'Failed to create booking');
       }
 
-      // Redirect to payment page
-      router.push(`/payment/${data.booking._id || data.data?._id}`);
+      const bookingId = data.booking._id || data.data?._id;
+      router.push(`/dashboard/bookings/${bookingId}/documents`);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -109,7 +106,7 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -151,7 +148,7 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
               <h3 className="text-lg font-bold text-yellow-800 mb-2">Login Required</h3>
               <p className="text-yellow-700 mb-4">
                 You must be logged in to book this tour. This ensures you can access and manage your booking,
-                fill out application forms for yourself and dependants after payment.
+                add travelers, request confirmation, and pay only after our team sends your final quote.
               </p>
             </div>
           </div>
@@ -198,7 +195,7 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
           <div className="ml-3">
             <h3 className="text-sm font-bold text-green-800 mb-1">Logged in as {userData?.name}</h3>
             <p className="text-sm text-green-700">
-              After payment, you&apos;ll be able to fill out application forms for yourself and add dependants to this booking.
+              Start your booking request now. You&apos;ll add travelers next, then our team will confirm final pricing before payment.
             </p>
           </div>
         </div>
@@ -289,15 +286,24 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
           />
         </div>
 
+        <div>
+          <label htmlFor="specialRequests" className="block text-sm font-medium mb-1">
+            Special Requests
+          </label>
+          <textarea
+            id="specialRequests"
+            name="specialRequests"
+            value={formData.specialRequests}
+            onChange={handleChange}
+            rows={4}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Tell us about room preferences, accessibility needs, traveler notes, or timing constraints."
+          />
+        </div>
+
         <div className="border-t pt-4">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-lg font-medium">Total Amount:</span>
-            <span className="text-2xl font-bold text-blue-600">
-              CA${totalAmount.toLocaleString()}
-            </span>
-          </div>
-          <p className="text-sm text-gray-600 mb-4">
-            CA${pricePerPerson.toLocaleString()} × {formData.numberOfTravelers} traveler(s)
+          <p className="text-sm text-gray-700 mb-4">
+            Final pricing is confirmed after you add all travelers. No payment is collected at this step.
           </p>
         </div>
 
@@ -306,7 +312,7 @@ export default function BookingForm({ tourId, tourTitle, pricePerPerson }: Booki
           disabled={loading}
           className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          {loading ? 'Processing...' : 'Continue to Payment'}
+          {loading ? 'Creating Request...' : 'Start Booking Request'}
         </button>
       </form>
     </div>

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
 import Tour from '@/lib/models/Tour';
-import { sendBookingConfirmation } from '@/lib/utils/email';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 
 export async function GET(request: NextRequest) {
@@ -74,30 +73,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Tour not found' }, { status: 404 });
     }
 
-    // Ensure tour field is set correctly and copy packageType from tour
+    // Ensure tour field is set correctly and copy packageType from tour.
+    // Pricing is assigned later by an admin after travelers/dependants are known.
     const bookingData = {
       ...body,
       tour: tourId,
       user: decoded.userId, // Associate booking with logged-in user
       packageType: tour.packageType, // Copy package type from tour
+      totalAmount: 0,
+      pricingStatus: 'unpriced',
+      paymentStatus: 'pending',
+      bookingStatus: 'pending',
     };
     delete bookingData.tourId; // Remove tourId if it exists
+    delete bookingData.pricePerPerson;
+    delete bookingData.quotedTravelerCount;
+    delete bookingData.quotedTotalAmount;
+    delete bookingData.quoteNotes;
+    delete bookingData.quoteSentAt;
+    delete bookingData.quoteExpiresAt;
+    delete bookingData.quoteAcceptedAt;
+    delete bookingData.paymentIntentId;
+    delete bookingData.stripePaymentIntentId;
+    delete bookingData.quickBooksInvoiceId;
+    delete bookingData.quickBooksInvoiceNumber;
 
     const booking = await Booking.create(bookingData);
 
-    // Send confirmation email
-    try {
-      await sendBookingConfirmation(booking.customerEmail, {
-        customerName: booking.customerName,
-        tourTitle: tour.title,
-        bookingDate: booking.bookingDate.toISOString(),
-        numberOfTravelers: booking.numberOfTravelers,
-        totalAmount: booking.totalAmount,
-        bookingId: booking._id.toString(),
-      });
-    } catch (emailError) {
-      console.error('Failed to send email:', emailError);
-    }
+    // Do not send a payment-style confirmation here. The booking is a quote request
+    // until the customer adds travelers and an admin sends final pricing.
 
     return NextResponse.json({ success: true, booking }, { status: 201 });
   } catch (error: any) {

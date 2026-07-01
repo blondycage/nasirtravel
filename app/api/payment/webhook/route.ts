@@ -4,6 +4,8 @@ import connectDB from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
 import { sendPaymentConfirmation } from '@/lib/utils/email';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get('stripe-signature');
@@ -32,19 +34,24 @@ export async function POST(request: NextRequest) {
 
     const booking = await Booking.findById(bookingId);
     if (booking) {
+      const wasAlreadyPaid = booking.paymentStatus === 'paid';
       booking.paymentStatus = 'paid';
       booking.bookingStatus = 'confirmed';
+      booking.pricingStatus = 'paid';
+      booking.stripePaymentIntentId = paymentIntent.id;
       await booking.save();
 
       // Send payment confirmation email
-      try {
-        await sendPaymentConfirmation(booking.customerEmail, {
-          customerName: booking.customerName,
-          amount: booking.totalAmount,
-          bookingId: booking._id.toString(),
-        });
-      } catch (emailError) {
-        console.error('Failed to send payment confirmation email:', emailError);
+      if (!wasAlreadyPaid) {
+        try {
+          await sendPaymentConfirmation(booking.customerEmail, {
+            customerName: booking.customerName,
+            amount: booking.quotedTotalAmount || booking.totalAmount,
+            bookingId: booking._id.toString(),
+          });
+        } catch (emailError) {
+          console.error('Failed to send payment confirmation email:', emailError);
+        }
       }
     }
   }

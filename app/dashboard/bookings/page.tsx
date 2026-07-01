@@ -14,6 +14,8 @@ interface Booking {
   bookingDate: string;
   numberOfTravelers: number;
   totalAmount: number;
+  pricingStatus?: 'unpriced' | 'quote_requested' | 'quoted' | 'accepted' | 'payment_pending' | 'paid' | 'expired';
+  quotedTotalAmount?: number;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   bookingStatus: 'pending' | 'confirmed' | 'cancelled';
   documents: any[];
@@ -194,7 +196,9 @@ export default function BookingsPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-blue-600 mb-2">
-                          CA${booking.totalAmount.toLocaleString()}
+                          {(booking.quotedTotalAmount || booking.totalAmount) > 0
+                            ? `CA${(booking.quotedTotalAmount || booking.totalAmount).toLocaleString()}`
+                            : 'Awaiting quote'}
                         </div>
                         <div className="flex gap-2">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.paymentStatus)}`}>
@@ -231,7 +235,7 @@ export default function BookingsPage() {
                       >
                         View Details
                       </Link>
-                      {booking.paymentStatus === 'pending' && (
+                      {booking.paymentStatus === 'pending' && ['quoted', 'payment_pending', 'accepted'].includes(booking.pricingStatus || '') && (
                         <Link
                           href={`/payment/${booking._id}`}
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"

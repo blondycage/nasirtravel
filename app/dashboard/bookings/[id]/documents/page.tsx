@@ -331,6 +331,26 @@ export default function BookingDocumentsPage() {
     }
   };
 
+  const handleRequestConfirmation = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/bookings/${bookingId}/quote-request`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to request confirmation');
+      }
+
+      success('Confirmation requested. Our team will review and send your quote.');
+      await fetchData();
+    } catch (err: any) {
+      showError(err.message || 'Failed to request confirmation');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -352,20 +372,6 @@ export default function BookingDocumentsPage() {
     );
   }
 
-  if (booking.paymentStatus !== 'paid') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-bold mb-4">Payment Required</h2>
-          <p className="text-gray-600 mb-4">Payment must be completed before managing documents</p>
-          <Link href={`/dashboard/bookings/${bookingId}`} className="text-blue-600 hover:underline">
-            Back to Booking Details
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <ToastContainer toasts={toasts} onRemove={removeToast} />
@@ -373,9 +379,30 @@ export default function BookingDocumentsPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <Link href="/dashboard" className="text-blue-600 hover:underline">← Back to Dashboard</Link>
-          <h1 className="text-3xl font-bold mt-2">Manage Documents</h1>
+          <h1 className="text-3xl font-bold mt-2">Manage Travelers & Documents</h1>
           <p className="text-gray-600">Booking ID: {bookingId}</p>
         </div>
+
+        {booking.paymentStatus !== 'paid' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Prepare Your Booking for Confirmation</h2>
+            <p className="text-gray-700 mb-4">
+              Add every traveler on this booking, then request confirmation. Our team will review the details and send final pricing before payment.
+            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-sm text-gray-700">
+                Traveler profiles: {1 + dependants.length} of {booking.numberOfTravelers}
+              </p>
+              <button
+                onClick={handleRequestConfirmation}
+                disabled={booking.pricingStatus === 'quote_requested'}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {booking.pricingStatus === 'quote_requested' ? 'Confirmation Requested' : 'Request Confirmation'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* User Documents Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -833,6 +860,7 @@ export default function BookingDocumentsPage() {
                   onDeleteDocument={handleDeleteDependantDocument}
                   onDelete={handleDeleteDependant}
                   uploading={uploading}
+                  showError={showError}
                 />
               ))}
             </div>
@@ -853,7 +881,8 @@ function DependantCard({
   onUploadDocument,
   onDeleteDocument,
   onDelete,
-  uploading
+  uploading,
+  showError
 }: {
   dependant: any;
   bookingId: string;
@@ -863,6 +892,7 @@ function DependantCard({
   onDeleteDocument: (depId: string, docId: string) => void;
   onDelete: (id: string) => void;
   uploading: string | null;
+  showError: (message: string) => void;
 }) {
   const [docName, setDocName] = useState('');
 

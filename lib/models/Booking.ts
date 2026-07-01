@@ -18,8 +18,22 @@ export interface IBooking extends Document {
   customerPhone: string;
   numberOfTravelers: number;
   totalAmount: number;
+  pricingStatus: 'unpriced' | 'quote_requested' | 'quoted' | 'accepted' | 'payment_pending' | 'paid' | 'expired';
+  pricePerPerson?: number;
+  quotedTravelerCount?: number;
+  quotedTotalAmount?: number;
+  quoteNotes?: string;
+  quoteRequestedAt?: Date;
+  quoteSentAt?: Date;
+  quoteExpiresAt?: Date;
+  quoteAcceptedAt?: Date;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   paymentIntentId?: string;
+  stripePaymentIntentId?: string;
+  quickBooksInvoiceId?: string;
+  quickBooksInvoiceNumber?: string;
+  quickBooksSyncStatus?: 'not_started' | 'pending' | 'synced' | 'failed';
+  quickBooksSyncError?: string;
   bookingStatus: 'pending' | 'confirmed' | 'cancelled';
   bookingDate: Date;
   specialRequests?: string;
@@ -97,13 +111,35 @@ const BookingSchema = new Schema<IBooking>(
     customerEmail: { type: String, required: true },
     customerPhone: { type: String, required: true },
     numberOfTravelers: { type: Number, required: true },
-    totalAmount: { type: Number, required: true },
+    totalAmount: { type: Number, default: 0 },
+    pricingStatus: {
+      type: String,
+      enum: ['unpriced', 'quote_requested', 'quoted', 'accepted', 'payment_pending', 'paid', 'expired'],
+      default: 'unpriced',
+    },
+    pricePerPerson: { type: Number },
+    quotedTravelerCount: { type: Number },
+    quotedTotalAmount: { type: Number },
+    quoteNotes: { type: String },
+    quoteRequestedAt: { type: Date },
+    quoteSentAt: { type: Date },
+    quoteExpiresAt: { type: Date },
+    quoteAcceptedAt: { type: Date },
     paymentStatus: {
       type: String,
       enum: ['pending', 'paid', 'failed', 'refunded'],
       default: 'pending',
     },
     paymentIntentId: { type: String },
+    stripePaymentIntentId: { type: String },
+    quickBooksInvoiceId: { type: String },
+    quickBooksInvoiceNumber: { type: String },
+    quickBooksSyncStatus: {
+      type: String,
+      enum: ['not_started', 'pending', 'synced', 'failed'],
+      default: 'not_started',
+    },
+    quickBooksSyncError: { type: String },
     bookingStatus: {
       type: String,
       enum: ['pending', 'confirmed', 'cancelled'],

@@ -95,10 +95,10 @@ export async function POST(
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
-    // Check if payment is completed
-    if (booking.paymentStatus !== 'paid') {
+    // Quote-first bookings must collect travelers before payment.
+    if (booking.bookingStatus === 'cancelled') {
       return NextResponse.json(
-        { error: 'Payment must be completed before adding dependants' },
+        { error: 'Cannot add dependants to a cancelled booking' },
         { status: 400 }
       );
     }

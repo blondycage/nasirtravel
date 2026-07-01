@@ -20,6 +20,9 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
     accommodation: '',
     dates: '',
     price: '',
+    pricingMode: 'quote_required' as 'fixed' | 'quote_required',
+    priceLabel: 'Price confirmed after review',
+    startingPrice: '',
     description: '',
     status: 'draft',
     inclusions: [] as string[],
@@ -43,6 +46,9 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
         accommodation: initialData.accommodation || '',
         dates: initialData.dates || '',
         price: initialData.price || '',
+        pricingMode: initialData.pricingMode || 'quote_required',
+        priceLabel: initialData.priceLabel || 'Price confirmed after review',
+        startingPrice: initialData.startingPrice || '',
         description: initialData.description || '',
         status: initialData.status || 'draft',
         inclusions: initialData.inclusions || [],
@@ -228,8 +234,63 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
         </div>
 
         <div>
+          <label htmlFor="pricingMode" className="block text-sm font-medium text-gray-700 mb-1">
+            Pricing Mode *
+          </label>
+          <select
+            id="pricingMode"
+            name="pricingMode"
+            required
+            value={formData.pricingMode}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="quote_required">Quote Required</option>
+            <option value="fixed">Fixed Price (legacy)</option>
+          </select>
+          <p className="mt-1 text-xs text-gray-500">
+            Use quote required for packages whose final price depends on travelers and availability.
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="priceLabel" className="block text-sm font-medium text-gray-700 mb-1">
+            Public Price Label
+          </label>
+          <input
+            type="text"
+            id="priceLabel"
+            name="priceLabel"
+            value={formData.priceLabel}
+            onChange={handleChange}
+            placeholder="e.g., Price confirmed after review"
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="startingPrice" className="block text-sm font-medium text-gray-700 mb-1">
+            Starting Guidance (CAD)
+          </label>
+          <input
+            type="number"
+            id="startingPrice"
+            name="startingPrice"
+            min="0"
+            step="0.01"
+            value={formData.startingPrice}
+            onChange={handleChange}
+            placeholder="Optional guidance only"
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Optional public guidance. It is not used for payment.
+          </p>
+        </div>
+
+        <div>
           <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-            Price (CAD)
+            Legacy Price Text
           </label>
           <input
             type="text"
@@ -237,11 +298,11 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
             name="price"
             value={formData.price}
             onChange={handleChange}
-            placeholder="e.g., CA$4,585 - CA$5,135 (Leave empty for enquiry-only packages)"
+            placeholder="Optional legacy display value"
             className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="mt-1 text-xs text-gray-500">
-            If left empty, users will see an &quot;Enquire&quot; button instead of payment
+            Kept for old records and PDFs. New checkout pricing is set on each booking quote.
           </p>
         </div>
 

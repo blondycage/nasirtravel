@@ -42,7 +42,9 @@ export async function POST(
     // Update booking status
     booking.paymentStatus = 'paid';
     booking.bookingStatus = 'confirmed';
+    booking.pricingStatus = 'paid';
     booking.paymentIntentId = paymentIntent;
+    booking.stripePaymentIntentId = paymentIntent;
     await booking.save();
 
     return NextResponse.json({

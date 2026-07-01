@@ -17,6 +17,9 @@ interface Dependant {
   relationship: string;
   dateOfBirth?: string;
   passportNumber?: string;
+  applicationNumber?: string;
+  applicationFormSubmitted?: boolean;
+  applicationStatus?: 'pending' | 'submitted' | 'under_review' | 'accepted' | 'rejected' | 'needs_revision';
   documents: Document[];
 }
 
@@ -31,6 +34,12 @@ export default function AdminBookingDetailPage() {
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteForm, setQuoteForm] = useState({
+    pricePerPerson: '',
+    quoteExpiresAt: '',
+    quoteNotes: '',
+  });
 
   useEffect(() => {
     fetchData();
@@ -110,6 +119,43 @@ export default function AdminBookingDetailPage() {
       setError(err.message);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const sendQuote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setQuoteLoading(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch(`/api/admin/bookings/${bookingId}/quote`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quoteForm),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send quote');
+      }
+
+      setBooking(data.data);
+      setSuccessMessage('Quote sent successfully.');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setQuoteLoading(false);
     }
   };
 
@@ -245,6 +291,81 @@ export default function AdminBookingDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Quote Management */}
+        {booking.paymentStatus !== 'paid' && (
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 className="text-xl font-bold mb-4">Quote Management</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <p className="text-sm text-gray-600">Pricing Status</p>
+                <p className="font-semibold capitalize">{booking.pricingStatus?.replace('_', ' ') || 'unpriced'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Travelers</p>
+                <p className="font-semibold">{booking.numberOfTravelers}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Current Quote</p>
+                <p className="font-semibold text-green-600">
+                  {booking.quotedTotalAmount ? `CA$${booking.quotedTotalAmount.toLocaleString()}` : 'Not quoted'}
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={sendQuote} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="pricePerPerson" className="block text-sm font-medium text-gray-700 mb-1">
+                  Price Per Person (CAD) *
+                </label>
+                <input
+                  type="number"
+                  id="pricePerPerson"
+                  min="0"
+                  step="0.01"
+                  required
+                  value={quoteForm.pricePerPerson}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, pricePerPerson: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="quoteExpiresAt" className="block text-sm font-medium text-gray-700 mb-1">
+                  Quote Expires
+                </label>
+                <input
+                  type="date"
+                  id="quoteExpiresAt"
+                  value={quoteForm.quoteExpiresAt}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, quoteExpiresAt: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label htmlFor="quoteNotes" className="block text-sm font-medium text-gray-700 mb-1">
+                  Quote Notes
+                </label>
+                <textarea
+                  id="quoteNotes"
+                  rows={3}
+                  value={quoteForm.quoteNotes}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, quoteNotes: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Optional notes shown with the customer quote"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <button
+                  type="submit"
+                  disabled={quoteLoading}
+                  className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {quoteLoading ? 'Sending Quote...' : 'Send Quote'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Customer Documents */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
