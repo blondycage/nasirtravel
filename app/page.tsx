@@ -1,9 +1,19 @@
+import type { Metadata } from 'next';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import Testimonials from '@/components/Testimonials';
 import FAQ from '@/components/FAQ';
 import Footer from '@/components/Footer';
+
+export const metadata: Metadata = {
+  title: 'Hajj, Umrah & Travel Packages',
+  description:
+    'Plan Hajj, Umrah, and worldwide travel with Naasir Travel. Explore packages, request quotes, and get guided support.',
+  alternates: {
+    canonical: '/',
+  },
+};
 
 export default function Home() {
   return (
