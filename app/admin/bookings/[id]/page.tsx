@@ -17,6 +17,7 @@ interface Dependant {
   relationship: string;
   dateOfBirth?: string;
   passportNumber?: string;
+  travelerType?: 'adult' | 'child' | 'infant';
   applicationNumber?: string;
   applicationFormSubmitted?: boolean;
   applicationStatus?: 'pending' | 'submitted' | 'under_review' | 'accepted' | 'rejected' | 'needs_revision';
@@ -36,7 +37,9 @@ export default function AdminBookingDetailPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteForm, setQuoteForm] = useState({
-    pricePerPerson: '',
+    adultPrice: '',
+    childPrice: '',
+    infantPrice: '',
     quoteExpiresAt: '',
     quoteNotes: '',
   });
@@ -171,6 +174,38 @@ export default function AdminBookingDetailPage() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const getTravelerBreakdown = () => {
+    const total = Number(booking?.numberOfTravelers || 1);
+    const hasBreakdown =
+      booking?.adultTravelers !== undefined ||
+      booking?.childTravelers !== undefined ||
+      booking?.infantTravelers !== undefined;
+
+    return {
+      adultTravelers: hasBreakdown ? Number(booking?.adultTravelers || 0) : total,
+      childTravelers: Number(booking?.childTravelers || 0),
+      infantTravelers: Number(booking?.infantTravelers || 0),
+      total,
+    };
+  };
+
+  const calculateQuotePreview = () => {
+    const breakdown = getTravelerBreakdown();
+    const adultPrice = Number(quoteForm.adultPrice || 0);
+    const childPrice = Number(quoteForm.childPrice || 0);
+    const infantPrice = Number(quoteForm.infantPrice || 0);
+
+    return {
+      adultTotal: breakdown.adultTravelers * adultPrice,
+      childTotal: breakdown.childTravelers * childPrice,
+      infantTotal: breakdown.infantTravelers * infantPrice,
+      total:
+        breakdown.adultTravelers * adultPrice +
+        breakdown.childTravelers * childPrice +
+        breakdown.infantTravelers * infantPrice,
+    };
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -191,6 +226,9 @@ export default function AdminBookingDetailPage() {
       </div>
     );
   }
+
+  const travelerBreakdown = getTravelerBreakdown();
+  const quotePreview = calculateQuotePreview();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -235,8 +273,11 @@ export default function AdminBookingDetailPage() {
               <p className="font-medium">{booking.customerPhone}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Number of Travelers</p>
+              <p className="text-sm text-gray-600">Travelers</p>
               <p className="font-medium">{booking.numberOfTravelers}</p>
+              <p className="text-xs text-gray-500">
+                Adults: {travelerBreakdown.adultTravelers} | Children: {travelerBreakdown.childTravelers} | Infants: {travelerBreakdown.infantTravelers}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Amount</p>
@@ -304,6 +345,9 @@ export default function AdminBookingDetailPage() {
               <div>
                 <p className="text-sm text-gray-600">Travelers</p>
                 <p className="font-semibold">{booking.numberOfTravelers}</p>
+                <p className="text-xs text-gray-500">
+                  Adults: {travelerBreakdown.adultTravelers}, Children: {travelerBreakdown.childTravelers}, Infants: {travelerBreakdown.infantTravelers}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Current Quote</p>
@@ -313,19 +357,47 @@ export default function AdminBookingDetailPage() {
               </div>
             </div>
 
-            <form onSubmit={sendQuote} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={sendQuote} className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="pricePerPerson" className="block text-sm font-medium text-gray-700 mb-1">
-                  Price Per Person (CAD) *
+                <label htmlFor="adultPrice" className="block text-sm font-medium text-gray-700 mb-1">
+                  Adult Price (CAD) *
                 </label>
                 <input
                   type="number"
-                  id="pricePerPerson"
+                  id="adultPrice"
                   min="0"
                   step="0.01"
                   required
-                  value={quoteForm.pricePerPerson}
-                  onChange={(e) => setQuoteForm(prev => ({ ...prev, pricePerPerson: e.target.value }))}
+                  value={quoteForm.adultPrice}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, adultPrice: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="childPrice" className="block text-sm font-medium text-gray-700 mb-1">
+                  Child Price (CAD)
+                </label>
+                <input
+                  type="number"
+                  id="childPrice"
+                  min="0"
+                  step="0.01"
+                  value={quoteForm.childPrice}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, childPrice: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="infantPrice" className="block text-sm font-medium text-gray-700 mb-1">
+                  Infant Price (CAD)
+                </label>
+                <input
+                  type="number"
+                  id="infantPrice"
+                  min="0"
+                  step="0.01"
+                  value={quoteForm.infantPrice}
+                  onChange={(e) => setQuoteForm(prev => ({ ...prev, infantPrice: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -341,7 +413,7 @@ export default function AdminBookingDetailPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-3">
                 <label htmlFor="quoteNotes" className="block text-sm font-medium text-gray-700 mb-1">
                   Quote Notes
                 </label>
@@ -354,7 +426,16 @@ export default function AdminBookingDetailPage() {
                   placeholder="Optional notes shown with the customer quote"
                 />
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-gray-700">
+                <p className="font-semibold text-gray-900 mb-2">Quote Preview</p>
+                <div className="space-y-1">
+                  <p>Adults: {travelerBreakdown.adultTravelers} x CA${Number(quoteForm.adultPrice || 0).toFixed(2)} = CA${quotePreview.adultTotal.toFixed(2)}</p>
+                  <p>Children: {travelerBreakdown.childTravelers} x CA${Number(quoteForm.childPrice || 0).toFixed(2)} = CA${quotePreview.childTotal.toFixed(2)}</p>
+                  <p>Infants: {travelerBreakdown.infantTravelers} x CA${Number(quoteForm.infantPrice || 0).toFixed(2)} = CA${quotePreview.infantTotal.toFixed(2)}</p>
+                  <p className="font-bold text-gray-900 pt-1">Total: CA${quotePreview.total.toFixed(2)}</p>
+                </div>
+              </div>
+              <div className="md:col-span-3">
                 <button
                   type="submit"
                   disabled={quoteLoading}
@@ -458,6 +539,9 @@ export default function AdminBookingDetailPage() {
                       <div>
                         <p className="font-semibold text-gray-900">{dependant.name}</p>
                         <p className="text-sm text-gray-600">{dependant.relationship}</p>
+                        {dependant.travelerType && (
+                          <p className="text-xs text-gray-500 capitalize">{dependant.travelerType}</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -502,6 +586,9 @@ export default function AdminBookingDetailPage() {
                   <div className="mb-4">
                     <h3 className="text-lg font-bold">{dependant.name}</h3>
                     <p className="text-sm text-gray-600">Relationship: {dependant.relationship}</p>
+                    {dependant.travelerType && (
+                      <p className="text-sm text-gray-600 capitalize">Traveler type: {dependant.travelerType}</p>
+                    )}
                     {dependant.dateOfBirth && (
                       <p className="text-sm text-gray-600">
                         DOB: {new Date(dependant.dateOfBirth).toLocaleDateString()}

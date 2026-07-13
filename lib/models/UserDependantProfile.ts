@@ -6,6 +6,7 @@ export interface IUserDependantProfile extends Document {
   relationship: string;
   dateOfBirth?: Date;
   passportNumber?: string;
+  travelerType?: 'adult' | 'child' | 'infant';
   countryOfNationality?: string;
   firstName?: string;
   fatherName?: string;
@@ -26,6 +27,10 @@ const UserDependantProfileSchema = new Schema<IUserDependantProfile>(
     relationship: { type: String, required: true },
     dateOfBirth: { type: Date },
     passportNumber: { type: String },
+    travelerType: {
+      type: String,
+      enum: ['adult', 'child', 'infant'],
+    },
     countryOfNationality: { type: String },
     firstName: { type: String },
     fatherName: { type: String },

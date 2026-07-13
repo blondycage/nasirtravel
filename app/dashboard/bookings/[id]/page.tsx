@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import { calculateQuoteTotal, getTravelerBreakdown } from '@/lib/utils/travelers';
 
 interface IDocument {
   _id?: string;
@@ -37,10 +38,19 @@ interface BookingDetails {
   customerEmail: string;
   customerPhone: string;
   numberOfTravelers: number;
+  adultTravelers?: number;
+  childTravelers?: number;
+  infantTravelers?: number;
   totalAmount: number;
   pricingStatus?: 'unpriced' | 'quote_requested' | 'quoted' | 'accepted' | 'payment_pending' | 'paid' | 'expired';
   quotedTotalAmount?: number;
   pricePerPerson?: number;
+  adultPrice?: number;
+  childPrice?: number;
+  infantPrice?: number;
+  quotedAdultTravelers?: number;
+  quotedChildTravelers?: number;
+  quotedInfantTravelers?: number;
   quoteNotes?: string;
   quoteExpiresAt?: string;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
@@ -228,6 +238,23 @@ export default function BookingDetailsPage() {
     ? new Date(tourData.startDates[0]).toLocaleDateString()
     : tourData?.dates || 'N/A';
   const tourDeparture = tourData?.departure;
+  const travelerBreakdown = getTravelerBreakdown(booking);
+  const quoteBreakdown = {
+    adultTravelers: booking.quotedAdultTravelers ?? travelerBreakdown.adultTravelers,
+    childTravelers: booking.quotedChildTravelers ?? travelerBreakdown.childTravelers,
+    infantTravelers: booking.quotedInfantTravelers ?? travelerBreakdown.infantTravelers,
+  };
+  const hasCategoryQuote =
+    booking.adultPrice !== undefined ||
+    booking.childPrice !== undefined ||
+    booking.infantPrice !== undefined;
+  const quoteTotals = hasCategoryQuote
+    ? calculateQuoteTotal(quoteBreakdown, {
+        adultPrice: booking.adultPrice || booking.pricePerPerson || 0,
+        childPrice: booking.childPrice || 0,
+        infantPrice: booking.infantPrice || 0,
+      })
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -489,6 +516,9 @@ export default function BookingDetailsPage() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Number of Travelers</p>
               <p className="font-semibold text-gray-900">{booking.numberOfTravelers}</p>
+              <p className="text-xs text-gray-500">
+                Adults: {travelerBreakdown.adultTravelers} | Children: {travelerBreakdown.childTravelers} | Infants: {travelerBreakdown.infantTravelers}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-1">Booking Date</p>
@@ -528,6 +558,22 @@ export default function BookingDetailsPage() {
                   : 'Awaiting quote'}
               </span>
             </div>
+            {quoteTotals && (
+              <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700 space-y-1">
+                <div className="flex justify-between">
+                  <span>Adults: {quoteBreakdown.adultTravelers} x CA${(booking.adultPrice || booking.pricePerPerson || 0).toFixed(2)}</span>
+                  <span>CA${quoteTotals.adultTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Children: {quoteBreakdown.childTravelers} x CA${(booking.childPrice || 0).toFixed(2)}</span>
+                  <span>CA${quoteTotals.childTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Infants: {quoteBreakdown.infantTravelers} x CA${(booking.infantPrice || 0).toFixed(2)}</span>
+                  <span>CA${quoteTotals.infantTotal.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
             <div className="border-t pt-3">
               <div className="flex justify-between text-lg font-bold text-gray-900">
                 <span>Total Amount</span>
@@ -540,7 +586,7 @@ export default function BookingDetailsPage() {
             </div>
             {booking.pricePerPerson && (
               <div className="text-sm text-gray-600">
-                Price per person: CA${booking.pricePerPerson.toFixed(2)}
+                Adult price: CA${booking.pricePerPerson.toFixed(2)}
               </div>
             )}
             {booking.quoteNotes && (
@@ -585,6 +631,9 @@ export default function BookingDetailsPage() {
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900">{dep.name}</h4>
                       <p className="text-sm text-gray-600">{dep.relationship}</p>
+                      {dep.travelerType && (
+                        <p className="text-xs text-gray-500 capitalize">{dep.travelerType}</p>
+                      )}
                       {dep.applicationStatus && (
                         <span className={`inline-block mt-2 px-2 py-1 text-xs rounded ${
                           dep.applicationStatus === 'accepted' ? 'bg-green-100 text-green-800' :

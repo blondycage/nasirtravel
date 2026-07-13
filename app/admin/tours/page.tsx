@@ -9,6 +9,8 @@ interface Tour {
   title: string;
   category: string;
   price: string;
+  priceLabel?: string;
+  startingPrice?: number;
   status: 'draft' | 'published' | 'archived';
   createdAt: string;
 }
@@ -136,8 +138,8 @@ export default function AdminToursPage() {
             </Link>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="max-w-full overflow-x-auto rounded-lg bg-white shadow">
+            <table className="min-w-[900px] divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -147,7 +149,7 @@ export default function AdminToursPage() {
                     Category
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
+                    Public Price
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -170,7 +172,11 @@ export default function AdminToursPage() {
                       <div className="text-sm text-gray-600">{tour.category}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{tour.price}</div>
+                      <div className="text-sm text-gray-900">
+                        {tour.startingPrice
+                          ? `Starting from CA$${tour.startingPrice.toLocaleString()} per person`
+                          : tour.priceLabel || tour.price || 'Price confirmed after review'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(tour.status)}`}>

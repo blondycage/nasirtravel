@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { getTravelerBreakdown } from '@/lib/utils/travelers';
 
 interface Booking {
   _id: string;
@@ -19,6 +20,9 @@ interface Booking {
   customerName: string;
   customerEmail: string;
   numberOfTravelers: number;
+  adultTravelers?: number;
+  childTravelers?: number;
+  infantTravelers?: number;
   totalAmount: number;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   bookingStatus: 'pending' | 'confirmed' | 'cancelled';
@@ -238,6 +242,10 @@ export default function UserDashboard() {
                             </p>
                             <p>
                               <span className="font-medium">Travelers:</span> {booking.numberOfTravelers}
+                              {(() => {
+                                const breakdown = getTravelerBreakdown(booking);
+                                return ` (${breakdown.adultTravelers} adult, ${breakdown.childTravelers} child, ${breakdown.infantTravelers} infant)`;
+                              })()}
                             </p>
                             <p>
                               <span className="font-medium">Amount:</span> ${booking.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

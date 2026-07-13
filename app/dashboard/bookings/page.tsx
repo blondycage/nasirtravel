@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getTravelerBreakdown } from '@/lib/utils/travelers';
 
 interface Booking {
   _id: string;
@@ -13,6 +14,9 @@ interface Booking {
   };
   bookingDate: string;
   numberOfTravelers: number;
+  adultTravelers?: number;
+  childTravelers?: number;
+  infantTravelers?: number;
   totalAmount: number;
   pricingStatus?: 'unpriced' | 'quote_requested' | 'quoted' | 'accepted' | 'payment_pending' | 'paid' | 'expired';
   quotedTotalAmount?: number;
@@ -214,7 +218,13 @@ export default function BookingsPage() {
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
                       <div className="flex items-center gap-2">
                         <span>👥</span>
-                        <span>{booking.numberOfTravelers} Traveler(s)</span>
+                        <span>
+                          {booking.numberOfTravelers} Traveler(s)
+                          {(() => {
+                            const breakdown = getTravelerBreakdown(booking);
+                            return ` - ${breakdown.adultTravelers} adult, ${breakdown.childTravelers} child, ${breakdown.infantTravelers} infant`;
+                          })()}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span>📅</span>

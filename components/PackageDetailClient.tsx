@@ -222,17 +222,28 @@ export default function PackageDetailClient({ packageId }: { packageId: string }
 
               {/* Price */}
               <div className="mb-6">
-                <p className="text-3xl sm:text-4xl font-extrabold text-primary-blue mb-2">
-                  {tour.priceLabel || 'Price confirmed after review'}
-                </p>
                 {tour.startingPrice ? (
-                  <p className="text-gray-600 text-sm">
-                    Guidance from CA${tour.startingPrice.toLocaleString()} per person. Final price is confirmed by our team.
-                  </p>
+                  <>
+                    <p className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                      Starting from
+                    </p>
+                    <p className="text-3xl sm:text-4xl font-extrabold text-primary-blue mb-2">
+                      CA${tour.startingPrice.toLocaleString()}
+                      <span className="text-base sm:text-lg font-semibold text-gray-600"> per person</span>
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      Final price is confirmed after review.
+                    </p>
+                  </>
                 ) : (
-                  <p className="text-gray-600 text-sm">
-                    Add travelers first. Our team will send final pricing before payment.
-                  </p>
+                  <>
+                    <p className="text-3xl sm:text-4xl font-extrabold text-primary-blue mb-2">
+                      {tour.priceLabel || 'Price confirmed after review'}
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      Add travelers first. Our team will send final pricing before payment.
+                    </p>
+                  </>
                 )}
               </div>
 

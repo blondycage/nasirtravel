@@ -9,6 +9,19 @@ interface TourFormProps {
   initialData?: any;
 }
 
+const normalizePackageCategory = (category?: string) => {
+  if (!category) return '';
+
+  const normalized = category.toLowerCase();
+  if (normalized.includes('umrah')) return 'Umrah';
+  if (normalized.includes('america') || normalized.includes('usa') || normalized.includes('canada') || normalized.includes('mexico') || normalized.includes('caribbean')) return 'Americas';
+  if (normalized === 'asia') return 'Asia';
+  if (normalized === 'africa') return 'Africa';
+  if (normalized === 'europe') return 'Europe';
+
+  return category;
+};
+
 export default function TourForm({ tourId, initialData }: TourFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -39,7 +52,7 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
     if (initialData) {
       setFormData({
         title: initialData.title || '',
-        category: initialData.category || '',
+        category: normalizePackageCategory(initialData.category),
         packageType: initialData.packageType || 'standard',
         image: initialData.image || '',
         departure: initialData.departure || '',
@@ -201,16 +214,21 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
           <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
             Category *
           </label>
-          <input
-            type="text"
+          <select
             id="category"
             name="category"
             required
             value={formData.category}
             onChange={handleChange}
-            placeholder="e.g., Umrah/Hajj, Adventure, Cultural"
             className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+          >
+            <option value="">Select a category</option>
+            <option value="Umrah">Umrah</option>
+            <option value="Asia">Asia</option>
+            <option value="Africa">Africa</option>
+            <option value="Europe">Europe</option>
+            <option value="Americas">Americas</option>
+          </select>
         </div>
 
         <div>
@@ -270,7 +288,7 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
 
         <div>
           <label htmlFor="startingPrice" className="block text-sm font-medium text-gray-700 mb-1">
-            Starting Guidance (CAD)
+            Starting From Price Per Person (CAD)
           </label>
           <input
             type="number"
@@ -280,11 +298,11 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
             step="0.01"
             value={formData.startingPrice}
             onChange={handleChange}
-            placeholder="Optional guidance only"
+            placeholder="e.g., 1999"
             className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="mt-1 text-xs text-gray-500">
-            Optional public guidance. It is not used for payment.
+            Public display only. Final checkout pricing is still set on each booking quote.
           </p>
         </div>
 

@@ -3,6 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import {
+  ArrowRight,
+  CalendarClock,
+  FileCheck2,
+  MessageSquareText,
+  Package,
+  Plane,
+  Star,
+  Users,
+} from 'lucide-react';
 
 interface Stats {
   totalBookings: number;
@@ -12,6 +22,75 @@ interface Stats {
   totalReviews: number;
   totalHajjInterests: number;
 }
+
+const statCards = [
+  {
+    label: 'Total Bookings',
+    key: 'totalBookings',
+    icon: CalendarClock,
+    href: '/admin/bookings',
+    tone: 'bg-blue-50 text-blue-700 ring-blue-100',
+  },
+  {
+    label: 'Pending Bookings',
+    key: 'pendingBookings',
+    icon: FileCheck2,
+    href: '/admin/bookings?filter=quotes',
+    tone: 'bg-amber-50 text-amber-700 ring-amber-100',
+  },
+  {
+    label: 'Packages',
+    key: 'totalTours',
+    icon: Plane,
+    href: '/admin/tours',
+    tone: 'bg-cyan-50 text-cyan-700 ring-cyan-100',
+  },
+  {
+    label: 'Users',
+    key: 'totalUsers',
+    icon: Users,
+    href: '/admin/users',
+    tone: 'bg-violet-50 text-violet-700 ring-violet-100',
+  },
+  {
+    label: 'Reviews',
+    key: 'totalReviews',
+    icon: Star,
+    href: '/admin/reviews',
+    tone: 'bg-yellow-50 text-yellow-700 ring-yellow-100',
+  },
+  {
+    label: 'Hajj Interest',
+    key: 'totalHajjInterests',
+    icon: MessageSquareText,
+    href: '/admin/hajj-interest',
+    tone: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+  },
+];
+
+const operations = [
+  {
+    title: 'Quotation Queue',
+    description: 'Review quote requests, set adult/child/infant pricing, and send customers to payment.',
+    href: '/admin/bookings?filter=quotes',
+    icon: FileCheck2,
+    cta: 'Manage quotations',
+  },
+  {
+    title: 'Booking Operations',
+    description: 'Track booking status, traveler documents, applications, payments, and dependants.',
+    href: '/admin/bookings',
+    icon: CalendarClock,
+    cta: 'Open bookings',
+  },
+  {
+    title: 'Package Inventory',
+    description: 'Create and edit packages, publish availability, pricing guidance, and categories.',
+    href: '/admin/tours',
+    icon: Package,
+    cta: 'Manage packages',
+  },
+];
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -30,8 +109,8 @@ export default function AdminDashboard() {
 
         const response = await fetch('/api/admin/stats', {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (!response.ok) {
@@ -54,174 +133,119 @@ export default function AdminDashboard() {
     fetchStats();
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/login');
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading dashboard...</p>
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+          <p className="text-sm text-slate-600">Loading admin overview...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-blue-600 hover:text-blue-700">
-                View Site
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Operations Overview</p>
+          <h1 className="mt-1 text-3xl font-bold text-slate-950">Admin Dashboard</h1>
+          <p className="mt-2 max-w-2xl text-sm text-slate-600">
+            Monitor booking activity, handle quote requests, and jump directly into the workflows that need attention.
+          </p>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Total Bookings</p>
-                <p className="text-3xl font-bold text-gray-900">{stats?.totalBookings || 0}</p>
-              </div>
-              <div className="text-4xl">📋</div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Pending Bookings</p>
-                <p className="text-3xl font-bold text-orange-600">{stats?.pendingBookings || 0}</p>
-              </div>
-              <div className="text-4xl">⏳</div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Total Tours</p>
-                <p className="text-3xl font-bold text-blue-600">{stats?.totalTours || 0}</p>
-              </div>
-              <div className="text-4xl">🗺️</div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Total Users</p>
-                <p className="text-3xl font-bold text-purple-600">{stats?.totalUsers || 0}</p>
-              </div>
-              <div className="text-4xl">👥</div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Total Reviews</p>
-                <p className="text-3xl font-bold text-yellow-600">{stats?.totalReviews || 0}</p>
-              </div>
-              <div className="text-4xl">⭐</div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Hajj Interest</p>
-                <p className="text-3xl font-bold text-emerald-600">{stats?.totalHajjInterests || 0}</p>
-              </div>
-              <div className="text-4xl">🕋</div>
-            </div>
-          </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/bookings?filter=quotes"
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            <FileCheck2 className="h-4 w-4" />
+            Quotation Queue
+          </Link>
+          <Link
+            href="/admin/tours/new"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            <Plane className="h-4 w-4" />
+            New Package
+          </Link>
         </div>
+      </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white p-6 rounded-lg shadow mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link
-              href="/admin/tours"
-              className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center"
-            >
-              <div className="text-3xl mb-2">📝</div>
-              <p className="font-medium">Manage Tours</p>
-            </Link>
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
-            <Link
-              href="/admin/bookings"
-              className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center"
-            >
-              <div className="text-3xl mb-2">📋</div>
-              <p className="font-medium">View Bookings</p>
-            </Link>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          const value = stats?.[card.key as keyof Stats] || 0;
 
+          return (
             <Link
-              href="/admin/users"
-              className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center"
+              href={card.href}
+              key={card.key}
+              className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
-              <div className="text-3xl mb-2">👥</div>
-              <p className="font-medium">Manage Users</p>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500">{card.label}</p>
+                  <p className="mt-2 text-3xl font-bold text-slate-950">{value}</p>
+                </div>
+                <div className={`rounded-lg p-3 ring-1 ${card.tone}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-1 text-sm font-semibold text-blue-700 opacity-0 transition group-hover:opacity-100">
+                Open
+                <ArrowRight className="h-4 w-4" />
+              </div>
             </Link>
+          );
+        })}
+      </div>
 
-            <Link
-              href="/admin/reviews"
-              className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center"
-            >
-              <div className="text-3xl mb-2">⭐</div>
-              <p className="font-medium">Manage Reviews</p>
-            </Link>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        {operations.map((item) => {
+          const Icon = item.icon;
 
+          return (
             <Link
-              href="/admin/applications"
-              className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center"
+              key={item.title}
+              href={item.href}
+              className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md"
             >
-              <div className="text-3xl mb-2">📄</div>
-              <p className="font-medium">Review Applications</p>
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                <Icon className="h-5 w-5" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-950">{item.title}</h2>
+              <p className="mt-2 min-h-12 text-sm leading-6 text-slate-600">{item.description}</p>
+              <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-700">
+                {item.cta}
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+              </div>
             </Link>
+          );
+        })}
+      </div>
 
-            <Link
-              href="/admin/hajj-interest"
-              className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-center"
-            >
-              <div className="text-3xl mb-2">🕋</div>
-              <p className="font-medium">Hajj Interest</p>
-            </Link>
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-950">Recommended Daily Flow</h2>
+            <p className="mt-1 text-sm text-slate-600">Start with quote requests, then paid bookings, then applications.</p>
           </div>
+          <Link
+            href="/admin/bookings?filter=quotes"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            Start with quotations
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
-          <p className="text-gray-600">Recent bookings and updates will appear here.</p>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-type PackageCategory = 'All' | 'Hajj / Umrah' | 'Asia' | 'Africa' | 'Europe';
+type PackageCategory = 'All' | 'Umrah' | 'Asia' | 'Africa' | 'Europe' | 'Americas';
 
 interface TourPackage {
   id?: number;
@@ -26,7 +26,7 @@ interface TourPackage {
   status: 'draft' | 'published' | 'archived';
 }
 
-const categories: PackageCategory[] = ['All', 'Hajj / Umrah', 'Asia', 'Africa', 'Europe'];
+const categories: PackageCategory[] = ['All', 'Umrah', 'Asia', 'Africa', 'Europe', 'Americas'];
 
 export default function PackagesPage() {
   const [selectedCategory, setSelectedCategory] = useState<PackageCategory>('All');
@@ -118,10 +118,22 @@ export default function PackagesPage() {
 
     if (selectedCategory === 'All') {
       matchesCategory = true;
-    } else if (selectedCategory === 'Hajj / Umrah') {
-      // Match if category contains 'hajj' or 'umrah' (case-insensitive)
+    } else if (selectedCategory === 'Umrah') {
+      // Match existing Hajj / Umrah records by their Umrah category text.
       const pkgCategoryLower = pkg.category.toLowerCase();
-      matchesCategory = pkgCategoryLower.includes('hajj') || pkgCategoryLower.includes('umrah');
+      matchesCategory = pkgCategoryLower.includes('umrah');
+    } else if (selectedCategory === 'Americas') {
+      const pkgCategoryLower = pkg.category.toLowerCase();
+      matchesCategory = [
+        'americas',
+        'america',
+        'north america',
+        'south america',
+        'usa',
+        'canada',
+        'mexico',
+        'caribbean',
+      ].some((category) => pkgCategoryLower.includes(category));
     } else {
       // Exact match for other categories (case-insensitive)
       matchesCategory = pkg.category.toLowerCase() === selectedCategory.toLowerCase();
@@ -356,14 +368,22 @@ export default function PackagesPage() {
 
                   {/* Price */}
                   <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">Pricing</p>
-                    <p className="text-lg sm:text-xl font-extrabold text-primary-blue">
-                      {pkg.priceLabel || 'Confirmed after review'}
-                    </p>
                     {pkg.startingPrice && (
-                      <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                        Guidance from CA${pkg.startingPrice.toLocaleString()}
-                      </p>
+                      <>
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1">Starting from</p>
+                        <p className="text-lg sm:text-xl font-extrabold text-primary-blue">
+                          CA${pkg.startingPrice.toLocaleString()}
+                          <span className="text-xs sm:text-sm font-semibold text-gray-600"> per person</span>
+                        </p>
+                      </>
+                    )}
+                    {!pkg.startingPrice && (
+                      <>
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1">Pricing</p>
+                        <p className="text-lg sm:text-xl font-extrabold text-primary-blue">
+                          {pkg.priceLabel || 'Confirmed after review'}
+                        </p>
+                      </>
                     )}
                   </div>
 
@@ -461,10 +481,22 @@ export default function PackagesPage() {
 
                   {/* Price */}
                   <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
-                    <p className="text-xs sm:text-sm text-gray-600 mb-1">Pricing</p>
-                    <p className="text-lg sm:text-xl font-extrabold text-primary-blue">
-                      {pkg.priceLabel || 'Confirmed after review'}
-                    </p>
+                    {pkg.startingPrice ? (
+                      <>
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1">Starting from</p>
+                        <p className="text-lg sm:text-xl font-extrabold text-primary-blue">
+                          CA${pkg.startingPrice.toLocaleString()}
+                          <span className="text-xs sm:text-sm font-semibold text-gray-600"> per person</span>
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1">Pricing</p>
+                        <p className="text-lg sm:text-xl font-extrabold text-primary-blue">
+                          {pkg.priceLabel || 'Confirmed after review'}
+                        </p>
+                      </>
+                    )}
                   </div>
 
                   {/* Button */}
@@ -615,10 +647,11 @@ export default function PackagesPage() {
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 transition-all outline-none"
                 >
                   <option value="">Select a package type</option>
-                  <option value="Hajj / Umrah">Hajj / Umrah</option>
+                  <option value="Umrah">Umrah</option>
                   <option value="Asia">Asia</option>
                   <option value="Africa">Africa</option>
                   <option value="Europe">Europe</option>
+                  <option value="Americas">Americas</option>
                   <option value="Custom Package">Custom Package</option>
                   <option value="Other">Other</option>
                 </select>

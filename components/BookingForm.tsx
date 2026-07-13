@@ -18,7 +18,9 @@ export default function BookingForm({ tourId, tourTitle }: BookingFormProps) {
     customerName: '',
     customerEmail: '',
     customerPhone: '',
-    numberOfTravelers: 1,
+    adultTravelers: 1,
+    childTravelers: 0,
+    infantTravelers: 0,
     bookingDate: new Date().toISOString().split('T')[0],
     specialRequests: '',
   });
@@ -87,7 +89,9 @@ export default function BookingForm({ tourId, tourTitle }: BookingFormProps) {
         },
         body: JSON.stringify({
           tourId,
-          ...formData
+          ...formData,
+          numberOfTravelers:
+            formData.adultTravelers + formData.childTravelers + formData.infantTravelers,
         })
       });
 
@@ -110,7 +114,9 @@ export default function BookingForm({ tourId, tourTitle }: BookingFormProps) {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'numberOfTravelers' ? parseInt(value) || 1 : value
+      [name]: ['adultTravelers', 'childTravelers', 'infantTravelers'].includes(name)
+        ? Math.max(name === 'adultTravelers' ? 1 : 0, parseInt(value) || 0)
+        : value
     }));
   };
 
@@ -253,20 +259,60 @@ export default function BookingForm({ tourId, tourTitle }: BookingFormProps) {
           />
         </div>
 
-        <div>
-          <label htmlFor="numberOfTravelers" className="block text-sm font-medium mb-1">
-            Number of Travelers *
-          </label>
-          <input
-            type="number"
-            id="numberOfTravelers"
-            name="numberOfTravelers"
-            required
-            min="1"
-            value={formData.numberOfTravelers}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+        <div className="md:col-span-2">
+          <fieldset>
+            <legend className="block text-sm font-medium mb-2">
+              Travelers *
+            </legend>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label htmlFor="adultTravelers" className="block text-sm text-gray-600 mb-1">
+                  Adults (12+)
+                </label>
+                <input
+                  type="number"
+                  id="adultTravelers"
+                  name="adultTravelers"
+                  required
+                  min="1"
+                  value={formData.adultTravelers}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="childTravelers" className="block text-sm text-gray-600 mb-1">
+                  Children (2-11)
+                </label>
+                <input
+                  type="number"
+                  id="childTravelers"
+                  name="childTravelers"
+                  min="0"
+                  value={formData.childTravelers}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="infantTravelers" className="block text-sm text-gray-600 mb-1">
+                  Infants (0-2)
+                </label>
+                <input
+                  type="number"
+                  id="infantTravelers"
+                  name="infantTravelers"
+                  min="0"
+                  value={formData.infantTravelers}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <p className="mt-2 text-sm text-gray-600">
+              Total travelers: {formData.adultTravelers + formData.childTravelers + formData.infantTravelers}
+            </p>
+          </fieldset>
         </div>
 
         <div>

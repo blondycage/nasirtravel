@@ -5,12 +5,12 @@ import Image from 'next/image';
 import { useState } from 'react';
 import Link from 'next/link';
 
-type PackageCategory = 'All' | 'Hajj / Umrah' | 'Asia' | 'Africa' | 'Europe';
+type PackageCategory = 'All' | 'Umrah' | 'Asia' | 'Africa' | 'Europe' | 'Americas';
 
 interface TourPackage {
   id: number;
   title: string;
-  category: PackageCategory;
+  category: Exclude<PackageCategory, 'All'> | 'Hajj / Umrah';
   image: string;
   departure?: string;
   accommodation: string;
@@ -100,14 +100,35 @@ const packages: TourPackage[] = [
   },
 ];
 
-const categories: PackageCategory[] = ['All', 'Hajj / Umrah', 'Asia', 'Africa', 'Europe'];
+const categories: PackageCategory[] = ['All', 'Umrah', 'Asia', 'Africa', 'Europe', 'Americas'];
 
 export default function Packages() {
   const [selectedCategory, setSelectedCategory] = useState<PackageCategory>('All');
 
   const filteredPackages = selectedCategory === 'All'
     ? packages
-    : packages.filter(pkg => pkg.category === selectedCategory);
+    : packages.filter(pkg => {
+        const pkgCategoryLower = pkg.category.toLowerCase();
+
+        if (selectedCategory === 'Umrah') {
+          return pkgCategoryLower.includes('umrah');
+        }
+
+        if (selectedCategory === 'Americas') {
+          return [
+            'americas',
+            'america',
+            'north america',
+            'south america',
+            'usa',
+            'canada',
+            'mexico',
+            'caribbean',
+          ].some((category) => pkgCategoryLower.includes(category));
+        }
+
+        return pkgCategoryLower === selectedCategory.toLowerCase();
+      });
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -247,10 +268,12 @@ export default function Packages() {
 
                 {/* Price */}
                 <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Starting From</p>
+                  <p className="text-sm text-gray-600 mb-1">
+                    {pkg.isComing ? 'Pricing' : 'Starting from'}
+                  </p>
                   <p className="text-2xl font-extrabold text-primary-blue">
                     {pkg.price}
-                    {!pkg.isComing && <span className="text-sm font-normal text-gray-600"> Per Person</span>}
+                    {!pkg.isComing && <span className="text-sm font-semibold text-gray-600"> per person</span>}
                   </p>
                 </div>
 

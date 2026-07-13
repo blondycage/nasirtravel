@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 import { sendBookingQuoteReady } from '@/lib/utils/email';
+import { calculateQuoteTotal, getTravelerBreakdown, getTravelerTotal } from '@/lib/utils/travelers';
 
 export async function POST(
   request: NextRequest,
@@ -24,12 +25,18 @@ export async function POST(
     }
 
     const body = await request.json();
-    const pricePerPerson = Number(body.pricePerPerson);
+    const adultPrice = Number(body.adultPrice ?? body.pricePerPerson);
+    const childPrice = body.childPrice === '' || body.childPrice === undefined ? 0 : Number(body.childPrice);
+    const infantPrice = body.infantPrice === '' || body.infantPrice === undefined ? 0 : Number(body.infantPrice);
     const quoteNotes = body.quoteNotes;
     const quoteExpiresAt = body.quoteExpiresAt ? new Date(body.quoteExpiresAt) : undefined;
 
-    if (!pricePerPerson || pricePerPerson <= 0) {
-      return NextResponse.json({ error: 'A valid price per person is required' }, { status: 400 });
+    if (!adultPrice || adultPrice <= 0) {
+      return NextResponse.json({ error: 'A valid adult price is required' }, { status: 400 });
+    }
+
+    if (childPrice < 0 || infantPrice < 0 || Number.isNaN(childPrice) || Number.isNaN(infantPrice)) {
+      return NextResponse.json({ error: 'Child and infant prices cannot be negative' }, { status: 400 });
     }
 
     const booking = await Booking.findById(params.id);
@@ -41,11 +48,19 @@ export async function POST(
       return NextResponse.json({ error: 'Paid bookings cannot be requoted' }, { status: 400 });
     }
 
-    const travelerCount = booking.numberOfTravelers;
-    const quotedTotalAmount = Number((pricePerPerson * travelerCount).toFixed(2));
+    const breakdown = getTravelerBreakdown(booking);
+    const travelerCount = getTravelerTotal(breakdown);
+    const quoteTotals = calculateQuoteTotal(breakdown, { adultPrice, childPrice, infantPrice });
+    const quotedTotalAmount = quoteTotals.total;
 
-    booking.pricePerPerson = pricePerPerson;
+    booking.pricePerPerson = adultPrice;
+    booking.adultPrice = adultPrice;
+    booking.childPrice = childPrice;
+    booking.infantPrice = infantPrice;
     booking.quotedTravelerCount = travelerCount;
+    booking.quotedAdultTravelers = breakdown.adultTravelers;
+    booking.quotedChildTravelers = breakdown.childTravelers;
+    booking.quotedInfantTravelers = breakdown.infantTravelers;
     booking.quotedTotalAmount = quotedTotalAmount;
     booking.totalAmount = quotedTotalAmount;
     booking.quoteNotes = quoteNotes;
@@ -63,7 +78,13 @@ export async function POST(
         tourTitle: (booking.tour as any)?.title || 'Your selected package',
         bookingId: booking._id.toString(),
         numberOfTravelers: travelerCount,
-        pricePerPerson,
+        pricePerPerson: adultPrice,
+        adultTravelers: breakdown.adultTravelers,
+        childTravelers: breakdown.childTravelers,
+        infantTravelers: breakdown.infantTravelers,
+        adultPrice,
+        childPrice,
+        infantPrice,
         totalAmount: quotedTotalAmount,
         quoteNotes,
         quoteExpiresAt,

@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
 import Tour from '@/lib/models/Tour';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
+import { getTravelerTotal, normalizeCount } from '@/lib/utils/travelers';
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,6 +74,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Tour not found' }, { status: 404 });
     }
 
+    const adultTravelers = normalizeCount(body.adultTravelers, normalizeCount(body.numberOfTravelers, 1));
+    const childTravelers = normalizeCount(body.childTravelers, 0);
+    const infantTravelers = normalizeCount(body.infantTravelers, 0);
+    const numberOfTravelers = getTravelerTotal({ adultTravelers, childTravelers, infantTravelers });
+
+    if (adultTravelers < 1) {
+      return NextResponse.json({ success: false, error: 'At least one adult traveler is required' }, { status: 400 });
+    }
+
+    if (numberOfTravelers < 1) {
+      return NextResponse.json({ success: false, error: 'At least one traveler is required' }, { status: 400 });
+    }
+
     // Ensure tour field is set correctly and copy packageType from tour.
     // Pricing is assigned later by an admin after travelers/dependants are known.
     const bookingData = {
@@ -80,6 +94,10 @@ export async function POST(request: NextRequest) {
       tour: tourId,
       user: decoded.userId, // Associate booking with logged-in user
       packageType: tour.packageType, // Copy package type from tour
+      adultTravelers,
+      childTravelers,
+      infantTravelers,
+      numberOfTravelers,
       totalAmount: 0,
       pricingStatus: 'unpriced',
       paymentStatus: 'pending',

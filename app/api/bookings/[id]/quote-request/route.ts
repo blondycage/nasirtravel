@@ -4,6 +4,7 @@ import Booking from '@/lib/models/Booking';
 import Dependant from '@/lib/models/Dependant';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 import { sendQuoteRequestReceived } from '@/lib/utils/email';
+import { getRemainingDependantSlots, getTravelerBreakdown } from '@/lib/utils/travelers';
 
 export async function POST(
   request: NextRequest,
@@ -53,13 +54,27 @@ export async function POST(
       return NextResponse.json({ error: 'This booking has already been paid' }, { status: 400 });
     }
 
-    const dependantCount = await Dependant.countDocuments({ bookingId: params.id });
-    const currentTravelerCount = 1 + dependantCount;
+    const dependants = await Dependant.find({ bookingId: params.id }).select('travelerType');
+    const currentTravelerCount = 1 + dependants.length;
 
     if (currentTravelerCount !== booking.numberOfTravelers) {
       return NextResponse.json(
         {
           error: `Traveler count mismatch. This booking is for ${booking.numberOfTravelers} traveler(s), but ${currentTravelerCount} traveler profile(s) are currently attached.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const remainingSlots = getRemainingDependantSlots(getTravelerBreakdown(booking), dependants);
+    if (
+      remainingSlots.adultTravelers !== 0 ||
+      remainingSlots.childTravelers !== 0 ||
+      remainingSlots.infantTravelers !== 0
+    ) {
+      return NextResponse.json(
+        {
+          error: `Traveler category mismatch. Remaining slots - adults: ${remainingSlots.adultTravelers}, children: ${remainingSlots.childTravelers}, infants: ${remainingSlots.infantTravelers}.`,
         },
         { status: 400 }
       );

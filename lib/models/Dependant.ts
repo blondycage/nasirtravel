@@ -17,6 +17,7 @@ export interface IDependant extends Document {
   relationship: string;
   dateOfBirth?: Date;
   passportNumber?: string;
+  travelerType?: 'adult' | 'child' | 'infant';
   
   // Personal Information
   countryOfNationality?: string;
@@ -82,6 +83,10 @@ const DependantSchema = new Schema<IDependant>(
     relationship: { type: String, required: true },
     dateOfBirth: { type: Date },
     passportNumber: { type: String },
+    travelerType: {
+      type: String,
+      enum: ['adult', 'child', 'infant'],
+    },
     
     // Personal Information
     countryOfNationality: { type: String },

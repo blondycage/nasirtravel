@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import UserDependantProfile from '@/lib/models/UserDependantProfile';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
+import { getTravelerTypeFromDateOfBirth, normalizeTravelerType } from '@/lib/utils/travelers';
 
 // GET - Get all dependant profiles for the authenticated user
 export async function GET(request: NextRequest) {
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { name, relationship, dateOfBirth, passportNumber } = body;
+    const travelerType = normalizeTravelerType(body.travelerType) || getTravelerTypeFromDateOfBirth(dateOfBirth);
 
     if (!name || !relationship) {
       return NextResponse.json(
@@ -65,6 +67,7 @@ export async function POST(request: NextRequest) {
       relationship,
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
       passportNumber,
+      travelerType,
     });
 
     return NextResponse.json({ success: true, dependant: profile }, { status: 201 });

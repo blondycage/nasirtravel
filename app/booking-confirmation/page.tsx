@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { getTravelerBreakdown } from '@/lib/utils/travelers';
 
 function BookingConfirmationContent() {
   const searchParams = useSearchParams();
@@ -83,6 +84,8 @@ function BookingConfirmationContent() {
     );
   }
 
+  const travelerBreakdown = getTravelerBreakdown(booking);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -124,7 +127,12 @@ function BookingConfirmationContent() {
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Number of Travelers:</span>
-                  <span className="font-medium text-gray-900">{booking.numberOfTravelers}</span>
+                  <span className="font-medium text-gray-900 text-right">
+                    {booking.numberOfTravelers}
+                    <span className="block text-xs text-gray-500">
+                      Adults: {travelerBreakdown.adultTravelers} | Children: {travelerBreakdown.childTravelers} | Infants: {travelerBreakdown.infantTravelers}
+                    </span>
+                  </span>
                 </div>
 
                 <div className="flex justify-between">

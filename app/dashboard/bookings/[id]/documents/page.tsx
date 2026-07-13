@@ -4,6 +4,15 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ToastContainer, { useToast } from '@/components/Toast';
+import {
+  getRemainingDependantSlots,
+  getTravelerBreakdown,
+  getTravelerLabel,
+  getTravelerTotal,
+  getTravelerTypeFromDateOfBirth,
+  normalizeTravelerType,
+  type TravelerType,
+} from '@/lib/utils/travelers';
 
 interface Document {
   _id: string;
@@ -16,6 +25,7 @@ interface Dependant {
   _id: string;
   name: string;
   relationship: string;
+  travelerType?: TravelerType;
   documents: Document[];
 }
 
@@ -39,9 +49,15 @@ export default function BookingDocumentsPage() {
   const [newDependant, setNewDependant] = useState({
     name: '',
     relationship: '',
+    travelerType: 'adult' as TravelerType,
     dateOfBirth: '',
     passportNumber: ''
   });
+
+  const travelerBreakdown = booking ? getTravelerBreakdown(booking) : null;
+  const remainingSlots = travelerBreakdown ? getRemainingDependantSlots(travelerBreakdown, dependants) : null;
+  const totalTravelers = travelerBreakdown ? getTravelerTotal(travelerBreakdown) : booking?.numberOfTravelers || 0;
+  const addedTravelers = 1 + dependants.length;
 
   useEffect(() => {
     fetchData();
@@ -159,7 +175,10 @@ export default function BookingDocumentsPage() {
       
       if (addMode === 'select' && selectedProfileId) {
         // Add from existing profile
-        requestBody = { profileId: selectedProfileId };
+        requestBody = {
+          profileId: selectedProfileId,
+          travelerType: newDependant.travelerType,
+        };
       } else {
         // Create new dependant
         if (!newDependant.name || !newDependant.relationship) {
@@ -168,6 +187,10 @@ export default function BookingDocumentsPage() {
         requestBody = {
           name: newDependant.name,
           relationship: newDependant.relationship,
+          travelerType:
+            getTravelerTypeFromDateOfBirth(newDependant.dateOfBirth) ||
+            normalizeTravelerType(newDependant.travelerType) ||
+            'adult',
           dateOfBirth: newDependant.dateOfBirth || undefined,
           passportNumber: newDependant.passportNumber || undefined,
         };
@@ -191,7 +214,7 @@ export default function BookingDocumentsPage() {
       setShowAddDependant(false);
       setAddMode('select');
       setSelectedProfileId('');
-      setNewDependant({ name: '', relationship: '', dateOfBirth: '', passportNumber: '' });
+      setNewDependant({ name: '', relationship: '', travelerType: 'adult', dateOfBirth: '', passportNumber: '' });
       await fetchData();
     } catch (err: any) {
       showError(err.message || 'Failed to add dependant');
@@ -223,6 +246,10 @@ export default function BookingDocumentsPage() {
         body: JSON.stringify({
           name: newDependant.name,
           relationship: newDependant.relationship,
+          travelerType:
+            getTravelerTypeFromDateOfBirth(newDependant.dateOfBirth) ||
+            normalizeTravelerType(newDependant.travelerType) ||
+            'adult',
           dateOfBirth: newDependant.dateOfBirth || undefined,
           passportNumber: newDependant.passportNumber || undefined,
         })
@@ -251,7 +278,7 @@ export default function BookingDocumentsPage() {
       success('Dependant profile created and added to booking successfully');
       setShowAddDependant(false);
       setAddMode('select');
-      setNewDependant({ name: '', relationship: '', dateOfBirth: '', passportNumber: '' });
+      setNewDependant({ name: '', relationship: '', travelerType: 'adult', dateOfBirth: '', passportNumber: '' });
       await fetchUserDependantProfiles();
       await fetchData();
     } catch (err: any) {
@@ -390,9 +417,14 @@ export default function BookingDocumentsPage() {
               Add every traveler on this booking, then request confirmation. Our team will review the details and send final pricing before payment.
             </p>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <p className="text-sm text-gray-700">
-                Traveler profiles: {1 + dependants.length} of {booking.numberOfTravelers}
-              </p>
+              <div className="text-sm text-gray-700">
+                <p>Traveler profiles: {addedTravelers} of {totalTravelers}</p>
+                {travelerBreakdown && (
+                  <p className="text-xs text-gray-600">
+                    Adults: {travelerBreakdown.adultTravelers} | Children: {travelerBreakdown.childTravelers} | Infants: {travelerBreakdown.infantTravelers}
+                  </p>
+                )}
+              </div>
               <button
                 onClick={handleRequestConfirmation}
                 disabled={booking.pricingStatus === 'quote_requested'}
@@ -699,7 +731,7 @@ export default function BookingDocumentsPage() {
                     setShowAddDependant(false);
                     setAddMode('select');
                     setSelectedProfileId('');
-                    setNewDependant({ name: '', relationship: '', dateOfBirth: '', passportNumber: '' });
+                    setNewDependant({ name: '', relationship: '', travelerType: 'adult', dateOfBirth: '', passportNumber: '' });
                   }}
                   disabled={addingDependant}
                   className="text-gray-600 hover:text-gray-800 disabled:opacity-50"
@@ -707,6 +739,23 @@ export default function BookingDocumentsPage() {
                   ✕
                 </button>
               </div>
+
+              {travelerBreakdown && remainingSlots && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4 text-sm">
+                  <div className="rounded border bg-white p-3">
+                    <p className="font-semibold">Adults (12+)</p>
+                    <p className="text-gray-600">Remaining: {remainingSlots.adultTravelers}</p>
+                  </div>
+                  <div className="rounded border bg-white p-3">
+                    <p className="font-semibold">Children (2-11)</p>
+                    <p className="text-gray-600">Remaining: {remainingSlots.childTravelers}</p>
+                  </div>
+                  <div className="rounded border bg-white p-3">
+                    <p className="font-semibold">Infants (0-2)</p>
+                    <p className="text-gray-600">Remaining: {remainingSlots.infantTravelers}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Mode Toggle */}
               <div className="flex gap-2 mb-4">
@@ -756,10 +805,27 @@ export default function BookingDocumentsPage() {
                         {userDependantProfiles.map((profile) => (
                           <option key={profile._id} value={profile._id}>
                             {profile.name} ({profile.relationship})
+                            {profile.travelerType && ` - ${getTravelerLabel(profile.travelerType)}`}
                             {profile.dateOfBirth && ` - ${new Date(profile.dateOfBirth).toLocaleDateString()}`}
                           </option>
                         ))}
                       </select>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Traveler Type</label>
+                        <select
+                          disabled={addingDependant}
+                          value={newDependant.travelerType}
+                          onChange={(e) => setNewDependant({...newDependant, travelerType: e.target.value as TravelerType})}
+                          className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        >
+                          <option value="adult">Adult (12+)</option>
+                          <option value="child">Child (2-11)</option>
+                          <option value="infant">Infant (0-2)</option>
+                        </select>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Used only if the saved profile does not already have a date of birth or traveler type.
+                        </p>
+                      </div>
                       <button
                         onClick={handleAddDependant}
                         disabled={addingDependant || !selectedProfileId}
@@ -807,9 +873,33 @@ export default function BookingDocumentsPage() {
                     placeholder="Date of Birth"
                     disabled={addingDependant}
                     value={newDependant.dateOfBirth}
-                    onChange={(e) => setNewDependant({...newDependant, dateOfBirth: e.target.value})}
+                    onChange={(e) => {
+                      const inferredType = getTravelerTypeFromDateOfBirth(e.target.value);
+                      setNewDependant({
+                        ...newDependant,
+                        dateOfBirth: e.target.value,
+                        travelerType: inferredType || newDependant.travelerType,
+                      });
+                    }}
                     className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
                   />
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Traveler Type *</label>
+                    <select
+                      required
+                      disabled={addingDependant}
+                      value={newDependant.travelerType}
+                      onChange={(e) => setNewDependant({...newDependant, travelerType: e.target.value as TravelerType})}
+                      className="w-full px-4 py-2 border rounded disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="adult">Adult (12+)</option>
+                      <option value="child">Child (2-11)</option>
+                      <option value="infant">Infant (0-2)</option>
+                    </select>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Date of birth will auto-select this when possible.
+                    </p>
+                  </div>
                   <input
                     type="text"
                     placeholder="Passport Number (Optional)"
@@ -915,6 +1005,9 @@ function DependantCard({
         <div>
           <h3 className="font-bold">{dependant.name}</h3>
           <p className="text-sm text-gray-600">{dependant.relationship}</p>
+          {dependant.travelerType && (
+            <p className="text-xs text-gray-500">{getTravelerLabel(dependant.travelerType)}</p>
+          )}
           {dependant.applicationStatus && (
             <span className={`inline-block mt-1 px-2 py-1 text-xs rounded ${
               dependant.applicationStatus === 'accepted' ? 'bg-green-100 text-green-800' :

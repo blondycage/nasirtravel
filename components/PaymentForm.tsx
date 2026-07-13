@@ -7,21 +7,39 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface PaymentFormContentProps {
+  clientSecret: string;
   bookingId: string;
   amount: number;
   onSuccess: () => void;
 }
 
-function PaymentFormContent({ bookingId, amount, onSuccess }: PaymentFormContentProps) {
+function PaymentFormContent({ clientSecret, bookingId, amount, onSuccess }: PaymentFormContentProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error('Payment confirmation is taking too long. Please check your connection and try again.'));
+      }, timeoutMs);
+    });
+
+    try {
+      return await Promise.race([promise, timeout]);
+    } finally {
+      clearTimeout(timeoutId!);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!stripe || !elements) {
+      setError('Payment form is still loading. Please wait a moment and try again.');
       return;
     }
 
@@ -29,20 +47,51 @@ function PaymentFormContent({ bookingId, amount, onSuccess }: PaymentFormContent
     setError('');
 
     try {
-      const { error: submitError } = await stripe.confirmPayment({
+      const { error: submitError } = await elements.submit();
+
+      if (submitError) {
+        setError(submitError.message || 'Please check your payment details and try again.');
+        return;
+      }
+
+      const { error: confirmError, paymentIntent } = await withTimeout(stripe.confirmPayment({
         elements,
+        clientSecret,
         confirmParams: {
           return_url: `${window.location.origin}/booking-confirmation?booking=${bookingId}`,
         },
-      });
+        redirect: 'if_required',
+      }), 45000);
 
-      if (submitError) {
-        setError(submitError.message || 'Payment failed');
-      } else {
-        onSuccess();
+      if (confirmError) {
+        setError(confirmError.message || 'Payment failed. Please try again.');
+        return;
       }
+
+      if (paymentIntent?.status === 'succeeded') {
+        const response = await fetch(`/api/bookings/${bookingId}/confirm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntent: paymentIntent.id }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => null);
+          throw new Error(data?.error || 'Payment succeeded, but booking confirmation failed. Please contact support.');
+        }
+
+        onSuccess();
+        return;
+      }
+
+      if (paymentIntent?.status === 'processing') {
+        setError('Your payment is still processing. Please wait a moment, then refresh the booking status.');
+        return;
+      }
+
+      setError(`Payment status: ${paymentIntent?.status || 'unknown'}. Please try again or contact support.`);
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      setError(err.message || 'An error occurred while processing the payment.');
     } finally {
       setLoading(false);
     }
@@ -104,7 +153,12 @@ export default function PaymentForm({ clientSecret, bookingId, amount, onSuccess
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold mb-6">Complete Your Payment</h2>
       <Elements stripe={stripePromise} options={options}>
-        <PaymentFormContent bookingId={bookingId} amount={amount} onSuccess={onSuccess} />
+        <PaymentFormContent
+          clientSecret={clientSecret}
+          bookingId={bookingId}
+          amount={amount}
+          onSuccess={onSuccess}
+        />
       </Elements>
     </div>
   );

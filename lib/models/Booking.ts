@@ -17,10 +17,19 @@ export interface IBooking extends Document {
   customerEmail: string;
   customerPhone: string;
   numberOfTravelers: number;
+  adultTravelers?: number;
+  childTravelers?: number;
+  infantTravelers?: number;
   totalAmount: number;
   pricingStatus: 'unpriced' | 'quote_requested' | 'quoted' | 'accepted' | 'payment_pending' | 'paid' | 'expired';
   pricePerPerson?: number;
+  adultPrice?: number;
+  childPrice?: number;
+  infantPrice?: number;
   quotedTravelerCount?: number;
+  quotedAdultTravelers?: number;
+  quotedChildTravelers?: number;
+  quotedInfantTravelers?: number;
   quotedTotalAmount?: number;
   quoteNotes?: string;
   quoteRequestedAt?: Date;
@@ -111,6 +120,9 @@ const BookingSchema = new Schema<IBooking>(
     customerEmail: { type: String, required: true },
     customerPhone: { type: String, required: true },
     numberOfTravelers: { type: Number, required: true },
+    adultTravelers: { type: Number, min: 0 },
+    childTravelers: { type: Number, min: 0 },
+    infantTravelers: { type: Number, min: 0 },
     totalAmount: { type: Number, default: 0 },
     pricingStatus: {
       type: String,
@@ -118,7 +130,13 @@ const BookingSchema = new Schema<IBooking>(
       default: 'unpriced',
     },
     pricePerPerson: { type: Number },
+    adultPrice: { type: Number },
+    childPrice: { type: Number },
+    infantPrice: { type: Number },
     quotedTravelerCount: { type: Number },
+    quotedAdultTravelers: { type: Number },
+    quotedChildTravelers: { type: Number },
+    quotedInfantTravelers: { type: Number },
     quotedTotalAmount: { type: Number },
     quoteNotes: { type: String },
     quoteRequestedAt: { type: Date },

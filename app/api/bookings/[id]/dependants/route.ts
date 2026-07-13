@@ -3,6 +3,14 @@ import connectDB from '@/lib/mongodb';
 import Dependant from '@/lib/models/Dependant';
 import Booking from '@/lib/models/Booking';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
+import {
+  getRemainingDependantSlots,
+  getTravelerBreakdown,
+  getTravelerLabel,
+  getTravelerTotal,
+  getTravelerTypeFromDateOfBirth,
+  normalizeTravelerType,
+} from '@/lib/utils/travelers';
 
 // GET - List all dependants for a booking
 export async function GET(
@@ -140,6 +148,7 @@ export async function POST(
 
     const body = await request.json();
     const { name, relationship, dateOfBirth, passportNumber, profileId } = body;
+    let requestedTravelerType = normalizeTravelerType(body.travelerType);
 
     // If profileId is provided, fetch the profile and use its data
     let dependantData: any = {
@@ -149,6 +158,7 @@ export async function POST(
       relationship,
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
       passportNumber,
+      travelerType: getTravelerTypeFromDateOfBirth(dateOfBirth) || requestedTravelerType,
       documents: [],
     };
 
@@ -167,6 +177,10 @@ export async function POST(
           relationship: relationship || profile.relationship,
           dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : profile.dateOfBirth,
           passportNumber: passportNumber || profile.passportNumber,
+          travelerType:
+            profile.travelerType ||
+            getTravelerTypeFromDateOfBirth(dateOfBirth || profile.dateOfBirth) ||
+            requestedTravelerType,
           countryOfNationality: profile.countryOfNationality,
           firstName: profile.firstName,
           fatherName: profile.fatherName,
@@ -187,16 +201,40 @@ export async function POST(
       );
     }
 
-    // Validate that adding this dependant won't exceed numberOfTravelers
-    // Count: 1 (main user) + existing dependants + 1 (new dependant) <= numberOfTravelers
-    const existingDependants = await Dependant.countDocuments({ bookingId: params.id });
-    const totalTravelers = 1 + existingDependants + 1; // 1 main user + existing dependants + new dependant
-    
-    if (totalTravelers > booking.numberOfTravelers) {
-      const remainingSlots = booking.numberOfTravelers - (1 + existingDependants);
+    if (!dependantData.travelerType) {
+      return NextResponse.json(
+        { error: 'Traveler type is required when date of birth is not available' },
+        { status: 400 }
+      );
+    }
+
+    const existingDependants = await Dependant.find({ bookingId: params.id }).select('travelerType');
+    const breakdown = getTravelerBreakdown(booking);
+    const remainingSlots = getRemainingDependantSlots(breakdown, existingDependants);
+    const totalTravelers = getTravelerTotal(breakdown);
+    const existingCount = existingDependants.length;
+
+    if (1 + existingCount + 1 > totalTravelers) {
+      const remainingTotalSlots = totalTravelers - (1 + existingCount);
       return NextResponse.json(
         { 
-          error: `Cannot add more dependants. The booking is for ${booking.numberOfTravelers} traveler(s) (including the main user). You have ${remainingSlots} slot(s) remaining.` 
+          error: `Cannot add more dependants. The booking is for ${totalTravelers} traveler(s) (including the main user). You have ${remainingTotalSlots} slot(s) remaining.` 
+        },
+        { status: 400 }
+      );
+    }
+
+    const slotKey =
+      dependantData.travelerType === 'child'
+        ? 'childTravelers'
+        : dependantData.travelerType === 'infant'
+          ? 'infantTravelers'
+          : 'adultTravelers';
+
+    if (remainingSlots[slotKey] <= 0) {
+      return NextResponse.json(
+        {
+          error: `No ${getTravelerLabel(dependantData.travelerType).toLowerCase()} dependant slots are remaining for this booking.`,
         },
         { status: 400 }
       );

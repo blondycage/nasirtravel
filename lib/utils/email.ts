@@ -809,6 +809,12 @@ export const sendBookingQuoteReady = async (
     bookingId: string;
     numberOfTravelers: number;
     pricePerPerson: number;
+    adultTravelers?: number;
+    childTravelers?: number;
+    infantTravelers?: number;
+    adultPrice?: number;
+    childPrice?: number;
+    infantPrice?: number;
     totalAmount: number;
     quoteNotes?: string;
     quoteExpiresAt?: Date;
@@ -834,6 +840,17 @@ export const sendBookingQuoteReady = async (
   const expiryText = quoteDetails.quoteExpiresAt
     ? quoteDetails.quoteExpiresAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
+  const hasCategoryPricing =
+    quoteDetails.adultTravelers !== undefined ||
+    quoteDetails.childTravelers !== undefined ||
+    quoteDetails.infantTravelers !== undefined;
+  const categoryPricingHtml = hasCategoryPricing
+    ? `
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Adults:</strong> ${quoteDetails.adultTravelers || 0} x CA$${(quoteDetails.adultPrice || quoteDetails.pricePerPerson || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Children:</strong> ${quoteDetails.childTravelers || 0} x CA$${(quoteDetails.childPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Infants:</strong> ${quoteDetails.infantTravelers || 0} x CA$${(quoteDetails.infantPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+    `
+    : `<p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Price Per Person:</strong> CA$${quoteDetails.pricePerPerson.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>`;
 
   const mailOptions = {
     from: getFromAddress(),
@@ -854,7 +871,7 @@ export const sendBookingQuoteReady = async (
             <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Booking ID:</strong> ${escapeHtml(quoteDetails.bookingId)}</p>
             <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Package:</strong> ${escapeHtml(quoteDetails.tourTitle)}</p>
             <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Travelers:</strong> ${quoteDetails.numberOfTravelers}</p>
-            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Price Per Person:</strong> CA$${quoteDetails.pricePerPerson.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            ${categoryPricingHtml}
             <p style="color: #374151; font-size: 16px; margin: 10px 0 5px 0;"><strong>Total:</strong> CA$${quoteDetails.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             ${expiryText ? `<p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Quote Expires:</strong> ${escapeHtml(expiryText)}</p>` : ''}
             ${quoteDetails.quoteNotes ? `<div style="background: white; padding: 15px; border-radius: 4px; border: 1px solid #d1d5db; color: #374151; font-size: 14px; line-height: 1.6; white-space: pre-wrap; margin-top: 12px;">${escapeHtml(quoteDetails.quoteNotes)}</div>` : ''}
