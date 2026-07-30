@@ -18,26 +18,55 @@ function BookingConfirmationContent() {
 
   useEffect(() => {
     const confirmBooking = async () => {
-      if (!bookingId || !paymentIntent) {
+      if (!bookingId) {
         setError('Invalid confirmation link');
         setLoading(false);
         return;
       }
 
       try {
-        // Update booking status after successful payment
-        const response = await fetch(`/api/bookings/${bookingId}/confirm`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentIntent })
-        });
+        const confirmWithPaymentIntent = async () => {
+          const response = await fetch(`/api/bookings/${bookingId}/confirm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentIntent })
+          });
 
-        if (!response.ok) {
-          throw new Error('Failed to confirm booking');
-        }
+          const data = await response.json().catch(() => null);
 
-        const data = await response.json();
-        setBooking(data.booking);
+          if (!response.ok) {
+            throw new Error(data?.error || 'Failed to confirm booking');
+          }
+
+          return data.booking;
+        };
+
+        const loadConfirmedBooking = async () => {
+          const maxAttempts = 6;
+
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            const response = await fetch(`/api/bookings/${bookingId}/confirm`);
+            const data = await response.json().catch(() => null);
+
+            if (response.ok) {
+              return data.booking;
+            }
+
+            if (response.status !== 409 || attempt === maxAttempts) {
+              throw new Error(data?.error || 'Failed to load booking confirmation');
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+
+          throw new Error('Booking payment is still being confirmed. Please refresh in a moment.');
+        };
+
+        const confirmedBooking = paymentIntent
+          ? await confirmWithPaymentIntent()
+          : await loadConfirmedBooking();
+
+        setBooking(confirmedBooking);
       } catch (err: any) {
         setError(err.message);
       } finally {
