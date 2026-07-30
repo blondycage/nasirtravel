@@ -155,7 +155,7 @@ export default function ApplicationForm({
       sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
       
       if (expiryDate < sixMonthsFromNow) {
-        return 'Passport must be valid at least 6 months from the visa application submission date';
+        return 'Passport must be valid at least 6 months from the return date';
       }
     }
 
@@ -621,7 +621,7 @@ export default function ApplicationForm({
                 className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="mt-1 text-xs text-red-600">
-                Passport must be valid at least 6 months from the Visa application submission date
+                Passport must be valid at least 6 months from the return date
               </p>
             </div>
           </div>

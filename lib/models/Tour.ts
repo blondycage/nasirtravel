@@ -22,6 +22,13 @@ export interface ITour extends Document {
   gallery?: string[];
   inclusions?: string[];
   exclusions?: string[];
+  infoTables?: Array<{
+    title: string;
+    columns: string[];
+    rows: string[][];
+    notes?: string;
+    order?: number;
+  }>;
   status: 'draft' | 'published' | 'archived';
   createdAt: Date;
   updatedAt: Date;
@@ -56,6 +63,15 @@ const TourSchema = new Schema<ITour>(
     gallery: [{ type: String }],
     inclusions: [{ type: String }],
     exclusions: [{ type: String }],
+    infoTables: [
+      {
+        title: { type: String, default: '' },
+        columns: [{ type: String }],
+        rows: [[{ type: String }]],
+        notes: { type: String, default: '' },
+        order: { type: Number, default: 0 },
+      },
+    ],
     status: { type: String, enum: ['draft', 'published', 'archived'], default: 'draft' },
   },
   { timestamps: true }

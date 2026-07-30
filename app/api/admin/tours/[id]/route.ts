@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Tour from '@/lib/models/Tour';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 import sanitizeHtml from 'sanitize-html';
+import { normalizePackageInfoTables } from '@/lib/utils/packageInfoTables';
 
 // GET single tour
 export async function GET(
@@ -78,6 +79,7 @@ export async function PUT(
     if (body.startingPrice === '') {
       body.startingPrice = undefined;
     }
+    body.infoTables = normalizePackageInfoTables(body.infoTables);
     if (body.description) {
       body.description = sanitizeHtml(body.description, {
         allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2', 'h3', 'u', 'br']),

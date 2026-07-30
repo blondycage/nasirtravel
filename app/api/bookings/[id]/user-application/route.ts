@@ -130,7 +130,7 @@ export async function POST(
       
       if (expiryDate < sixMonthsFromNow) {
         return NextResponse.json(
-          { error: 'Passport must be valid at least 6 months from the visa application submission date' },
+          { error: 'Passport must be valid at least 6 months from the return date' },
           { status: 400 }
         );
       }

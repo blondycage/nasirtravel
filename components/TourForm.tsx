@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import RichTextEditor from './RichTextEditor';
+import { PACKAGE_INFO_TABLE_LIMITS, normalizePackageInfoTables, type PackageInfoTable } from '@/lib/utils/packageInfoTables';
 
 interface TourFormProps {
   tourId?: string;
@@ -40,6 +41,7 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
     status: 'draft',
     inclusions: [] as string[],
     exclusions: [] as string[],
+    infoTables: [] as PackageInfoTable[],
     itinerary: [] as Array<{ day: number; title: string; description: string }>
   });
   const [loading, setLoading] = useState(false);
@@ -66,6 +68,7 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
         status: initialData.status || 'draft',
         inclusions: initialData.inclusions || [],
         exclusions: initialData.exclusions || [],
+        infoTables: normalizePackageInfoTables(initialData.infoTables),
         itinerary: initialData.itinerary || []
       });
     }
@@ -92,7 +95,10 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          infoTables: normalizePackageInfoTables(formData.infoTables),
+        })
       });
 
       const data = await response.json();
@@ -125,6 +131,133 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
 
   const removeItem = (field: 'inclusions' | 'exclusions', index: number) => {
     setFormData(prev => ({ ...prev, [field]: prev[field].filter((_, i) => i !== index) }));
+  };
+
+  const addInfoTable = () => {
+    setFormData(prev => {
+      if (prev.infoTables.length >= PACKAGE_INFO_TABLE_LIMITS.maxTables) return prev;
+
+      return {
+        ...prev,
+        infoTables: [
+          ...prev.infoTables,
+          {
+            title: '',
+            columns: ['Option', 'Details'],
+            rows: [['', '']],
+            notes: '',
+            order: prev.infoTables.length,
+          },
+        ],
+      };
+    });
+  };
+
+  const updateInfoTable = (tableIndex: number, changes: Partial<PackageInfoTable>) => {
+    setFormData(prev => ({
+      ...prev,
+      infoTables: prev.infoTables.map((table, index) =>
+        index === tableIndex ? { ...table, ...changes } : table
+      ),
+    }));
+  };
+
+  const removeInfoTable = (tableIndex: number) => {
+    setFormData(prev => ({
+      ...prev,
+      infoTables: prev.infoTables.filter((_, index) => index !== tableIndex),
+    }));
+  };
+
+  const addInfoTableColumn = (tableIndex: number) => {
+    setFormData(prev => ({
+      ...prev,
+      infoTables: prev.infoTables.map((table, index) => {
+        if (index !== tableIndex || table.columns.length >= PACKAGE_INFO_TABLE_LIMITS.maxColumns) return table;
+
+        return {
+          ...table,
+          columns: [...table.columns, `Column ${table.columns.length + 1}`],
+          rows: table.rows.map((row) => [...row, '']),
+        };
+      }),
+    }));
+  };
+
+  const removeInfoTableColumn = (tableIndex: number, columnIndex: number) => {
+    setFormData(prev => ({
+      ...prev,
+      infoTables: prev.infoTables.map((table, index) => {
+        if (index !== tableIndex || table.columns.length <= 1) return table;
+
+        return {
+          ...table,
+          columns: table.columns.filter((_, currentIndex) => currentIndex !== columnIndex),
+          rows: table.rows.map((row) => row.filter((_, currentIndex) => currentIndex !== columnIndex)),
+        };
+      }),
+    }));
+  };
+
+  const updateInfoTableColumn = (tableIndex: number, columnIndex: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      infoTables: prev.infoTables.map((table, index) =>
+        index === tableIndex
+          ? {
+              ...table,
+              columns: table.columns.map((column, currentIndex) =>
+                currentIndex === columnIndex ? value : column
+              ),
+            }
+          : table
+      ),
+    }));
+  };
+
+  const addInfoTableRow = (tableIndex: number) => {
+    setFormData(prev => ({
+      ...prev,
+      infoTables: prev.infoTables.map((table, index) => {
+        if (index !== tableIndex || table.rows.length >= PACKAGE_INFO_TABLE_LIMITS.maxRows) return table;
+
+        return {
+          ...table,
+          rows: [...table.rows, Array.from({ length: table.columns.length }, () => '')],
+        };
+      }),
+    }));
+  };
+
+  const removeInfoTableRow = (tableIndex: number, rowIndex: number) => {
+    setFormData(prev => ({
+      ...prev,
+      infoTables: prev.infoTables.map((table, index) =>
+        index === tableIndex
+          ? { ...table, rows: table.rows.filter((_, currentIndex) => currentIndex !== rowIndex) }
+          : table
+      ),
+    }));
+  };
+
+  const updateInfoTableCell = (tableIndex: number, rowIndex: number, columnIndex: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      infoTables: prev.infoTables.map((table, index) =>
+        index === tableIndex
+          ? {
+              ...table,
+              rows: table.rows.map((row, currentRowIndex) =>
+                currentRowIndex === rowIndex
+                  ? table.columns.map((_, currentColumnIndex) =>
+                      currentColumnIndex === columnIndex ? value : row[currentColumnIndex] || ''
+                    )
+                  : row
+              ),
+            }
+          : table
+      ),
+    }));
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -416,6 +549,162 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
             initialContent={formData.description}
             onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
           />
+        </div>
+
+        <div className="md:col-span-2">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Custom Information Tables
+              </label>
+              <p className="mt-1 text-xs text-gray-500">
+                Optional. Add flexible tables for accommodations, flight options, approximate prices, or package notes.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={addInfoTable}
+              disabled={formData.infoTables.length >= PACKAGE_INFO_TABLE_LIMITS.maxTables}
+              className="inline-flex items-center justify-center rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            >
+              + Add Table
+            </button>
+          </div>
+
+          {formData.infoTables.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-5 text-sm text-gray-500">
+              No custom tables added. Packages will display normally without this section.
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {formData.infoTables.map((table, tableIndex) => (
+                <div key={tableIndex} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                  <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="grid flex-1 gap-3 md:grid-cols-[1fr_1fr]">
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase text-gray-500">
+                          Table Title
+                        </label>
+                        <input
+                          type="text"
+                          value={table.title}
+                          maxLength={PACKAGE_INFO_TABLE_LIMITS.maxTitleLength}
+                          onChange={(e) => updateInfoTable(tableIndex, { title: e.target.value })}
+                          placeholder="e.g. Accommodation Options"
+                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-semibold uppercase text-gray-500">
+                          Notes
+                        </label>
+                        <input
+                          type="text"
+                          value={table.notes || ''}
+                          maxLength={PACKAGE_INFO_TABLE_LIMITS.maxNotesLength}
+                          onChange={(e) => updateInfoTable(tableIndex, { notes: e.target.value })}
+                          placeholder="Optional caption or disclaimer"
+                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeInfoTable(tableIndex)}
+                      className="rounded border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                    >
+                      Delete Table
+                    </button>
+                  </div>
+
+                  <div className="max-w-full overflow-x-auto rounded border border-gray-200">
+                    <table className="min-w-[760px] divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          {table.columns.map((column, columnIndex) => (
+                            <th key={columnIndex} className="min-w-44 px-3 py-3 text-left align-top">
+                              <div className="flex items-start gap-2">
+                                <input
+                                  type="text"
+                                  value={column}
+                                  maxLength={PACKAGE_INFO_TABLE_LIMITS.maxCellLength}
+                                  onChange={(e) => updateInfoTableColumn(tableIndex, columnIndex, e.target.value)}
+                                  placeholder={`Column ${columnIndex + 1}`}
+                                  className="min-w-0 flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs font-semibold uppercase text-gray-700 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                                />
+                                {table.columns.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeInfoTableColumn(tableIndex, columnIndex)}
+                                    className="rounded px-2 py-1 text-sm leading-none text-red-500 hover:bg-red-50"
+                                    title="Remove column"
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                              </div>
+                            </th>
+                          ))}
+                          <th className="w-20 px-3 py-3 text-right text-xs font-semibold uppercase text-gray-500">
+                            Row
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white">
+                        {table.rows.map((row, rowIndex) => (
+                          <tr key={rowIndex}>
+                            {table.columns.map((_, columnIndex) => (
+                              <td key={columnIndex} className="px-3 py-3 align-top">
+                                <textarea
+                                  value={row[columnIndex] || ''}
+                                  maxLength={PACKAGE_INFO_TABLE_LIMITS.maxCellLength}
+                                  onChange={(e) => updateInfoTableCell(tableIndex, rowIndex, columnIndex, e.target.value)}
+                                  placeholder="Enter information"
+                                  rows={2}
+                                  className="min-h-16 w-full resize-y rounded border border-gray-300 px-2 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                                />
+                              </td>
+                            ))}
+                            <td className="px-3 py-3 text-right align-top">
+                              <button
+                                type="button"
+                                onClick={() => removeInfoTableRow(tableIndex, rowIndex)}
+                                className="rounded border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                              >
+                                Remove
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => addInfoTableRow(tableIndex)}
+                      disabled={table.rows.length >= PACKAGE_INFO_TABLE_LIMITS.maxRows}
+                      className="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+                    >
+                      + Add Row
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addInfoTableColumn(tableIndex)}
+                      disabled={table.columns.length >= PACKAGE_INFO_TABLE_LIMITS.maxColumns}
+                      className="rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-400"
+                    >
+                      + Add Column
+                    </button>
+                    <span className="self-center text-xs text-gray-500">
+                      {table.rows.length}/{PACKAGE_INFO_TABLE_LIMITS.maxRows} rows, {table.columns.length}/{PACKAGE_INFO_TABLE_LIMITS.maxColumns} columns
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>

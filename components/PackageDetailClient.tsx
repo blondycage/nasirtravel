@@ -9,6 +9,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BookingForm from '@/components/BookingForm';
 import { generatePackagePDF } from '@/lib/generatePackagePDF';
+import { packageInfoTableHasContent, type PackageInfoTable } from '@/lib/utils/packageInfoTables';
 
 interface Tour {
   _id: string;
@@ -28,6 +29,7 @@ interface Tour {
   itinerary?: { day: number; title: string; description: string }[];
   inclusions?: string[];
   exclusions?: string[];
+  infoTables?: PackageInfoTable[];
   gallery?: string[];
 }
 
@@ -122,6 +124,9 @@ export default function PackageDetailClient({ packageId }: { packageId: string }
 
   // Approved reviews only
   const approvedReviews = reviews.filter(r => r.status === 'approved');
+  const visibleInfoTables = [...(tour.infoTables || [])]
+    .filter(packageInfoTableHasContent)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
 
   const handleSubmitEnquiry = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -372,6 +377,69 @@ export default function PackageDetailClient({ packageId }: { packageId: string }
                     dangerouslySetInnerHTML={{ __html: tour.description || '' }}
                   />
                 </div>
+
+                {/* Custom Information Tables */}
+                {visibleInfoTables.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                      Package Details & Options
+                    </h3>
+                    <div className="space-y-6">
+                      {visibleInfoTables.map((table, tableIndex) => {
+                        const displayRows = table.rows.filter((row) => row.some(Boolean));
+
+                        return (
+                          <div key={tableIndex} className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+                            {(table.title || table.notes) && (
+                              <div className="border-b border-slate-300 bg-slate-100 px-5 py-4">
+                                {table.title && (
+                                  <h4 className="text-lg font-bold text-slate-950">{table.title}</h4>
+                                )}
+                                {table.notes && (
+                                  <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{table.notes}</p>
+                                )}
+                              </div>
+                            )}
+                            {displayRows.length > 0 && (
+                              <div className="max-w-full overflow-x-auto">
+                                <table className="min-w-[720px] border-collapse">
+                                  <thead>
+                                    <tr>
+                                      {table.columns.map((column, columnIndex) => (
+                                        <th
+                                          key={columnIndex}
+                                          className="border border-slate-300 bg-slate-800 px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-white"
+                                        >
+                                          {column || `Column ${columnIndex + 1}`}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {displayRows.map((row, rowIndex) => (
+                                      <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                                        {table.columns.map((_, columnIndex) => (
+                                          <td
+                                            key={columnIndex}
+                                            className="border border-slate-300 px-5 py-4 align-top text-sm leading-6 text-slate-700"
+                                          >
+                                            <span className="whitespace-pre-line">
+                                              {row[columnIndex] || '-'}
+                                            </span>
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Price Includes/Excludes */}
                 {(tour.inclusions || tour.exclusions) && (

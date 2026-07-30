@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Tour from '@/lib/models/Tour';
+import { normalizePackageInfoTables } from '@/lib/utils/packageInfoTables';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -21,6 +22,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     await connectDB();
     const body = await request.json();
+    body.infoTables = normalizePackageInfoTables(body.infoTables);
 
     const tour = await Tour.findByIdAndUpdate(params.id, body, {
       new: true,

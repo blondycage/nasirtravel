@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 
 // Get the "from" email address (defaults to EMAIL_USER if not set)
 const getFromAddress = () => {
-  return  'noreply@naasirtravel.com';
+  return process.env.EMAIL_FROM || 'noreply@naasirtravel.com';
 };
 
 // Enhanced logging utility
@@ -26,72 +26,70 @@ const escapeHtml = (value: any) => {
 
 // Check if email is configured
 const isEmailConfigured = () => {
-  const configured = !!(process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD);
+  const emailUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const emailPassword = process.env.SMTP_PASS || process.env.EMAIL_APP_PASSWORD;
+  const configured = !!(emailUser && emailPassword);
 
   logEmailDebug('EMAIL CONFIGURATION CHECK', {
     configured,
-    hasEmailUser: !!process.env.EMAIL_USER,
-    hasEmailPassword: !!process.env.EMAIL_APP_PASSWORD,
-    emailUserLength: process.env.EMAIL_USER?.length || 0,
-    emailPasswordLength: process.env.EMAIL_APP_PASSWORD?.length || 0,
-    emailUser: process.env.EMAIL_USER ? `${process.env.EMAIL_USER.substring(0, 3)}***` : 'NOT SET'
+    hasEmailUser: !!emailUser,
+    hasEmailPassword: !!emailPassword,
+    emailUserLength: emailUser?.length || 0,
+    emailPasswordLength: emailPassword?.length || 0,
+    emailUser: emailUser ? `${emailUser.substring(0, 3)}***` : 'NOT SET'
   });
 
   return configured;
 };
 
-// Create transporter only if email is configured (Gmail SMTP)
+// Create transporter only if email is configured.
 const getTransporter = () => {
+  const emailUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const emailPassword = process.env.SMTP_PASS || process.env.EMAIL_APP_PASSWORD;
+
   if (!isEmailConfigured()) {
     logEmailDebug('TRANSPORTER CREATION FAILED', {
       reason: 'Email not configured',
-      emailUser: process.env.EMAIL_USER,
-      hasPassword: !!process.env.EMAIL_APP_PASSWORD
+      hasEmailUser: !!emailUser,
+      hasPassword: !!emailPassword
     });
     return null;
   }
- 
+
+  const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.zeptomail.ca';
+  const smtpPort = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 587);
+  const secure = process.env.SMTP_SECURE
+    ? process.env.SMTP_SECURE === 'true'
+    : smtpPort === 465;
+  const emailDebug = process.env.EMAIL_DEBUG === 'true';
+
   const transportConfig = {
-    service: 'zeptomail',
-    host: 'smtp.zeptomail.ca',
-    port: 587,
-    secure: false, // true for 465, false for other ports
+    host: smtpHost,
+    port: smtpPort,
+    secure,
     auth: {
-      user: process.env.EMAIL_USER, // Your Gmail address
-      pass: process.env.EMAIL_APP_PASSWORD, // Your Gmail App Password (NOT regular password)
+      user: emailUser,
+      pass: emailPassword,
     },
     tls: {
-      rejectUnauthorized: false
+      rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED === 'false' ? false : true,
     },
-    debug: true,
-    logger: true
-  };
-
-  // Show first and last 3 characters of password for verification
-  const maskPassword = (pwd: string | undefined) => {
-    if (!pwd) return 'NOT SET';
-    if (pwd.length <= 6) return '***INVALID_LENGTH***';
-    const first3 = pwd.substring(0, 3);
-    const last3 = pwd.substring(pwd.length - 3);
-    const middle = '*'.repeat(Math.max(0, pwd.length - 6));
-    return `${first3}${middle}${last3}`;
+    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 15000),
+    greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 15000),
+    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 30000),
+    debug: emailDebug,
+    logger: emailDebug,
   };
 
   logEmailDebug('TRANSPORTER CREATED', {
-    service: transportConfig.service,
     host: transportConfig.host,
     port: transportConfig.port,
     secure: transportConfig.secure,
-    user: transportConfig.auth.user,
-    userMasked: transportConfig.auth.user ? `${transportConfig.auth.user.substring(0, 5)}***@${transportConfig.auth.user.split('@')[1] || ''}` : 'NOT SET',
+    userMasked: emailUser ? `${emailUser.substring(0, 5)}***@${emailUser.split('@')[1] || ''}` : 'NOT SET',
     hasPassword: !!transportConfig.auth.pass,
     passwordLength: transportConfig.auth.pass?.length || 0,
-    passwordMasked: maskPassword(transportConfig.auth.pass),
-    passwordFirst3Chars: transportConfig.auth.pass?.substring(0, 3) || 'NOT SET',
-    passwordLast3Chars: transportConfig.auth.pass?.substring(transportConfig.auth.pass.length - 3) || 'NOT SET',
-    // Full credentials for debugging (REMOVE IN PRODUCTION!)
-    FULL_EMAIL_FOR_DEBUG: process.env.EMAIL_USER,
-    FULL_PASSWORD_FOR_DEBUG: process.env.EMAIL_APP_PASSWORD
+    tlsRejectUnauthorized: transportConfig.tls.rejectUnauthorized,
+    debug: emailDebug
   });
 
   return nodemailer.createTransport(transportConfig);
@@ -127,8 +125,7 @@ const sendEmailWithDebug = async (
       errorStack: error.stack,
       errorCommand: error.command,
       errorResponse: error.response,
-      errorResponseCode: error.responseCode,
-      fullError: JSON.stringify(error, null, 2)
+      errorResponseCode: error.responseCode
     });
     return { success: false, error };
   }

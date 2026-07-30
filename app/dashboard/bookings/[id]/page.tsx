@@ -255,6 +255,7 @@ export default function BookingDetailsPage() {
         infantPrice: booking.infantPrice || 0,
       })
     : null;
+  const quoteNotes = booking.quoteNotes?.trim();
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -541,6 +542,33 @@ export default function BookingDetailsPage() {
           </div>
         </motion.div>
 
+        {/* Quote Notes */}
+        {quoteNotes && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-6 shadow-md"
+          >
+            <div className="mb-3 flex items-start gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-500 text-white">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h8m-8 4h6M5 5h14v14H5z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-amber-950">Quote Notes</h3>
+                <p className="mt-1 text-sm text-amber-800">
+                  Important information from Naasir Travel about your quotation.
+                </p>
+              </div>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-white p-4">
+              <p className="whitespace-pre-line text-sm leading-6 text-gray-800">{quoteNotes}</p>
+            </div>
+          </motion.div>
+        )}
+
         {/* Payment Summary */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -587,11 +615,6 @@ export default function BookingDetailsPage() {
             {booking.pricePerPerson && (
               <div className="text-sm text-gray-600">
                 Adult price: CA${booking.pricePerPerson.toFixed(2)}
-              </div>
-            )}
-            {booking.quoteNotes && (
-              <div className="text-sm text-gray-600">
-                Quote notes: {booking.quoteNotes}
               </div>
             )}
             {booking.paymentIntentId && (
