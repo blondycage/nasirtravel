@@ -100,20 +100,20 @@ export async function generatePackagePDF(tour: Tour): Promise<void> {
     const colCount = columns.length;
     const colW = CONTENT_W / colCount;
     const cellPad = 2;
-    const headerFontSize = colCount > 6 ? 5.8 : 7;
-    const bodyFontSize = colCount > 6 ? 5.8 : 7;
-    const lineHeight = colCount > 6 ? 3.1 : 3.6;
+    const headerFontSize = colCount > 6 ? 6 : 7.2;
+    const bodyFontSize = colCount > 6 ? 6 : 7.5;
+    const lineHeight = colCount > 6 ? 3.3 : 3.8;
 
     const drawHeader = () => {
       checkPage(12);
-      pdf.setFillColor(...DARK);
-      pdf.setDrawColor(203, 213, 225);
-      pdf.setLineWidth(0.15);
+      pdf.setFillColor(243, 244, 246);
+      pdf.setDrawColor(156, 163, 175);
+      pdf.setLineWidth(0.25);
 
       columns.forEach((column, columnIndex) => {
         const x = MARGIN + columnIndex * colW;
         pdf.rect(x, y, colW, 9, 'FD');
-        pdf.setTextColor(...WHITE);
+        pdf.setTextColor(...DARK);
         pdf.setFontSize(headerFontSize);
         pdf.setFont('helvetica', 'bold');
         const lines = pdf.splitTextToSize(column || `Column ${columnIndex + 1}`, colW - cellPad * 2);
@@ -165,15 +165,16 @@ export async function generatePackagePDF(tour: Tour): Promise<void> {
         drawHeader();
       }
 
-      const fillColor: RGB = rowIndex % 2 === 0 ? WHITE : [248, 250, 252];
-      pdf.setFillColor(...fillColor);
-      pdf.setDrawColor(203, 213, 225);
-      pdf.setLineWidth(0.15);
+      pdf.setFillColor(...WHITE);
+      pdf.setDrawColor(156, 163, 175);
+      pdf.setLineWidth(0.25);
 
       columns.forEach((_, columnIndex) => {
         const x = MARGIN + columnIndex * colW;
         pdf.rect(x, y, colW, rowH, 'FD');
         pdf.setTextColor(...DARK);
+        pdf.setFontSize(bodyFontSize);
+        pdf.setFont('helvetica', 'normal');
         pdf.text(cellLines[columnIndex], x + cellPad, y + 4);
       });
 
