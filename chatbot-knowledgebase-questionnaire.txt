@@ -1,0 +1,177 @@
+NAASIRTRAVEL CHATBOT KNOWLEDGE BASE 
+==========================================================
+Purpose: Gather everything needed to build a comprehensive, accurate knowledge base
+for the Naasir AI travel assistant.
+
+
+SECTION 1 — COMPANY & SERVICES
+--------------------------------
+1.  What is the full official name, registered address, and all contact channels
+    (phone, email, WhatsApp, live chat hours)?
+
+2.  What are your current business hours and timezone for customer support?
+
+3.  Do you operate in multiple languages? If so, which ones should the chatbot support?
+
+4.  What is the full list of tour/package types you currently offer
+    (Hajj, Umrah, international tours, domestic, group, private, etc.)?
+
+5.  Are there seasonal packages or limited-time offerings we should document?
+
+
+SECTION 2 — PACKAGES & PRICING
+--------------------------------
+6.  What specific packages are currently available, and what does each include
+    (flights, hotels, transport, meals, guides)?
+
+7.  What are the price ranges or tiers for each package?
+    (Even approximate ranges help the bot give useful answers)
+
+8.  Are there group discounts, family rates, early-bird pricing, or loyalty rewards?
+
+9.  What are your payment plan options (installment schedules, deposit amounts, deadlines)?
+
+10. Which payment methods do you accept (credit card, Interac, bank transfer, cash, crypto)?
+
+11. What is the full refund/cancellation policy per package type, with exact deadlines
+    and percentages?
+
+12. Are there any hidden fees or surcharges users commonly ask about
+    (visa fees, baggage, airport transfers)?
+
+
+SECTION 3 — BOOKING PROCESS
+-----------------------------
+13. Walk us through the complete booking process step-by-step from the user's perspective —
+    what happens from first click to final confirmation?
+
+14. What documents are required at each stage of booking (passport, vaccination proof, etc.)?
+
+15. How far in advance must bookings be made for each package type?
+
+16. Can users modify a booking after it's confirmed? What are the rules and fees?
+
+17. How does group/family booking work — can one person book for multiple travellers?
+
+18. What happens if a package sells out or a trip gets cancelled by NaasirTravel?
+
+
+SECTION 4 — HAJJ & UMRAH SPECIFICS
+-------------------------------------
+19. What are the current Saudi Arabia visa requirements you handle for Umrah and Hajj
+    pilgrims (specific documents, costs, processing times)?
+
+20. What vaccinations are currently mandatory vs. recommended for Saudi Arabia travel?
+
+21. Do you provide mahram documentation assistance for women travelling without a
+    male guardian?
+
+22. What are the exact ihram rules and dress code requirements you tell your clients?
+
+23. Do you offer pre-departure orientation sessions or guides for first-time pilgrims?
+
+24. Are there age restrictions for any Hajj or Umrah packages?
+
+25. What is your stance on Hajj lottery/quota — do you handle government quota applications?
+
+
+SECTION 5 — DESTINATIONS & TRAVEL INFO
+-----------------------------------------
+26. Which countries/cities do you currently offer tours to beyond Saudi Arabia?
+
+27. For each destination, do you have standard advice on: visa requirements, best travel
+    times, local customs, safety tips, currency, and language?
+
+28. Do you partner with specific airlines, hotels, or ground transport providers?
+    Can the chatbot name them?
+
+29. Are there any destinations you specifically do NOT serve that users commonly ask about?
+
+30. Do you provide travel insurance, or do you recommend specific providers?
+
+
+SECTION 6 — CUSTOMER ACCOUNTS & PLATFORM
+-------------------------------------------
+31. What can users manage inside their account dashboard
+    (bookings, dependants, documents, invoices)?
+
+32. What is the process for resetting a password or recovering a locked account?
+
+33. What are the rules around adding dependants — age limits, required documents,
+    maximum per account?
+
+34. Can users download invoices, booking confirmations, or visa letters from their account?
+
+35. Is there a mobile app, or is the platform web-only?
+
+
+SECTION 7 — POLICIES & LEGAL
+-------------------------------
+36. What is your full privacy policy in plain language — what data do you collect
+    and how is it used?
+
+37. Are there any terms of service points users frequently misunderstand or ask about?
+
+38. What is your complaint or dispute resolution process?
+
+39. Are you registered with any travel industry bodies (TICO, IATA, ATOL, etc.)
+    that give users confidence?
+
+40. Do you have any age restrictions (minimum age to book independently, senior travel rules)?
+
+
+SECTION 8 — COMMON CUSTOMER QUESTIONS (MOST IMPORTANT)
+---------------------------------------------------------
+41. What are the TOP 10 QUESTIONS your customer support team gets asked most frequently?
+
+42. What are the TOP 5 COMPLAINTS OR MISUNDERSTANDINGS customers have that the chatbot
+    could prevent?
+
+43. Are there any questions you want the chatbot to ALWAYS REDIRECT TO A HUMAN AGENT
+    rather than answer itself?
+
+44. Are there sensitive topics (pricing disputes, complaints, medical emergencies) where
+    you want the bot to immediately hand off to staff?
+
+45. What should the chatbot say when it genuinely doesn't know the answer — is there a
+    specific contact name, email, or phone number to direct users to?
+
+
+SECTION 9 — CONTENT & DOCUMENTS YOU ALREADY HAVE
+---------------------------------------------------
+46. Do you have an existing FAQ document, employee training manual, or help centre
+    we can use as source material?
+
+47. Are there any brochures, itineraries, or package detail PDFs we can feed into
+    the knowledge base?
+
+48. Do you have blog posts, destination guides, or articles on your website we can index?
+
+49. Are there any WhatsApp or email templates your support team uses that show the
+    "right" answers to common questions?
+
+50. Who on your team will be responsible for reviewing and updating the knowledge base
+    going forward?
+
+
+SECTION 10 — FUTURE & GROWTH
+------------------------------
+51. Are you planning to add new destinations or package types in the next 6–12 months?
+
+52. Do you want the chatbot to eventually be able to check real-time booking status
+    from your database?
+
+53. Should the chatbot eventually handle booking initiation (collect user details and
+    start a booking), or stay advisory-only?
+
+54. Do you want analytics on what questions users are asking most — to identify
+    knowledge gaps?
+
+55. What languages do most of your customers speak (English, Arabic, French, Urdu, etc.)?
+
+
+==========================================================
+NOTE: The most critical sections are 2, 3, 4, and 8 — pricing/policies, booking
+process, Hajj/Umrah specifics, and the real FAQ from your support team. Those four
+alone will cover approximately 80% of what users ask the chatbot.
+==========================================================

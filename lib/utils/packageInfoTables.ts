@@ -58,7 +58,7 @@ export function normalizePackageInfoTables(value: unknown): PackageInfoTable[] {
     .filter((table) => {
       const hasTitle = Boolean(table.title);
       const hasColumns = table.columns.some(Boolean);
-      const hasRows = table.rows.some((row) => row.some(Boolean));
+      const hasRows = table.rows.some((row: string[]) => row.some(Boolean));
       const hasNotes = Boolean(table.notes);
       return hasTitle || hasColumns || hasRows || hasNotes;
     });
@@ -72,6 +72,6 @@ export function packageInfoTableHasContent(table: PackageInfoTable) {
     table.title ||
     table.notes ||
     columns.some(Boolean) ||
-    rows.some((row) => Array.isArray(row) && row.some(Boolean))
+    rows.some((row: string[]) => Array.isArray(row) && row.some(Boolean))
   );
 }

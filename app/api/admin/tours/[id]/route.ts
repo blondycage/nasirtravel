@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Tour from '@/lib/models/Tour';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
-import sanitizeHtml from 'sanitize-html';
+import { sanitizeHtml } from '@/lib/utils/sanitizeHtml';
 import { normalizePackageInfoTables } from '@/lib/utils/packageInfoTables';
 
 // GET single tour

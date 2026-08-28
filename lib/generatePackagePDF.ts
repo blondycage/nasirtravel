@@ -1,4 +1,9 @@
 import { jsPDF } from 'jspdf';
+import {
+  normalizePackageInfoTables,
+  packageInfoTableHasContent,
+  type PackageInfoTable,
+} from '@/lib/utils/packageInfoTables';
 
 interface Tour {
   _id: string;
@@ -13,6 +18,7 @@ interface Tour {
   itinerary?: { day: number; title: string; description: string }[];
   inclusions?: string[];
   exclusions?: string[];
+  infoTables?: PackageInfoTable[];
 }
 
 function stripHtml(html: string): string {
@@ -57,6 +63,124 @@ export async function generatePackagePDF(tour: Tour): Promise<void> {
     pdf.setFont('helvetica', 'bold');
     pdf.text(title, MARGIN + 6, y + 7);
     y += 14;
+  };
+
+  const writeWrappedText = ({
+    text,
+    x,
+    maxWidth,
+    fontSize = 8.5,
+    color = GRAY,
+    lineHeight = 4.6,
+    fontStyle = 'normal',
+  }: {
+    text: string;
+    x: number;
+    maxWidth: number;
+    fontSize?: number;
+    color?: RGB;
+    lineHeight?: number;
+    fontStyle?: 'normal' | 'bold';
+  }) => {
+    pdf.setTextColor(...color);
+    pdf.setFontSize(fontSize);
+    pdf.setFont('helvetica', fontStyle);
+    const lines = pdf.splitTextToSize(text || '-', maxWidth);
+
+    lines.forEach((line: string) => {
+      checkPage(lineHeight + 1);
+      pdf.text(line, x, y);
+      y += lineHeight;
+    });
+  };
+
+  const drawPackageTable = (table: PackageInfoTable) => {
+    const columns = table.columns.length > 0 ? table.columns : ['Details'];
+    const rows = table.rows.filter((row: string[]) => row.some(Boolean));
+    const colCount = columns.length;
+    const colW = CONTENT_W / colCount;
+    const cellPad = 2;
+    const headerFontSize = colCount > 6 ? 5.8 : 7;
+    const bodyFontSize = colCount > 6 ? 5.8 : 7;
+    const lineHeight = colCount > 6 ? 3.1 : 3.6;
+
+    const drawHeader = () => {
+      checkPage(12);
+      pdf.setFillColor(...DARK);
+      pdf.setDrawColor(203, 213, 225);
+      pdf.setLineWidth(0.15);
+
+      columns.forEach((column, columnIndex) => {
+        const x = MARGIN + columnIndex * colW;
+        pdf.rect(x, y, colW, 9, 'FD');
+        pdf.setTextColor(...WHITE);
+        pdf.setFontSize(headerFontSize);
+        pdf.setFont('helvetica', 'bold');
+        const lines = pdf.splitTextToSize(column || `Column ${columnIndex + 1}`, colW - cellPad * 2);
+        pdf.text(lines.slice(0, 2), x + cellPad, y + 3.4);
+      });
+
+      y += 9;
+    };
+
+    if (table.title) {
+      checkPage(12);
+      pdf.setTextColor(...DARK);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(table.title, MARGIN, y);
+      y += 6;
+    }
+
+    if (table.notes) {
+      writeWrappedText({
+        text: table.notes,
+        x: MARGIN,
+        maxWidth: CONTENT_W,
+        fontSize: 8,
+        lineHeight: 4.2,
+      });
+      y += 2;
+    }
+
+    if (rows.length === 0) {
+      y += 4;
+      return;
+    }
+
+    drawHeader();
+
+    rows.forEach((row: string[], rowIndex: number) => {
+      pdf.setFontSize(bodyFontSize);
+      pdf.setFont('helvetica', 'normal');
+
+      const cellLines: string[][] = columns.map((_, columnIndex) =>
+        pdf.splitTextToSize(row[columnIndex] || '-', colW - cellPad * 2)
+      );
+      const rowH = Math.max(8, Math.max(...cellLines.map((lines: string[]) => lines.length)) * lineHeight + 4);
+
+      if (y + rowH > PAGE_H - 18) {
+        pdf.addPage();
+        y = MARGIN;
+        drawHeader();
+      }
+
+      const fillColor: RGB = rowIndex % 2 === 0 ? WHITE : [248, 250, 252];
+      pdf.setFillColor(...fillColor);
+      pdf.setDrawColor(203, 213, 225);
+      pdf.setLineWidth(0.15);
+
+      columns.forEach((_, columnIndex) => {
+        const x = MARGIN + columnIndex * colW;
+        pdf.rect(x, y, colW, rowH, 'FD');
+        pdf.setTextColor(...DARK);
+        pdf.text(cellLines[columnIndex], x + cellPad, y + 4);
+      });
+
+      y += rowH;
+    });
+
+    y += 8;
   };
 
   // ── HEADER BAR ──────────────────────────────────────────────────────────────
@@ -149,6 +273,15 @@ export async function generatePackagePDF(tour: Tour): Promise<void> {
       y += 5;
     });
     y += 5;
+  }
+
+  const infoTables = normalizePackageInfoTables(tour.infoTables || [])
+    .filter(packageInfoTableHasContent)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+  if (infoTables.length > 0) {
+    sectionHeader('Package Details & Options');
+    infoTables.forEach(drawPackageTable);
   }
 
   // ── INCLUSIONS ──────────────────────────────────────────────────────────────

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import sanitizeHtml from 'sanitize-html';
 import { Types } from 'mongoose';
 import PackageDetailClient from '@/components/PackageDetailClient';
 import connectDB from '@/lib/mongodb';
@@ -26,10 +25,16 @@ function absoluteUrl(path: string) {
 function plainText(html?: string) {
   if (!html) return '';
 
-  return sanitizeHtml(html, {
-    allowedTags: [],
-    allowedAttributes: {},
-  })
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/g, "'")
     .replace(/\s+/g, ' ')
     .trim();
 }
