@@ -106,13 +106,12 @@ export async function generatePackagePDF(tour: Tour): Promise<void> {
 
     const drawHeader = () => {
       checkPage(12);
-      pdf.setFillColor(243, 244, 246);
       pdf.setDrawColor(156, 163, 175);
       pdf.setLineWidth(0.25);
 
       columns.forEach((column, columnIndex) => {
         const x = MARGIN + columnIndex * colW;
-        pdf.rect(x, y, colW, 9, 'FD');
+        pdf.rect(x, y, colW, 9, 'S');
         pdf.setTextColor(...DARK);
         pdf.setFontSize(headerFontSize);
         pdf.setFont('helvetica', 'bold');
@@ -165,13 +164,12 @@ export async function generatePackagePDF(tour: Tour): Promise<void> {
         drawHeader();
       }
 
-      pdf.setFillColor(...WHITE);
       pdf.setDrawColor(156, 163, 175);
       pdf.setLineWidth(0.25);
 
       columns.forEach((_, columnIndex) => {
         const x = MARGIN + columnIndex * colW;
-        pdf.rect(x, y, colW, rowH, 'FD');
+        pdf.rect(x, y, colW, rowH, 'S');
         pdf.setTextColor(...DARK);
         pdf.setFontSize(bodyFontSize);
         pdf.setFont('helvetica', 'normal');
