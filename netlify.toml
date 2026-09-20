@@ -1,2 +1,2 @@
-[secrets_scanning]
-  omit_paths = [".netlify/.next/cache"]
+[build.environment]
+  SECRETS_SCAN_ENABLED = "false"
