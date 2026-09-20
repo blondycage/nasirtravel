@@ -1,0 +1,2 @@
+[secrets_scanning]
+  omit_paths = [".netlify/.next/cache"]
