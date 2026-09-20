@@ -11,6 +11,33 @@ export interface DecodedToken {
   exp: number;
 }
 
+const AUTH_STORAGE_KEYS = ['token', 'user', 'userId', 'userRole'];
+
+export const clearAuthStorage = (): void => {
+  if (typeof window === 'undefined') return;
+
+  AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+};
+
+const getLoginRedirect = (redirectPath: string): string => {
+  if (redirectPath !== '/login' || typeof window === 'undefined') {
+    return redirectPath;
+  }
+
+  const currentPath = `${window.location.pathname}${window.location.search}`;
+  if (currentPath === '/login' || currentPath.startsWith('/login?')) {
+    return '/login';
+  }
+
+  return `/login?redirect=${encodeURIComponent(currentPath)}`;
+};
+
+const redirectToLogin = (redirectPath: string): void => {
+  if (typeof window === 'undefined') return;
+
+  window.location.replace(getLoginRedirect(redirectPath));
+};
+
 /**
  * Decode JWT token without verification (client-side)
  * Only use this to check expiration, never for security decisions
@@ -59,17 +86,14 @@ export const getValidToken = (redirectPath: string = '/login'): string | null =>
   const token = localStorage.getItem('token');
 
   if (!token) {
-    window.location.href = redirectPath;
+    clearAuthStorage();
+    redirectToLogin(redirectPath);
     return null;
   }
 
   if (isTokenExpired(token)) {
-    // Clear expired token
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-
-    // Redirect to login
-    window.location.href = redirectPath;
+    clearAuthStorage();
+    redirectToLogin(redirectPath);
     return null;
   }
 
@@ -90,8 +114,7 @@ export const checkAuthAndRedirect = (redirectPath: string = '/login'): boolean =
  */
 export const handleUnauthorizedResponse = (status: number, redirectPath: string = '/login'): void => {
   if (status === 401) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = redirectPath;
+    clearAuthStorage();
+    redirectToLogin(redirectPath);
   }
 };

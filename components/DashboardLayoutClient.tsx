@@ -3,6 +3,8 @@
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { clearAuthStorage, getValidToken, handleUnauthorizedResponse } from '@/lib/utils/clientAuth';
 
 export default function DashboardLayout({
   children,
@@ -11,24 +13,28 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
+      const token = getValidToken();
+      if (!token) return;
 
       try {
         const response = await fetch('/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
+        if (response.status === 401) {
+          handleUnauthorizedResponse(response.status);
+          return;
+        }
+
         if (!response.ok) {
-          router.push('/login');
+          clearAuthStorage();
+          handleUnauthorizedResponse(401);
           return;
         }
 
@@ -40,11 +46,13 @@ export default function DashboardLayout({
       }
     };
 
-    fetchUser();
-  }, [router]);
+    if (!authLoading && isAuthenticated) {
+      fetchUser();
+    }
+  }, [authLoading, isAuthenticated]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    clearAuthStorage();
     router.push('/login');
   };
 
@@ -56,7 +64,7 @@ export default function DashboardLayout({
     { name: 'Profile', path: '/dashboard/profile', icon: '👤' },
   ];
 
-  if (!user) {
+  if (authLoading || !isAuthenticated || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>

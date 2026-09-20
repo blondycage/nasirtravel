@@ -1,8 +1,36 @@
 import nodemailer from 'nodemailer';
 
-// Get the "from" email address (defaults to EMAIL_USER if not set)
+type SmtpConfig = {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  password: string;
+};
+
 const getFromAddress = () => {
   return process.env.EMAIL_FROM || 'noreply@naasirtravel.com';
+};
+
+const getSmtpConfig = (): SmtpConfig | null => {
+  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const password = process.env.SMTP_PASS || process.env.EMAIL_APP_PASSWORD;
+  const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 587);
+
+  if (!host || !user || !password || !Number.isInteger(port) || port < 1 || port > 65535) {
+    return null;
+  }
+
+  return {
+    host,
+    port,
+    secure: process.env.SMTP_SECURE
+      ? process.env.SMTP_SECURE === 'true'
+      : port === 465,
+    user,
+    password,
+  };
 };
 
 // Enhanced logging utility
@@ -26,17 +54,19 @@ const escapeHtml = (value: any) => {
 
 // Check if email is configured
 const isEmailConfigured = () => {
+  const smtpConfig = getSmtpConfig();
+  const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST;
   const emailUser = process.env.SMTP_USER || process.env.EMAIL_USER;
   const emailPassword = process.env.SMTP_PASS || process.env.EMAIL_APP_PASSWORD;
-  const configured = !!(emailUser && emailPassword);
+  const smtpPort = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 587);
+  const configured = smtpConfig !== null;
 
   logEmailDebug('EMAIL CONFIGURATION CHECK', {
     configured,
+    hasSmtpHost: !!smtpHost,
     hasEmailUser: !!emailUser,
     hasEmailPassword: !!emailPassword,
-    emailUserLength: emailUser?.length || 0,
-    emailPasswordLength: emailPassword?.length || 0,
-    emailUser: emailUser ? `${emailUser.substring(0, 3)}***` : 'NOT SET'
+    hasValidPort: Number.isInteger(smtpPort) && smtpPort > 0 && smtpPort <= 65535
   });
 
   return configured;
@@ -44,32 +74,26 @@ const isEmailConfigured = () => {
 
 // Create transporter only if email is configured.
 const getTransporter = () => {
-  const emailUser = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const emailPassword = process.env.SMTP_PASS || process.env.EMAIL_APP_PASSWORD;
+  const smtpConfig = getSmtpConfig();
 
-  if (!isEmailConfigured()) {
+  if (!smtpConfig) {
     logEmailDebug('TRANSPORTER CREATION FAILED', {
       reason: 'Email not configured',
-      hasEmailUser: !!emailUser,
-      hasPassword: !!emailPassword
+      requiredVariables: ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'],
+      legacyCredentialVariablesSupported: ['EMAIL_HOST', 'EMAIL_USER', 'EMAIL_APP_PASSWORD']
     });
     return null;
   }
 
-  const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.zeptomail.ca';
-  const smtpPort = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 587);
-  const secure = process.env.SMTP_SECURE
-    ? process.env.SMTP_SECURE === 'true'
-    : smtpPort === 465;
   const emailDebug = process.env.EMAIL_DEBUG === 'true';
 
   const transportConfig = {
-    host: smtpHost,
-    port: smtpPort,
-    secure,
+    host: smtpConfig.host,
+    port: smtpConfig.port,
+    secure: smtpConfig.secure,
     auth: {
-      user: emailUser,
-      pass: emailPassword,
+      user: smtpConfig.user,
+      pass: smtpConfig.password,
     },
     tls: {
       rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED === 'false' ? false : true,
@@ -85,9 +109,8 @@ const getTransporter = () => {
     host: transportConfig.host,
     port: transportConfig.port,
     secure: transportConfig.secure,
-    userMasked: emailUser ? `${emailUser.substring(0, 5)}***@${emailUser.split('@')[1] || ''}` : 'NOT SET',
+    hasUser: !!transportConfig.auth.user,
     hasPassword: !!transportConfig.auth.pass,
-    passwordLength: transportConfig.auth.pass?.length || 0,
     tlsRejectUnauthorized: transportConfig.tls.rejectUnauthorized,
     debug: emailDebug
   });
@@ -796,6 +819,68 @@ export const sendQuoteRequestReceived = async (
   };
 
   return sendEmailWithDebug('SEND QUOTE REQUEST RECEIVED', transporter, mailOptions);
+};
+
+export const sendAdminQuoteRequestNotification = async (quoteDetails: {
+  customerName: string;
+  customerEmail: string;
+  tourTitle: string;
+  bookingId: string;
+  numberOfTravelers: number;
+}) => {
+  logEmailDebug('SEND ADMIN QUOTE REQUEST NOTIFICATION - START', {
+    bookingId: quoteDetails.bookingId,
+  });
+
+  if (!isEmailConfigured()) {
+    const error = 'Email not configured';
+    logEmailDebug('SEND ADMIN QUOTE REQUEST NOTIFICATION - FAILED', { error });
+    return { success: false, error };
+  }
+
+  const transporter = getTransporter();
+  if (!transporter) {
+    const error = 'Failed to create email transporter';
+    logEmailDebug('SEND ADMIN QUOTE REQUEST NOTIFICATION - FAILED', { error });
+    return { success: false, error };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const bookingLink = `${appUrl}/admin/bookings/${quoteDetails.bookingId}`;
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'info@naasirtravel.com';
+
+  const mailOptions = {
+    from: getFromAddress(),
+    to: adminEmail,
+    replyTo: quoteDetails.customerEmail,
+    subject: `Quotation Request: ${quoteDetails.tourTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: #1e3a8a; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 26px;">New Quotation Request</h1>
+        </div>
+        <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            A customer has requested final pricing for a booking.
+          </p>
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Customer:</strong> ${escapeHtml(quoteDetails.customerName)}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Email:</strong> ${escapeHtml(quoteDetails.customerEmail)}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Package:</strong> ${escapeHtml(quoteDetails.tourTitle)}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Travelers:</strong> ${quoteDetails.numberOfTravelers}</p>
+            <p style="color: #374151; font-size: 14px; margin: 5px 0;"><strong>Booking ID:</strong> ${escapeHtml(quoteDetails.bookingId)}</p>
+          </div>
+          <div style="text-align: center; margin: 30px 0 10px;">
+            <a href="${bookingLink}" style="display: inline-block; background: #1d4ed8; color: white; padding: 14px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+              Review Quotation Request
+            </a>
+          </div>
+        </div>
+      </div>
+    `,
+  };
+
+  return sendEmailWithDebug('SEND ADMIN QUOTE REQUEST NOTIFICATION', transporter, mailOptions);
 };
 
 export const sendBookingQuoteReady = async (

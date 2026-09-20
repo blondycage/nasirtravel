@@ -3,7 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Booking from '@/lib/models/Booking';
 import Dependant from '@/lib/models/Dependant';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
-import { sendQuoteRequestReceived } from '@/lib/utils/email';
+import { sendAdminQuoteRequestNotification, sendQuoteRequestReceived } from '@/lib/utils/email';
 import { getRemainingDependantSlots, getTravelerBreakdown } from '@/lib/utils/travelers';
 
 export async function POST(
@@ -85,14 +85,29 @@ export async function POST(
     await booking.save();
 
     try {
-      await sendQuoteRequestReceived(booking.customerEmail, {
+      const quoteDetails = {
         customerName: booking.customerName,
         tourTitle: (booking.tour as any)?.title || 'Your selected package',
         bookingId: booking._id.toString(),
         numberOfTravelers: booking.numberOfTravelers,
-      });
+      };
+
+      const [customerEmail, adminEmail] = await Promise.all([
+        sendQuoteRequestReceived(booking.customerEmail, quoteDetails),
+        sendAdminQuoteRequestNotification({
+          ...quoteDetails,
+          customerEmail: booking.customerEmail,
+        }),
+      ]);
+
+      if (!customerEmail.success || !adminEmail.success) {
+        console.error('One or more quote request emails failed', {
+          customerEmailSent: customerEmail.success,
+          adminEmailSent: adminEmail.success,
+        });
+      }
     } catch (emailError) {
-      console.error('Failed to send quote request received email:', emailError);
+      console.error('Failed to send quote request emails:', emailError);
     }
 
     return NextResponse.json({

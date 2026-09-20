@@ -21,7 +21,7 @@ function LoginForm() {
 
   useEffect(() => {
     const redirect = searchParams.get('redirect');
-    if (redirect) {
+    if (redirect?.startsWith('/') && !redirect.startsWith('//')) {
       setRedirectUrl(redirect);
     }
   }, [searchParams]);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getValidToken, handleUnauthorizedResponse } from '@/lib/utils/clientAuth';
+import { decodeToken, getValidToken, handleUnauthorizedResponse } from '@/lib/utils/clientAuth';
 
 interface UseAuthOptions {
   redirectTo?: string;
@@ -25,6 +25,12 @@ export const useAuth = (options: UseAuthOptions = {}) => {
       return;
     }
 
+    const decodedToken = decodeToken(token);
+    const expiresInMs = decodedToken ? Math.max(0, decodedToken.exp * 1000 - Date.now()) : 0;
+    const expiryTimer = window.setTimeout(() => {
+      handleUnauthorizedResponse(401, redirectTo);
+    }, expiresInMs);
+
     const verifyRole = async () => {
       if (requiredRole) {
         try {
@@ -45,7 +51,7 @@ export const useAuth = (options: UseAuthOptions = {}) => {
           }
 
           const data = await response.json();
-          if (data?.user?.role !== requiredRole) {
+          if (data?.data?.role !== requiredRole) {
             router.push('/unauthorized');
             return;
           }
@@ -61,6 +67,8 @@ export const useAuth = (options: UseAuthOptions = {}) => {
     };
 
     verifyRole();
+
+    return () => window.clearTimeout(expiryTimer);
   }, [redirectTo, requiredRole, router]);
 
   return { isAuthenticated, isLoading };

@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { clearAuthStorage } from '@/lib/utils/clientAuth';
 import {
   BarChart3,
   BookOpen,
@@ -35,6 +37,7 @@ const navItems = [
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth({ requiredRole: 'admin' });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [currentSearch, setCurrentSearch] = useState('');
@@ -45,8 +48,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }, [pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
+    clearAuthStorage();
     router.push('/login');
   };
 
@@ -143,6 +145,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </div>
     </aside>
   );
+
+  if (authLoading || !isAuthenticated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-100">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100">
