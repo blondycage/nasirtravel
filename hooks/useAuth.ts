@@ -51,8 +51,15 @@ export const useAuth = (options: UseAuthOptions = {}) => {
           }
 
           const data = await response.json();
-          if (data?.data?.role !== requiredRole) {
-            router.push('/unauthorized');
+          const user = data?.user ?? data?.data;
+
+          if (!user?.role) {
+            handleUnauthorizedResponse(401, redirectTo);
+            return;
+          }
+
+          if (user.role !== requiredRole) {
+            router.replace('/unauthorized');
             return;
           }
         } catch (error) {
