@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import Captcha from '@/components/Captcha';
 
 type PartySize = '1' | '2' | '3' | '4+';
 type PackageType = 'luxury' | 'premium' | 'standard';
@@ -107,6 +108,15 @@ export default function HajjInterestForm({ open, onClose }: HajjInterestFormProp
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+
+  useEffect(() => {
+    if (open) {
+      setCaptchaVerified(false);
+      setCaptchaResetKey(current => current + 1);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -222,6 +232,7 @@ export default function HajjInterestForm({ open, onClose }: HajjInterestFormProp
     if (!formData.roomPreference) return 'Please select a room preference.';
     if (!formData.departurePort.trim()) return 'Port of departure is required.';
     if (!formData.planningToGo) return 'Please confirm whether you are planning to go for Hajj.';
+    if (!captchaVerified) return 'Please complete the captcha verification.';
 
     for (const [index, dependant] of formData.dependants.entries()) {
       if (!dependant.name.trim()) {
@@ -280,6 +291,8 @@ export default function HajjInterestForm({ open, onClose }: HajjInterestFormProp
         planningToGo: '',
         dependants: [],
       });
+      setCaptchaVerified(false);
+      setCaptchaResetKey(current => current + 1);
 
       setTimeout(() => {
         onClose();
@@ -679,6 +692,14 @@ export default function HajjInterestForm({ open, onClose }: HajjInterestFormProp
                   )}
                 </section>
 
+                <section>
+                  <Captcha
+                    onVerify={setCaptchaVerified}
+                    resetKey={captchaResetKey}
+                    className="rounded-2xl bg-white p-4 text-gray-900"
+                  />
+                </section>
+
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <button
                     type="button"
@@ -689,7 +710,7 @@ export default function HajjInterestForm({ open, onClose }: HajjInterestFormProp
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !captchaVerified}
                     className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {loading ? 'Submitting...' : 'Submit Interest'}

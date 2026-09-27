@@ -12,6 +12,9 @@ export interface ITour extends Document {
   pricingMode?: 'fixed' | 'quote_required';
   priceLabel?: string;
   startingPrice?: number;
+  totalSeats?: number;
+  remainingSeats?: number;
+  inventoryUpdatedAt?: Date;
   isComing?: boolean;
   description?: string;
   itinerary?: Array<{
@@ -51,6 +54,9 @@ const TourSchema = new Schema<ITour>(
     },
     priceLabel: { type: String, default: 'Price confirmed after review' },
     startingPrice: { type: Number },
+    totalSeats: { type: Number, min: 1 },
+    remainingSeats: { type: Number, min: 0 },
+    inventoryUpdatedAt: Date,
     isComing: { type: Boolean, default: false },
     description: { type: String },
     itinerary: [

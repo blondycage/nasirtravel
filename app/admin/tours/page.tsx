@@ -11,6 +11,8 @@ interface Tour {
   price: string;
   priceLabel?: string;
   startingPrice?: number;
+  totalSeats?: number | null;
+  remainingSeats?: number | null;
   status: 'draft' | 'published' | 'archived';
   createdAt: string;
 }
@@ -155,6 +157,9 @@ export default function AdminToursPage() {
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Seats
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Created
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -182,6 +187,11 @@ export default function AdminToursPage() {
                       <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(tour.status)}`}>
                         {tour.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {tour.totalSeats != null && tour.remainingSeats != null
+                        ? `${tour.remainingSeats} / ${tour.totalSeats} left`
+                        : 'Not tracked'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {new Date(tour.createdAt).toLocaleDateString()}

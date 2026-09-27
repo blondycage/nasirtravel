@@ -5,6 +5,7 @@ import Booking from '@/lib/models/Booking';
 import User from '@/lib/models/User';
 import Review from '@/lib/models/Review';
 import HajjInterest from '@/lib/models/HajjInterest';
+import TravelEnquiry from '@/lib/models/TravelEnquiry';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 
 export async function GET(request: NextRequest) {
@@ -23,12 +24,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
-    const totalTours = await Tour.countDocuments();
-    const totalBookings = await Booking.countDocuments();
-    const pendingBookings = await Booking.countDocuments({ bookingStatus: 'pending' });
-    const totalUsers = await User.countDocuments();
-    const totalReviews = await Review.countDocuments();
-    const totalHajjInterests = await HajjInterest.countDocuments();
+    const [totalTours, totalBookings, pendingBookings, totalUsers, totalReviews, totalHajjInterests, newTravelEnquiries] = await Promise.all([
+      Tour.countDocuments(),
+      Booking.countDocuments(),
+      Booking.countDocuments({ bookingStatus: 'pending' }),
+      User.countDocuments(),
+      Review.countDocuments(),
+      HajjInterest.countDocuments(),
+      TravelEnquiry.countDocuments({ status: 'new' }),
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -39,6 +43,7 @@ export async function GET(request: NextRequest) {
         totalUsers,
         totalReviews,
         totalHajjInterests,
+        newTravelEnquiries,
       },
     });
   } catch (error: any) {

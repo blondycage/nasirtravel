@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Captcha from '@/components/Captcha';
 
 export default function ContactPage() {
   const router = useRouter();
@@ -18,9 +19,17 @@ export default function ContactPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!captchaVerified) {
+      alert('Please complete the captcha verification.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -45,6 +54,8 @@ export default function ContactPage() {
           message: '',
           packageInterest: '',
         });
+        setCaptchaVerified(false);
+        setCaptchaResetKey(current => current + 1);
       } else {
         alert(data.error || 'Failed to send message. Please try again.');
       }
@@ -356,9 +367,11 @@ export default function ContactPage() {
                   ></textarea>
                 </div>
 
+                <Captcha onVerify={setCaptchaVerified} resetKey={captchaResetKey} />
+
                 <motion.button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !captchaVerified}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="w-full bg-gradient-to-r from-primary-blue to-primary-orange text-white py-4 rounded-full text-lg font-bold shadow-xl hover:shadow-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"

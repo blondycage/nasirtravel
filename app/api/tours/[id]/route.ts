@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Tour from '@/lib/models/Tour';
 import { normalizePackageInfoTables } from '@/lib/utils/packageInfoTables';
+import { normalizeTourInventoryInput } from '@/lib/utils/tourInventory';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -22,11 +23,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     await connectDB();
     const body = await request.json();
+    const inventory = normalizeTourInventoryInput(body);
+    if (inventory.error) return NextResponse.json({ success: false, error: inventory.error }, { status: 400 });
+    Object.assign(body, inventory.value);
     body.infoTables = normalizePackageInfoTables(body.infoTables);
 
     const tour = await Tour.findByIdAndUpdate(params.id, body, {
       new: true,
-      runValidators: false,
+      runValidators: true,
     });
 
     if (!tour) {

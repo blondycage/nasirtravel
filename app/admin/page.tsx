@@ -21,6 +21,7 @@ interface Stats {
   totalUsers: number;
   totalReviews: number;
   totalHajjInterests: number;
+  newTravelEnquiries: number;
 }
 
 const statCards = [
@@ -60,6 +61,13 @@ const statCards = [
     tone: 'bg-yellow-50 text-yellow-700 ring-yellow-100',
   },
   {
+    label: 'New Enquiries',
+    key: 'newTravelEnquiries',
+    icon: MessageSquareText,
+    href: '/admin/travel-enquiries',
+    tone: 'bg-rose-50 text-rose-700 ring-rose-100',
+  },
+  {
     label: 'Hajj Interest',
     key: 'totalHajjInterests',
     icon: MessageSquareText,
@@ -69,6 +77,13 @@ const statCards = [
 ];
 
 const operations = [
+  {
+    title: 'Travel Enquiry Queue',
+    description: 'Review guest flight, hotel, package, and custom trip requests and track follow-up.',
+    href: '/admin/travel-enquiries',
+    icon: MessageSquareText,
+    cta: 'Review enquiries',
+  },
   {
     title: 'Quotation Queue',
     description: 'Review quote requests, set adult/child/infant pricing, and send customers to payment.',

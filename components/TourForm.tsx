@@ -37,6 +37,8 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
     pricingMode: 'quote_required' as 'fixed' | 'quote_required',
     priceLabel: 'Price confirmed after review',
     startingPrice: '',
+    totalSeats: '',
+    remainingSeats: '',
     description: '',
     status: 'draft',
     inclusions: [] as string[],
@@ -64,6 +66,8 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
         pricingMode: initialData.pricingMode || 'quote_required',
         priceLabel: initialData.priceLabel || 'Price confirmed after review',
         startingPrice: initialData.startingPrice || '',
+        totalSeats: initialData.totalSeats ?? '',
+        remainingSeats: initialData.remainingSeats ?? '',
         description: initialData.description || '',
         status: initialData.status || 'draft',
         inclusions: initialData.inclusions || [],
@@ -80,6 +84,20 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
     setError('');
 
     try {
+      const hasTotalSeats = formData.totalSeats !== '';
+      const hasRemainingSeats = formData.remainingSeats !== '';
+      if (hasTotalSeats !== hasRemainingSeats) {
+        throw new Error('Enter both total seats and remaining seats, or leave both blank.');
+      }
+      if (hasTotalSeats) {
+        const totalSeats = Number(formData.totalSeats);
+        const remainingSeats = Number(formData.remainingSeats);
+        if (!Number.isInteger(totalSeats) || totalSeats <= 0) throw new Error('Total seats must be a whole number greater than zero.');
+        if (!Number.isInteger(remainingSeats) || remainingSeats < 0 || remainingSeats > totalSeats) {
+          throw new Error('Remaining seats must be between zero and total seats.');
+        }
+      }
+
       const token = localStorage.getItem('token');
       if (!token) {
         router.push('/login');
@@ -97,6 +115,8 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
         },
         body: JSON.stringify({
           ...formData,
+          totalSeats: hasTotalSeats ? Number(formData.totalSeats) : null,
+          remainingSeats: hasRemainingSeats ? Number(formData.remainingSeats) : null,
           infoTables: normalizePackageInfoTables(formData.infoTables),
         })
       });
@@ -539,6 +559,41 @@ export default function TourForm({ tourId, initialData }: TourFormProps) {
               </div>
             )}
           </div>
+        </div>
+
+        <div>
+          <label htmlFor="totalSeats" className="block text-sm font-medium text-gray-700 mb-1">
+            Total Seats
+          </label>
+          <input
+            type="number"
+            id="totalSeats"
+            name="totalSeats"
+            min="1"
+            step="1"
+            value={formData.totalSeats}
+            onChange={handleChange}
+            placeholder="Optional"
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="remainingSeats" className="block text-sm font-medium text-gray-700 mb-1">
+            Remaining Seats
+          </label>
+          <input
+            type="number"
+            id="remainingSeats"
+            name="remainingSeats"
+            min="0"
+            step="1"
+            value={formData.remainingSeats}
+            onChange={handleChange}
+            placeholder="Optional"
+            className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <p className="mt-1 text-xs text-gray-500">Update this manually as seats are reserved.</p>
         </div>
 
         <div className="md:col-span-2">

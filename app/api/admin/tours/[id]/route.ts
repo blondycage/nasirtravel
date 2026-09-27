@@ -4,6 +4,7 @@ import Tour from '@/lib/models/Tour';
 import { verifyToken, getTokenFromHeader } from '@/lib/utils/auth';
 import { sanitizeHtml } from '@/lib/utils/sanitizeHtml';
 import { normalizePackageInfoTables } from '@/lib/utils/packageInfoTables';
+import { normalizeTourInventoryInput } from '@/lib/utils/tourInventory';
 
 // GET single tour
 export async function GET(
@@ -76,6 +77,11 @@ export async function PUT(
     }
 
     const body = await request.json();
+    const inventory = normalizeTourInventoryInput(body);
+    if (inventory.error) {
+      return NextResponse.json({ success: false, error: inventory.error }, { status: 400 });
+    }
+    Object.assign(body, inventory.value);
     if (body.startingPrice === '') {
       body.startingPrice = undefined;
     }

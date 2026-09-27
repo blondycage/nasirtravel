@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { RefreshCw } from 'lucide-react';
 
 interface CaptchaProps {
   onVerify: (isValid: boolean) => void;
   className?: string;
+  resetKey?: string | number;
 }
 
-export default function Captcha({ onVerify, className = '' }: CaptchaProps) {
+export default function Captcha({ onVerify, className = '', resetKey = 0 }: CaptchaProps) {
   const [captchaText, setCaptchaText] = useState('');
   const [userInput, setUserInput] = useState('');
   const [isVerified, setIsVerified] = useState(false);
@@ -94,7 +96,7 @@ export default function Captcha({ onVerify, className = '' }: CaptchaProps) {
   useEffect(() => {
     refreshCaptcha();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [resetKey]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -125,9 +127,7 @@ export default function Captcha({ onVerify, className = '' }: CaptchaProps) {
           className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
           title="Refresh captcha"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
+          <RefreshCw className="h-6 w-6 text-gray-600" aria-hidden="true" />
         </button>
       </div>
       <input

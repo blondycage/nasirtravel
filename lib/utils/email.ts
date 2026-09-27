@@ -883,6 +883,62 @@ export const sendAdminQuoteRequestNotification = async (quoteDetails: {
   return sendEmailWithDebug('SEND ADMIN QUOTE REQUEST NOTIFICATION', transporter, mailOptions);
 };
 
+export const sendTravelEnquiryAdminNotification = async (details: {
+  enquiryId: string;
+  reference: string;
+  name: string;
+  email: string;
+  phone: string;
+  services: string[];
+  purpose: string;
+  readiness: string;
+  origin: string;
+  destination: string;
+  departureDate?: string;
+  returnDate?: string;
+  packageTitle?: string;
+}) => {
+  logEmailDebug('SEND TRAVEL ENQUIRY ADMIN NOTIFICATION - START', { reference: details.reference });
+  if (!isEmailConfigured()) return { success: false, error: 'Email not configured' };
+  const transporter = getTransporter();
+  if (!transporter) return { success: false, error: 'Failed to create email transporter' };
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'info@naasirtravel.com';
+  const reviewLink = `${appUrl}/admin/travel-enquiries/${details.enquiryId}`;
+  const label = (value: string) => value.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+  return sendEmailWithDebug('SEND TRAVEL ENQUIRY ADMIN NOTIFICATION', transporter, {
+    from: getFromAddress(),
+    to: adminEmail,
+    replyTo: details.email,
+    subject: `New Travel Request: ${details.reference}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 20px;">
+        <div style="background: #1e3a8a; padding: 26px; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">New Travel Request</h1>
+        </div>
+        <div style="border: 1px solid #e5e7eb; border-top: 0; padding: 26px; border-radius: 0 0 8px 8px;">
+          <p><strong>Reference:</strong> ${escapeHtml(details.reference)}</p>
+          <p><strong>Customer:</strong> ${escapeHtml(details.name)}</p>
+          <p><strong>Email:</strong> ${escapeHtml(details.email)}</p>
+          <p><strong>Phone:</strong> ${escapeHtml(details.phone)}</p>
+          <p><strong>Services:</strong> ${escapeHtml(details.services.map(label).join(', '))}</p>
+          <p><strong>Purpose:</strong> ${escapeHtml(label(details.purpose))}</p>
+          <p><strong>Readiness:</strong> ${escapeHtml(label(details.readiness))}</p>
+          <p><strong>Route:</strong> ${escapeHtml(details.origin)} to ${escapeHtml(details.destination)}</p>
+          ${details.departureDate ? `<p><strong>Departure:</strong> ${escapeHtml(new Date(details.departureDate).toLocaleDateString())}</p>` : ''}
+          ${details.returnDate ? `<p><strong>Return:</strong> ${escapeHtml(new Date(details.returnDate).toLocaleDateString())}</p>` : ''}
+          ${details.packageTitle ? `<p><strong>Package:</strong> ${escapeHtml(details.packageTitle)}</p>` : ''}
+          <div style="margin-top: 26px; text-align: center;">
+            <a href="${reviewLink}" style="display: inline-block; background: #1d4ed8; color: white; padding: 13px 22px; border-radius: 6px; text-decoration: none; font-weight: bold;">Review Request</a>
+          </div>
+        </div>
+      </div>
+    `,
+  });
+};
+
 export const sendBookingQuoteReady = async (
   to: string,
   quoteDetails: {

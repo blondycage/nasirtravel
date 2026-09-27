@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import PackageOccupancy from '@/components/PackageOccupancy';
 
 type PackageCategory = 'All' | 'Umrah' | 'Asia' | 'Africa' | 'Europe' | 'Americas';
 
@@ -21,6 +22,8 @@ interface TourPackage {
   price: string;
   priceLabel?: string;
   startingPrice?: number;
+  totalSeats?: number | null;
+  remainingSeats?: number | null;
   pricingMode?: 'fixed' | 'quote_required';
   isComing?: boolean;
   status: 'draft' | 'published' | 'archived';
@@ -366,6 +369,8 @@ export default function PackagesPage() {
                     </div>
                   </div>
 
+                  <PackageOccupancy totalSeats={pkg.totalSeats} remainingSeats={pkg.remainingSeats} compact />
+
                   {/* Price */}
                   <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">
                     {pkg.startingPrice && (
@@ -478,6 +483,8 @@ export default function PackagesPage() {
                       <span className="line-clamp-1">{pkg.dates}</span>
                     </div>
                   </div>
+
+                  <PackageOccupancy totalSeats={pkg.totalSeats} remainingSeats={pkg.remainingSeats} compact />
 
                   {/* Price */}
                   <div className="pt-3 sm:pt-4 border-t border-gray-200 mt-auto">

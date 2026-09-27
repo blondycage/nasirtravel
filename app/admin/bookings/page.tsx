@@ -17,6 +17,7 @@ interface Booking {
   totalAmount: number;
   quotedTotalAmount?: number;
   documents: any[];
+  tour?: { _id: string; title: string } | string | null;
 }
 
 type BookingFilter = 'all' | 'quotes' | 'sent' | 'payment' | 'paid';
@@ -102,7 +103,8 @@ export default function AdminBookingsPage() {
   const matchesSearch = (booking: Booking) => {
     const term = search.trim().toLowerCase();
     if (!term) return true;
-    return [booking.customerName, booking.customerEmail, booking._id]
+    const packageTitle = typeof booking.tour === 'object' && booking.tour ? booking.tour.title : '';
+    return [booking.customerName, booking.customerEmail, booking._id, packageTitle]
       .filter(Boolean)
       .some((value) => value.toLowerCase().includes(term));
   };
@@ -175,7 +177,7 @@ export default function AdminBookingsPage() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name, email, booking ID"
+              placeholder="Search name, email, package, booking ID"
               className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
@@ -195,7 +197,7 @@ export default function AdminBookingsPage() {
           </div>
         ) : (
           <div className="max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table className="min-w-[1050px] divide-y divide-gray-200">
+            <table className="min-w-[1180px] divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -203,6 +205,9 @@ export default function AdminBookingsPage() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Package
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Booking Date
@@ -236,6 +241,11 @@ export default function AdminBookingsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-600">{booking.customerEmail}</div>
+                    </td>
+                    <td className="max-w-56 px-6 py-4">
+                      <div className="line-clamp-2 text-sm font-medium text-gray-800">
+                        {typeof booking.tour === 'object' && booking.tour ? booking.tour.title : 'Package unavailable'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {new Date(booking.bookingDate).toLocaleDateString()}

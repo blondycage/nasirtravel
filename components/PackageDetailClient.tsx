@@ -10,6 +10,7 @@ import Footer from '@/components/Footer';
 import BookingForm from '@/components/BookingForm';
 import { generatePackagePDF } from '@/lib/generatePackagePDF';
 import { packageInfoTableHasContent, type PackageInfoTable } from '@/lib/utils/packageInfoTables';
+import PackageOccupancy from '@/components/PackageOccupancy';
 
 interface Tour {
   _id: string;
@@ -21,6 +22,8 @@ interface Tour {
   pricingMode?: 'fixed' | 'quote_required';
   priceLabel?: string;
   startingPrice?: number;
+  totalSeats?: number | null;
+  remainingSeats?: number | null;
   dates: string;
   accommodation: string;
   departure?: string;
@@ -250,6 +253,10 @@ export default function PackageDetailClient({ packageId }: { packageId: string }
                     </p>
                   </>
                 )}
+              </div>
+
+              <div className="mb-6">
+                <PackageOccupancy totalSeats={tour.totalSeats} remainingSeats={tour.remainingSeats} />
               </div>
 
               {/* Package Details */}

@@ -27,6 +27,7 @@ const navItems = [
   { label: 'Overview', href: '/admin', icon: BarChart3 },
   { label: 'Bookings', href: '/admin/bookings', icon: CalendarClock },
   { label: 'Quotations', href: '/admin/bookings?filter=quotes', icon: FileCheck2 },
+  { label: 'Travel Enquiries', href: '/admin/travel-enquiries', icon: MessageSquareText },
   { label: 'Packages', href: '/admin/tours', icon: Plane },
   { label: 'Applications', href: '/admin/applications', icon: BookOpen },
   { label: 'Users', href: '/admin/users', icon: Users },
