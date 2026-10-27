@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import './User'; // Ensure User model is registered
+import './Tour'; // Ensure Tour model is registered before booking populations
 
 export interface IDocument {
   name: string;

@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   description:
     'Naasir Travel helps clients book Hajj, Umrah, and worldwide travel packages with guided support.',
   applicationName: 'Naasir Travel',
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
   alternates: {
     canonical: '/',
   },
@@ -59,6 +62,15 @@ export default function RootLayout({
     logo: new URL('/logo.png', siteUrl).toString(),
     description:
       'Naasir Travel helps clients book Hajj, Umrah, and worldwide travel packages with guided support.',
+    email: 'info@naasirtravel.com',
+    telephone: '+1-604-330-0307',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'Unit 803, 6081 No. 3 Road',
+      addressLocality: 'Richmond',
+      addressRegion: 'BC',
+      addressCountry: 'CA',
+    },
   };
 
   return (

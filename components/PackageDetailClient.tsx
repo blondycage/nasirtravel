@@ -36,11 +36,11 @@ interface Tour {
   gallery?: string[];
 }
 
-export default function PackageDetailClient({ packageId }: { packageId: string }) {
+export default function PackageDetailClient({ packageId, initialTour }: { packageId: string; initialTour?: Tour }) {
   const router = useRouter();
 
-  const [tour, setTour] = useState<Tour | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [tour, setTour] = useState<Tour | null>(initialTour || null);
+  const [loading, setLoading] = useState(!initialTour);
   const [error, setError] = useState('');
   const [reviews, setReviews] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'info' | 'reviews'>('info');
@@ -93,10 +93,10 @@ export default function PackageDetailClient({ packageId }: { packageId: string }
     };
 
     if (packageId) {
-      fetchTourDetails();
+      if (!initialTour) fetchTourDetails();
       fetchReviews();
     }
-  }, [packageId]);
+  }, [initialTour, packageId]);
 
   if (loading) {
     return (

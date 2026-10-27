@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import './Tour';
+import './User';
 
 export interface IReview extends Document {
   tour: mongoose.Types.ObjectId;

@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import './Tour';
 
 export type TravelEnquiryStatus = 'new' | 'contacted' | 'quoted' | 'closed';
 export type TravelService = 'flights' | 'hotels' | 'existing_package' | 'custom_package';

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Types } from 'mongoose';
+import { cache } from 'react';
+import { notFound } from 'next/navigation';
 import PackageDetailClient from '@/components/PackageDetailClient';
 import connectDB from '@/lib/mongodb';
 import Tour from '@/lib/models/Tour';
@@ -11,9 +13,12 @@ type Props = {
 };
 
 type PublishedTour = {
+  _id: unknown;
   title: string;
   description?: string;
   image?: string;
+  startingPrice?: number;
+  [key: string]: unknown;
 };
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://naasirtravel.com';
@@ -44,18 +49,17 @@ function truncate(text: string, length = 155) {
   return `${text.slice(0, length - 1).trim()}...`;
 }
 
-async function getPublishedTour(id: string) {
+const getPublishedTour = cache(async (id: string) => {
   if (!Types.ObjectId.isValid(id)) return null;
 
   await connectDB();
 
   const tour = await Tour.findOne({ _id: id, status: 'published' })
-    .select('title description image category dates accommodation departure startingPrice priceLabel updatedAt')
     .lean<PublishedTour>()
     .exec();
 
   return tour;
-}
+});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const tour = await getPublishedTour(params.id);
@@ -99,6 +103,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PackageDetailPage({ params }: Props) {
   const tour = await getPublishedTour(params.id);
+  if (!tour) notFound();
+
+  const serializedTour = JSON.parse(JSON.stringify(tour));
   const packageJsonLd = tour
     ? {
         '@context': 'https://schema.org',
@@ -125,7 +132,7 @@ export default async function PackageDetailPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(packageJsonLd) }}
         />
       )}
-      <PackageDetailClient packageId={params.id} />
+      <PackageDetailClient packageId={params.id} initialTour={serializedTour} />
     </>
   );
 }
