@@ -8,6 +8,7 @@ import { clearAuthStorage } from '@/lib/utils/clientAuth';
 import {
   BarChart3,
   BookOpen,
+  Newspaper,
   CalendarClock,
   ChevronsLeft,
   ChevronsRight,
@@ -29,6 +30,7 @@ const navItems = [
   { label: 'Quotations', href: '/admin/bookings?filter=quotes', icon: FileCheck2 },
   { label: 'Travel Enquiries', href: '/admin/travel-enquiries', icon: MessageSquareText },
   { label: 'Packages', href: '/admin/tours', icon: Plane },
+  { label: 'Blog', href: '/admin/blog', icon: Newspaper },
   { label: 'Applications', href: '/admin/applications', icon: BookOpen },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Reviews', href: '/admin/reviews', icon: Star },

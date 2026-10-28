@@ -83,6 +83,7 @@ export default function Header() {
             {[
               { name: 'Home', href: '/' },
               { name: 'Packages', href: '/packages' },
+              { name: 'Blog', href: '/blog' },
               { name: 'Plan a Trip', href: '/travel-request' },
               { name: 'Hajj 2027', href: '/hajj-2027' },
               { name: 'FAQ', href: '/#faq' },
@@ -185,6 +186,7 @@ export default function Header() {
                 {[
                   { name: 'Home', href: '/' },
                   { name: 'Packages', href: '/packages' },
+                  { name: 'Blog', href: '/blog' },
                   { name: 'Plan a Trip', href: '/travel-request' },
                   { name: 'Hajj 2027', href: '/hajj-2027' },
                   { name: 'FAQ', href: '/#faq' },

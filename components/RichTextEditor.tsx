@@ -4,11 +4,14 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Heading from '@tiptap/extension-heading';
+import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
 import { useEffect } from 'react';
 
 interface RichTextEditorProps {
   initialContent: string;
   onChange: (html: string) => void;
+  onUploadImage?: (file: File) => Promise<string>;
 }
 
 const ToolbarButton = ({
@@ -36,7 +39,7 @@ const ToolbarButton = ({
   </button>
 );
 
-export default function RichTextEditor({ initialContent, onChange }: RichTextEditorProps) {
+export default function RichTextEditor({ initialContent, onChange, onUploadImage }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -50,6 +53,8 @@ export default function RichTextEditor({ initialContent, onChange }: RichTextEdi
       }),
       Underline,
       Heading.configure({ levels: [1, 2, 3] }),
+      Link.configure({ openOnClick: false, HTMLAttributes: { rel: 'noopener noreferrer' } }),
+      Image.configure({ inline: false, allowBase64: false }),
     ],
     content: initialContent || '',
     onUpdate({ editor }) {
@@ -67,7 +72,7 @@ export default function RichTextEditor({ initialContent, onChange }: RichTextEdi
     if (editor && initialContent !== undefined) {
       const current = editor.getHTML();
       if (current !== initialContent) {
-        editor.commands.setContent(initialContent || '', false);
+        editor.commands.setContent(initialContent || '', { emitUpdate: false });
       }
     }
   }, [initialContent, editor]);
@@ -85,6 +90,37 @@ export default function RichTextEditor({ initialContent, onChange }: RichTextEdi
         >
           <strong>B</strong>
         </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => {
+            const url = window.prompt('Enter the link URL');
+            if (url) editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+          }}
+          active={editor.isActive('link')}
+          title="Add link"
+        >
+          Link
+        </ToolbarButton>
+
+        {onUploadImage && (
+          <ToolbarButton
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'image/*';
+              input.onchange = async () => {
+                const file = input.files?.[0];
+                if (!file) return;
+                const url = await onUploadImage(file);
+                editor.chain().focus().setImage({ src: url, alt: file.name }).run();
+              };
+              input.click();
+            }}
+            title="Insert image"
+          >
+            Image
+          </ToolbarButton>
+        )}
 
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleItalic().run()}

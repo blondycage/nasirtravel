@@ -14,7 +14,9 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     const base64 = `data:${file.type};base64,${buffer.toString('base64')}`;
 
-    const result = await uploadToCloudinary(base64);
+    const folder = String(formData.get('folder') || 'tours');
+    const safeFolder = ['tours', 'blog', 'documents'].includes(folder) ? folder : 'tours';
+    const result = await uploadToCloudinary(base64, safeFolder);
 
     return NextResponse.json({
       success: true,

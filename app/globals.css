@@ -33,3 +33,20 @@ h1, h2, h3, h4, h5, h6 {
 .font-extrabold {
   font-weight: 800;
 }
+
+.admin-input {
+  @apply mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100;
+}
+
+.blog-content { @apply text-lg leading-8 text-slate-700; }
+.blog-content h1, .blog-content h2, .blog-content h3 { @apply mt-10 mb-4 font-extrabold leading-tight text-slate-950; }
+.blog-content h1 { @apply text-4xl; }
+.blog-content h2 { @apply text-3xl; }
+.blog-content h3 { @apply text-2xl; }
+.blog-content p { @apply mb-6; }
+.blog-content ul { @apply mb-6 list-disc pl-6; }
+.blog-content ol { @apply mb-6 list-decimal pl-6; }
+.blog-content li { @apply mb-2; }
+.blog-content a { @apply font-semibold text-blue-700 underline decoration-blue-200 underline-offset-4 hover:text-orange-600; }
+.blog-content blockquote { @apply my-8 border-l-4 border-orange-400 bg-orange-50 px-6 py-4 italic text-slate-800; }
+.blog-content img { @apply my-8 h-auto w-full rounded-2xl; }

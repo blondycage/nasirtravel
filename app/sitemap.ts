@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import connectDB from '@/lib/mongodb';
 import Tour from '@/lib/models/Tour';
+import BlogPost from '@/lib/models/BlogPost';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://naasirtravel.com';
 
@@ -48,7 +49,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-    return [...staticPages, ...packagePages];
+    const posts = await BlogPost.find({ status: 'published' }).select('slug updatedAt').lean();
+    const blogPages: MetadataRoute.Sitemap = posts.map((post: any) => ({
+      url: absoluteUrl(`/blog/${post.slug}`),
+      lastModified: post.updatedAt || new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    }));
+
+    return [...staticPages, { url: absoluteUrl('/blog'), changeFrequency: 'daily', priority: 0.8 }, ...packagePages, ...blogPages];
   } catch (error) {
     console.error('Failed to generate package sitemap entries:', error);
     return staticPages;
